@@ -1,9 +1,87 @@
-// Service worker mínimo: guarda la página para abrirla rápido y permitir instalarla como app.
-const CACHE = 'finanzas-v2';
-self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', 'index.html', 'manifest.webmanifest'])).then(() => self.skipWaiting())); });
-self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
-self.addEventListener('fetch', e => {
-  const u = new URL(e.request.url);
-  if (e.request.method !== 'GET' || u.origin !== location.origin) return;   // Google y CDNs van directos a la red
-  e.respondWith(fetch(e.request).then(r => { const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return r; }).catch(() => caches.match(e.request)));
-});
+/* ==========================================================================
+   SERVICE WORKER - FINANZAS KUTXA
+   Caché de los archivos de la aplicación
+   ========================================================================== */
+
+   const CACHE = 'finanzas-v4';
+
+   const FILES = [
+       './',
+       './index.html',
+       './privacy.html',
+       './manifest.webmanifest',
+   
+       // CSS
+       './css/styles.css',
+   
+       // JavaScript
+       './js/state.js',
+       './js/utils.js',
+       './js/storage.js',
+       './js/csv.js',
+       './js/bizum.js',
+       './js/tags.js',
+       './js/dashboard.js',
+       './js/movimientos.js',
+       './js/inversion.js',
+       './js/presupuestos.js',
+       './js/reglas.js',
+       './js/importacion.js',
+       './js/backup.js',
+       './js/ui.js',
+       './js/cloud.js',
+       './js/app.js',
+   
+       // Iconos
+       './assets/icons/icon-180.png',
+       './assets/icons/icon-192.png',
+       './assets/icons/icon-512.png'
+   ];
+   
+   // Instalación y almacenamiento en caché
+   self.addEventListener('install', e => {
+       e.waitUntil(
+           caches.open(CACHE)
+               .then(cache => cache.addAll(FILES))
+               .then(() => self.skipWaiting())
+       );
+   });
+   
+   // Activación y eliminación de cachés anteriores
+   self.addEventListener('activate', e => {
+       e.waitUntil(
+           caches.keys()
+               .then(keys => Promise.all(
+                   keys
+                       .filter(key => key !== CACHE)
+                       .map(key => caches.delete(key))
+               ))
+               .then(() => self.clients.claim())
+       );
+   });
+   
+   // Solicitudes: primero red, después caché
+   self.addEventListener('fetch', e => {
+       const url = new URL(e.request.url);
+   
+       if (
+           e.request.method !== 'GET' ||
+           url.origin !== self.location.origin
+       ) return;
+   
+       e.respondWith(
+           fetch(e.request)
+               .then(response => {
+                   if (response.ok) {
+                       const copy = response.clone();
+   
+                       caches.open(CACHE)
+                           .then(cache => cache.put(e.request, copy));
+                   }
+   
+                   return response;
+               })
+               .catch(() => caches.match(e.request))
+       );
+   });
+   

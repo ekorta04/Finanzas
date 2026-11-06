@@ -1,0 +1,23 @@
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos temporales
+*.tmp
+*.log
+*.bak
+
+# Copias de seguridad financieras
+finanzas_backup_*.json
+
+# Configuración local de desarrollo
+.vscode/
+
+# Dependencias (si las añadimos)
+node_modules/
+
+# Variables privadas de configuración
+.env
+.env.local
