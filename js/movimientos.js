@@ -62,25 +62,62 @@
         }).join('');
     }
     
-    async function updateRowCategory(encKey, newCategory) {
-        const key = decodeURIComponent(encKey);
-        const row = AppState.rows.find(r => r.k === key); if (!row) return;
-        row.cat = newCategory; row.man = true;
     
-        const cn = norm(row.c);
-        const generic = /^(SIN CONCEPTO|ENVIO DE DINERO CON BIZUM|BIZUM)/.test(cn);
-        if (!generic && newCategory !== 'Sin clasificar' && !AppState.rules.some(x => norm(x.p) === cn)) {
-            const same = AppState.rows.filter(x => norm(x.c) === cn && x.k !== key && !x.man).length;
-            const msg = `¿Recordar "${row.c}" -> ${newCategory} para siempre?` + (same > 0 ? `\nSe aplicará automáticamente a otros ${same} movimientos iguales.` : '');
-            saveState(); renderAllViews();
-            if (await askConfirm(msg)) {
-                AppState.rules.unshift({ p: row.c, c: newCategory });
-                AppState.rows.forEach(x => { if (!x.man && norm(x.c) === cn) x.cat = newCategory; });
-                showToast('Regla guardada y movimientos actualizados');
-            }
-        }
-        saveState(); renderAllViews();
+/* =====================================================
+   CAMBIAR CATEGORÍA Y GUARDAR EN SUPABASE
+   ===================================================== */
+
+async function updateRowCategory(encKey, newCategory) {
+
+    const key = decodeURIComponent(encKey);
+
+    const row = AppState.rows.find(r => r.k === key);
+
+    if (!row) {
+        showToast('No se encontró el movimiento', 'error');
+        return;
     }
+
+    const accountId = window.activeSupabaseAccountId;
+
+    if (!accountId) {
+        showToast('No hay una cuenta seleccionada', 'error');
+        renderMovimientos();
+        return;
+    }
+
+    try {
+        // Guardar primero en PostgreSQL
+        await updateTransactionCategory(
+            accountId,
+            key,
+            newCategory
+        );
+
+        // Actualizar la interfaz solo si Supabase confirma
+        row.cat = newCategory;
+        row.man = true;
+
+        renderAllViews();
+
+        showToast('Categoría guardada en Supabase');
+
+    } catch (error) {
+        console.error(
+            'Error actualizando categoría:',
+            error
+        );
+
+        // Restaurar visualmente la categoría anterior
+        renderMovimientos();
+
+        showToast(
+            'No se pudo guardar la categoría',
+            'error'
+        );
+    }
+}
+
     
     function clearMovFilters() {
         ['filter-search', 'filter-cat', 'filter-tag', 'filter-month', 'filter-date-from', 'filter-date-to'].forEach(id => document.getElementById(id).value = '');

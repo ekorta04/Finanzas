@@ -118,6 +118,21 @@ async function showSupabaseImportScreen() {
 
         selector.disabled = accounts.length === 0;
 
+        
+        // Recordar la última cuenta seleccionada,
+        // pero dejar que el usuario decida qué hacer.
+        const lastAccountId = localStorage.getItem(
+            dashboardAccountKey(user.id)
+        );
+
+        const rememberedAccount = accounts.find(
+            account => account.id === lastAccountId
+        );
+
+        if (rememberedAccount) {
+            selector.value = rememberedAccount.id;
+        }
+
     } catch (error) {
         console.error('Error cargando cuentas:', error);
 
@@ -232,3 +247,56 @@ document.addEventListener('DOMContentLoaded', async () => {
         showLoginScreen();
     }
 });
+
+
+/* =====================================================
+   CERRAR SESIÓN DE FINANZAS KUTXA
+   ===================================================== */
+
+   async function logoutFinanzas() {
+    try {
+        // Ocultar inmediatamente los datos financieros
+        document.getElementById('app-root')
+            .classList.add('hidden');
+
+        document.getElementById('supabase-import-screen')
+            .classList.add('hidden');
+
+        // Cerrar la sesión de Supabase
+        await signOut();
+
+        // Limpiar los datos financieros de la memoria
+        AppState = defaultState();
+        BizumSugg = [];
+
+        // Limpiar selección y archivo de importación
+        const selector = document.getElementById(
+            'supabase-import-account'
+        );
+
+        const file = document.getElementById(
+            'supabase-import-file'
+        );
+
+        if (selector) {
+            selector.replaceChildren(
+                new Option('Selecciona una cuenta', '')
+            );
+        }
+
+        if (file) {
+            file.value = '';
+        }
+
+        // Regresar al inicio de sesión
+        window.location.replace(
+            window.location.pathname
+        );
+
+    } catch (error) {
+        console.error('Error al cerrar sesión:', error);
+
+        // No volver a mostrar el Dashboard
+        alert('No se pudo cerrar la sesión. Recarga la aplicación.');
+    }
+}

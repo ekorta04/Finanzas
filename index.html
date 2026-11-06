@@ -8,14 +8,18 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Finanzas">
+
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="assets/icons/icon-192.png">
 <link rel="apple-touch-icon" href="assets/icons/icon-180.png">
+
 <title>Finanzas KUTXA</title>
+
 <link rel="stylesheet" href="css/styles.css">
 
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+
 <script>
 tailwind.config = {
     darkMode: 'media',
@@ -34,7 +38,9 @@ tailwind.config = {
     }
 };
 </script>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.5.3/papaparse.min.js"></script>
 </head>
 
 <body>
@@ -59,6 +65,7 @@ tailwind.config = {
         </div>
 
         <form id="auth-form" class="space-y-4">
+
             <div>
                 <label for="auth-email" class="block text-sm font-medium mb-1">
                     Correo electrónico
@@ -94,6 +101,7 @@ tailwind.config = {
                 class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl">
                 Iniciar sesión
             </button>
+
         </form>
 
         <div class="text-center text-sm">
@@ -104,93 +112,353 @@ tailwind.config = {
                 Regístrate
             </button>
         </div>
+
     </div>
 </section>
 
 
 <!-- ==========================================
-     IMPORTADOR SUPABASE
+     IMPORTADOR UNIVERSAL SUPABASE
      ========================================== -->
 
-     <section id="supabase-import-screen"
-     class="hidden min-h-screen bg-slate-50 dark:bg-slate-950
-            p-6 text-slate-800 dark:text-slate-100">
- 
-     <div class="max-w-2xl mx-auto space-y-6">
- 
-         <div class="bg-white dark:bg-slate-900 rounded-2xl
-                     border border-slate-200 dark:border-slate-800
-                     shadow-sm p-6 space-y-4">
- 
-             <h1 class="text-2xl font-bold">
-                 Finanzas KUTXA
-             </h1>
- 
-             <p class="text-sm text-slate-500 dark:text-slate-400">
-                 Importación de movimientos a Supabase
-             </p>
- 
-             <div class="space-y-2">
-                 <label for="supabase-import-account"
-                     class="block text-sm font-semibold">
-                     Cuenta bancaria
-                 </label>
- 
-                 <select id="supabase-import-account"
-                     class="w-full px-3 py-3 rounded-xl border
-                            border-slate-300 dark:border-slate-700
-                            bg-white dark:bg-slate-800">
-                     <option value="">Selecciona una cuenta</option>
-                 </select>
-             </div>
- 
-             <div class="space-y-2">
-                 <label for="supabase-import-file"
-                     class="block text-sm font-semibold">
-                     Archivo CSV de Laboral Kutxa
-                 </label>
- 
-                 <input id="supabase-import-file"
-                     type="file"
-                     accept=".csv,text/csv"
-                     class="block w-full text-sm border
-                            border-slate-300 dark:border-slate-700
-                            rounded-xl p-3">
-             </div>
- 
-             <button id="supabase-import-button"
-                 type="button"
-                 disabled
-                 class="w-full px-4 py-3 bg-blue-600
-                        hover:bg-blue-700 disabled:opacity-50
-                        disabled:cursor-not-allowed
-                        text-white font-semibold rounded-xl">
-                 Importar movimientos
-             </button>
- 
-             <p id="supabase-import-message"
-                 class="hidden text-sm"
-                 role="status"
-                 aria-live="polite"></p>
-         </div>
- 
-     </div>
- </section>
- 
+<section id="supabase-import-screen"
+    class="hidden min-h-screen bg-slate-50 dark:bg-slate-950 p-6 text-slate-800 dark:text-slate-100">
+
+    <div class="max-w-2xl mx-auto space-y-6">
+
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 space-y-4">
+
+            <h1 class="text-2xl font-bold">
+                Finanzas KUTXA
+            </h1>
+
+            <p class="text-sm text-slate-500 dark:text-slate-400">
+                Importación de movimientos a Supabase
+            </p>
+
+            <button type="button"
+                onclick="logoutFinanzas()"
+                class="px-3 py-2 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg">
+                Cerrar sesión
+            </button>
+
+            <!-- CUENTA BANCARIA -->
+
+            <div class="space-y-2">
+
+                <label for="supabase-import-account"
+                    class="block text-sm font-semibold">
+                    Cuenta bancaria
+                </label>
+
+                <select id="supabase-import-account"
+                    class="w-full px-3 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800">
+                    <option value="">Selecciona una cuenta</option>
+                </select>
+
+            </div>
+
+            <!-- ARCHIVO CSV -->
+
+            <div class="space-y-2">
+
+                <label for="supabase-import-file"
+                    class="block text-sm font-semibold">
+                    Archivo CSV bancario
+                </label>
+
+                <input id="supabase-import-file"
+                    type="file"
+                    accept=".csv,text/csv"
+                    class="block w-full text-sm border border-slate-300 dark:border-slate-700 rounded-xl p-3">
+
+            </div>
+
+            <!-- ==========================================
+                 CONFIGURACIÓN DEL CSV UNIVERSAL
+                 ========================================== -->
+
+            <div id="csv-mapping-panel"
+                class="hidden space-y-5 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 bg-slate-50 dark:bg-slate-800/40">
+
+                <div>
+
+                    <h3 class="text-lg font-bold">
+                        Configurar columnas del CSV
+                    </h3>
+
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                        Comprueba qué columna corresponde a cada dato.
+                        Puedes corregir las selecciones antes de importar.
+                    </p>
+
+                </div>
+
+                <!-- INFORMACIÓN DEL ARCHIVO -->
+
+                <div id="csv-file-info"
+                    class="text-xs text-slate-500 dark:text-slate-400">
+                </div>
+
+                <!-- CORRESPONDENCIA DE COLUMNAS -->
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    <div>
+                        <label for="csv-map-date" class="block text-xs font-semibold mb-1">
+                            Fecha de operación *
+                        </label>
+                        <select id="csv-map-date"
+                            class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="csv-map-value-date" class="block text-xs font-semibold mb-1">
+                            Fecha valor (opcional)
+                        </label>
+                        <select id="csv-map-value-date"
+                            class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="csv-map-description" class="block text-xs font-semibold mb-1">
+                            Concepto / Descripción *
+                        </label>
+                        <select id="csv-map-description"
+                            class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="csv-map-amount" class="block text-xs font-semibold mb-1">
+                            Importe
+                        </label>
+                        <select id="csv-map-amount"
+                            class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="csv-map-debit" class="block text-xs font-semibold mb-1">
+                            Cargo / Dinero que sale
+                        </label>
+                        <select id="csv-map-debit"
+                            class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="csv-map-credit" class="block text-xs font-semibold mb-1">
+                            Abono / Dinero que entra
+                        </label>
+                        <select id="csv-map-credit"
+                            class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="csv-map-balance" class="block text-xs font-semibold mb-1">
+                            Saldo (opcional)
+                        </label>
+                        <select id="csv-map-balance"
+                            class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+                        </select>
+                    </div>
+
+                </div>
+
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                    * Campos obligatorios. Se necesita una columna de importe
+                    o bien columnas de cargo y abono.
+                </p>
+
+                <!-- ==========================================
+                     FORMATOS DE FECHA E IMPORTE
+                     ========================================== -->
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    <div>
+
+                        <label for="csv-date-format"
+                            class="block text-xs font-semibold mb-1">
+                            Formato de fecha
+                        </label>
+
+                        <select id="csv-date-format"
+                            class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+
+                            <option value="DMY">
+                                DD/MM/AAAA (España)
+                            </option>
+
+                            <option value="MDY">
+                                MM/DD/AAAA (EE. UU.)
+                            </option>
+
+                            <option value="YMD">
+                                AAAA-MM-DD (ISO)
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div>
+
+                        <label for="csv-number-format"
+                            class="block text-xs font-semibold mb-1">
+                            Formato de importes
+                        </label>
+
+                        <select id="csv-number-format"
+                            class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+
+                            <option value="EU">
+                                1.234,56 (Europeo)
+                            </option>
+
+                            <option value="US">
+                                1,234.56 (Internacional)
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+                <!-- ==========================================
+                     VISTA PREVIA ORIGINAL
+                     ========================================== -->
+
+                <div class="space-y-2">
+
+                    <h4 class="text-sm font-bold">
+                        Vista previa del archivo
+                    </h4>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+
+                        <table id="csv-preview-table"
+                            class="w-full text-xs text-left">
+                        </table>
+
+                    </div>
+
+                </div>
+
+                <!-- MENSAJES DE VALIDACIÓN -->
+
+                <p id="csv-mapping-message"
+                    class="hidden text-sm"
+                    role="status"
+                    aria-live="polite">
+                </p>
+
+                <!-- BOTÓN VALIDAR -->
+
+                <button id="csv-confirm-mapping"
+                    type="button"
+                    disabled
+                    class="w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold rounded-xl">
+                    Validar columnas y revisar movimientos
+                </button>
+
+                <!-- ==========================================
+                     VISTA PREVIA FINAL
+                     ========================================== -->
+
+                <div id="csv-final-preview"
+                    class="hidden space-y-3 mt-5">
+
+                    <h3 class="text-base font-bold">
+                        Movimientos preparados para importar
+                    </h3>
+
+                    <p id="csv-final-summary"
+                        class="text-sm text-slate-500 dark:text-slate-400">
+                    </p>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+
+                        <table class="w-full text-xs text-left">
+
+                            <thead class="bg-slate-200 dark:bg-slate-700">
+                                <tr>
+                                    <th class="px-3 py-2">Fecha</th>
+                                    <th class="px-3 py-2">Concepto</th>
+                                    <th class="px-3 py-2 text-right">Importe</th>
+                                    <th class="px-3 py-2 text-right">Saldo</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="csv-final-preview-body">
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    <p class="text-xs text-amber-700 dark:text-amber-400">
+                        Revisa las fechas, los importes y sus signos.
+                        Esta vista previa no guarda datos en Supabase.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <!-- ABRIR DASHBOARD SIN IMPORTAR -->
+
+            <button id="open-dashboard-button"
+                type="button"
+                onclick="openSelectedDashboard()"
+                class="w-full px-4 py-3 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-xl">
+                Abrir Dashboard
+            </button>
+
+            <!-- IMPORTADOR ANTERIOR: DESACTIVADO TEMPORALMENTE -->
+
+            <button id="supabase-import-button"
+                type="button"
+                disabled
+                class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl">
+                Importar movimientos
+            </button>
+
+            <p id="supabase-import-message"
+                class="hidden text-sm"
+                role="status"
+                aria-live="polite">
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
 
 <!-- ==========================================
      APLICACIÓN PRINCIPAL
      ========================================== -->
 
-<div id="app-root" class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-full flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+<div id="app-root"
+    class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-full flex flex-col antialiased selection:bg-brand-500 selection:text-white">
 
-    <!-- CABECERA -->
+    <!-- ==========================================
+         CABECERA
+         ========================================== -->
 
     <header class="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             <div class="flex items-center justify-between h-16">
+
                 <div class="flex items-center space-x-3">
 
                     <div class="p-2 bg-brand-600 text-white rounded-xl shadow-md shadow-brand-500/20">
@@ -198,18 +466,36 @@ tailwind.config = {
                     </div>
 
                     <div>
-                        <h1 class="font-bold text-lg leading-tight tracking-tight">Finanzas KUTXA</h1>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Control & Análisis Personal</p>
+                        <h1 class="font-bold text-lg leading-tight tracking-tight">
+                            Finanzas KUTXA
+                        </h1>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                            Control &amp; Análisis Personal
+                        </p>
                     </div>
+
                 </div>
 
                 <div class="flex items-center gap-2">
+
+                    <!-- CERRAR SESIÓN -->
+
+                    <button id="logout-button"
+                        type="button"
+                        onclick="logoutFinanzas()"
+                        class="px-3 py-2 text-xs font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-lg">
+                        Cerrar sesión
+                    </button>
+
+                    <!-- GOOGLE CLOUD ANTIGUO -->
 
                     <button id="cloud-dot"
                         onclick="cloudDotClick()"
                         title="Estado de la sincronización"
                         class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800">
-                        <span id="cloud-dot-i" class="inline-block w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                        <span id="cloud-dot-i"
+                            class="inline-block w-2.5 h-2.5 rounded-full bg-rose-500">
+                        </span>
                         <span id="cloud-dot-t">Sin conexión</span>
                     </button>
 
@@ -218,11 +504,15 @@ tailwind.config = {
                         <i class="fa-solid fa-file-csv"></i>
                         <span class="hidden sm:inline">Importar CSV</span>
                     </button>
+
                 </div>
+
             </div>
 
-            <nav class="flex space-x-1 sm:space-x-3 border-t border-slate-100 dark:border-slate-800/60 overflow-x-auto no-scrollbar py-2"
-                 id="nav-tabs">
+            <!-- NAVEGACIÓN -->
+
+            <nav id="nav-tabs"
+                class="flex space-x-1 sm:space-x-3 border-t border-slate-100 dark:border-slate-800/60 overflow-x-auto no-scrollbar py-2">
 
                 <button data-target="v-dashboard"
                     class="tab-btn active px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 whitespace-nowrap">
@@ -256,12 +546,18 @@ tailwind.config = {
 
                 <button data-target="v-datos"
                     class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                    <i class="fa-solid fa-arrows-rotate mr-2"></i>Datos & Sync
+                    <i class="fa-solid fa-arrows-rotate mr-2"></i>Datos &amp; Sync
                 </button>
 
             </nav>
+
         </div>
+
     </header>
+
+    <!-- ==========================================
+         CONTENIDO PRINCIPAL
+         ========================================== -->
 
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
@@ -271,240 +567,393 @@ tailwind.config = {
             class="hidden bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl p-4 flex items-center justify-between shadow-sm">
 
             <div class="flex items-center space-x-3">
+
                 <i class="fa-solid fa-circle-exclamation text-amber-500 text-xl"></i>
+
                 <div>
-                    <h4 class="font-semibold text-amber-900 dark:text-amber-200 text-sm">Movimientos pendientes de categorizar</h4>
-                    <p class="text-xs text-amber-700 dark:text-amber-400" id="unclassified-count"></p>
+                    <h4 class="font-semibold text-amber-900 dark:text-amber-200 text-sm">
+                        Movimientos pendientes de categorizar
+                    </h4>
+                    <p id="unclassified-count"
+                        class="text-xs text-amber-700 dark:text-amber-400">
+                    </p>
                 </div>
+
             </div>
 
             <button onclick="switchTab('v-movs'); filterUnclassified();"
                 class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded-lg shadow-sm">
                 Categorizar
             </button>
+
         </div>
 
         <!-- SUGERENCIAS BIZUM -->
 
         <div id="bizum-alert"
-            class="hidden bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/60 rounded-xl p-4 shadow-sm space-y-3"></div>
+            class="hidden bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/60 rounded-xl p-4 shadow-sm space-y-3">
+        </div>
 
-        <!-- ================= DASHBOARD ================= -->
+        <!-- ==========================================
+             DASHBOARD
+             ========================================== -->
 
-        <section id="v-dashboard" class="tab-content space-y-6">
+        <section id="v-dashboard"
+            class="tab-content space-y-6">
 
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
 
                 <div>
-                    <h2 class="text-base font-bold tracking-tight">Resumen Ejecutivo</h2>
+                    <h2 class="text-base font-bold tracking-tight">
+                        Resumen Ejecutivo
+                    </h2>
                     <p class="text-xs text-slate-500 dark:text-slate-400">
                         Cuenta Laboral Kutxa · los Bizums vinculados restan del gasto original
                     </p>
                 </div>
 
                 <div class="flex items-center space-x-2">
-                    <label for="dash-month" class="text-xs font-medium text-slate-500 dark:text-slate-400">Periodo:</label>
+                    <label for="dash-month"
+                        class="text-xs font-medium text-slate-500 dark:text-slate-400">
+                        Periodo:
+                    </label>
+
                     <select id="dash-month"
                         onchange="renderDashboard()"
                         class="bg-slate-100 dark:bg-slate-800 border-none text-xs font-semibold rounded-lg px-3 py-2 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-brand-500">
                         <option value="">Todo el Histórico</option>
                     </select>
                 </div>
+
             </div>
+
+            <!-- INDICADORES -->
 
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
 
                 <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 flex items-center justify-between">
-                        Gastos <i class="fa-solid fa-arrow-down-long text-rose-500"></i>
+                        Gastos
+                        <i class="fa-solid fa-arrow-down-long text-rose-500"></i>
                     </div>
-                    <div class="text-lg sm:text-xl font-bold text-rose-600 dark:text-rose-400 tracking-tight" id="kpi-gasto">0,00 €</div>
+                    <div id="kpi-gasto"
+                        class="text-lg sm:text-xl font-bold text-rose-600 dark:text-rose-400 tracking-tight">
+                        0,00 €
+                    </div>
                 </div>
 
                 <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 flex items-center justify-between">
-                        Ingresos <i class="fa-solid fa-arrow-up-long text-emerald-500"></i>
+                        Ingresos
+                        <i class="fa-solid fa-arrow-up-long text-emerald-500"></i>
                     </div>
-                    <div class="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight" id="kpi-ingreso">0,00 €</div>
+                    <div id="kpi-ingreso"
+                        class="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">
+                        0,00 €
+                    </div>
                 </div>
 
                 <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 flex items-center justify-between">
-                        Balance Neto <i class="fa-solid fa-scale-balanced text-brand-500"></i>
+                        Balance Neto
+                        <i class="fa-solid fa-scale-balanced text-brand-500"></i>
                     </div>
-                    <div class="text-lg sm:text-xl font-bold tracking-tight" id="kpi-balance">0,00 €</div>
+                    <div id="kpi-balance"
+                        class="text-lg sm:text-xl font-bold tracking-tight">
+                        0,00 €
+                    </div>
                 </div>
 
                 <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 flex items-center justify-between">
-                        Tasa Ahorro <i class="fa-solid fa-percent text-sky-500"></i>
+                        Tasa Ahorro
+                        <i class="fa-solid fa-percent text-sky-500"></i>
                     </div>
-                    <div class="text-lg sm:text-xl font-bold text-sky-600 dark:text-sky-400 tracking-tight" id="kpi-ahorro">0,0%</div>
+                    <div id="kpi-ahorro"
+                        class="text-lg sm:text-xl font-bold text-sky-600 dark:text-sky-400 tracking-tight">
+                        0,0%
+                    </div>
                 </div>
 
                 <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 flex items-center justify-between">
-                        Gasto/Día <i class="fa-solid fa-calendar-day text-indigo-500"></i>
+                        Gasto/Día
+                        <i class="fa-solid fa-calendar-day text-indigo-500"></i>
                     </div>
-                    <div class="text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-400 tracking-tight" id="kpi-diario">0,00 €</div>
+                    <div id="kpi-diario"
+                        class="text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-400 tracking-tight">
+                        0,00 €
+                    </div>
                 </div>
 
                 <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm bg-gradient-to-br from-brand-50/30 to-transparent dark:from-brand-900/10">
                     <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 flex items-center justify-between">
-                        Saldo Actual <i class="fa-solid fa-building-columns text-brand-600"></i>
+                        Saldo Actual
+                        <i class="fa-solid fa-building-columns text-brand-600"></i>
                     </div>
-                    <div class="text-lg sm:text-xl font-bold text-brand-600 dark:text-brand-400 tracking-tight" id="kpi-saldo">0,00 €</div>
-                    <div class="text-[10px] text-slate-400 mt-0.5 hidden" id="kpi-patrimonio"></div>
+                    <div id="kpi-saldo"
+                        class="text-lg sm:text-xl font-bold text-brand-600 dark:text-brand-400 tracking-tight">
+                        0,00 €
+                    </div>
+                    <div id="kpi-patrimonio"
+                        class="text-[10px] text-slate-400 mt-0.5 hidden">
+                    </div>
                 </div>
 
             </div>
+
+            <!-- GRÁFICOS -->
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
                 <div class="lg:col-span-7 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-bold text-sm tracking-tight">Evolución Mensual (Ingresos vs Gastos)</h3>
+                        <h3 class="font-bold text-sm tracking-tight">
+                            Evolución Mensual (Ingresos vs Gastos)
+                        </h3>
                         <span class="text-xs text-slate-400">
-                            <i class="fa-solid fa-circle-info mr-1"></i>Pasa el ratón para ver cifras
+                            <i class="fa-solid fa-circle-info mr-1"></i>
+                            Pasa el ratón para ver cifras
                         </span>
                     </div>
+
                     <div class="relative h-64 sm:h-72 w-full">
                         <canvas id="chart-mensual"></canvas>
                     </div>
+
                 </div>
 
                 <div class="lg:col-span-5 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+
                     <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-bold text-sm tracking-tight">Distribución por Categorías</h3>
+                        <h3 class="font-bold text-sm tracking-tight">
+                            Distribución por Categorías
+                        </h3>
                         <span class="text-xs text-slate-400">% total</span>
                     </div>
+
                     <div class="relative h-56 sm:h-64 w-full flex items-center justify-center">
                         <canvas id="chart-categorias"></canvas>
                     </div>
+
                 </div>
+
             </div>
+
+            <!-- COMERCIOS Y HÁBITOS -->
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+
                     <h3 class="font-bold text-sm tracking-tight mb-4 flex items-center space-x-2">
                         <i class="fa-solid fa-store text-brand-500"></i>
                         <span>Top 5 Comercios / Conceptos con mayor gasto</span>
                     </h3>
+
                     <div id="top-shops-list" class="space-y-3"></div>
+
                 </div>
 
                 <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+
                     <h3 class="font-bold text-sm tracking-tight mb-4 flex items-center space-x-2">
                         <i class="fa-solid fa-lightbulb text-amber-500"></i>
                         <span>Análisis de Hábitos</span>
                     </h3>
+
                     <div id="insights-container" class="space-y-3"></div>
+
                 </div>
+
             </div>
+
         </section>
 
-        <!-- ================= MOVIMIENTOS ================= -->
 
-        <section id="v-movs" class="tab-content hidden space-y-4">
+        <!-- ==========================================
+             MOVIMIENTOS
+             ========================================== -->
+
+        <section id="v-movs"
+            class="tab-content hidden space-y-4">
 
             <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
 
                     <div class="lg:col-span-2">
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Buscar por concepto</label>
+
+                        <label for="filter-search"
+                            class="block text-xs font-semibold text-slate-500 mb-1">
+                            Buscar por concepto
+                        </label>
+
                         <div class="relative">
+
                             <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-                            <input type="text" id="filter-search" oninput="renderMovimientos()" placeholder="Ej. Bizum, Eroski..."
+
+                            <input type="text"
+                                id="filter-search"
+                                oninput="renderMovimientos()"
+                                placeholder="Ej. Bizum, Eroski..."
                                 class="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500">
+
                         </div>
+
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Categoría</label>
-                        <select id="filter-cat" onchange="renderMovimientos()"
+
+                        <label for="filter-cat"
+                            class="block text-xs font-semibold text-slate-500 mb-1">
+                            Categoría
+                        </label>
+
+                        <select id="filter-cat"
+                            onchange="renderMovimientos()"
                             class="w-full py-1.5 px-3 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500">
                             <option value="">Todas</option>
                         </select>
+
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Etiqueta</label>
-                        <select id="filter-tag" onchange="renderMovimientos()"
+
+                        <label for="filter-tag"
+                            class="block text-xs font-semibold text-slate-500 mb-1">
+                            Etiqueta
+                        </label>
+
+                        <select id="filter-tag"
+                            onchange="renderMovimientos()"
                             class="w-full py-1.5 px-3 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500">
                             <option value="">Todas</option>
                         </select>
+
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Tipo</label>
-                        <select id="filter-type" onchange="renderMovimientos()"
+
+                        <label for="filter-type"
+                            class="block text-xs font-semibold text-slate-500 mb-1">
+                            Tipo
+                        </label>
+
+                        <select id="filter-type"
+                            onchange="renderMovimientos()"
                             class="w-full py-1.5 px-3 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500">
+
                             <option value="all">Todos</option>
                             <option value="expense">Solo Gastos (-)</option>
                             <option value="income">Solo Ingresos (+)</option>
+
                         </select>
+
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Periodo</label>
-                        <select id="filter-month" onchange="renderMovimientos()"
+
+                        <label for="filter-month"
+                            class="block text-xs font-semibold text-slate-500 mb-1">
+                            Periodo
+                        </label>
+
+                        <select id="filter-month"
+                            onchange="renderMovimientos()"
                             class="w-full py-1.5 px-3 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500">
                             <option value="">Todo</option>
                         </select>
+
                     </div>
+
                 </div>
 
+                <!-- FILTROS DE FECHA -->
+
                 <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+
                     <div class="flex items-center space-x-2">
+
                         <span class="text-slate-400 font-medium">Desde:</span>
-                        <input type="date" id="filter-date-from" onchange="renderMovimientos()"
+
+                        <input type="date"
+                            id="filter-date-from"
+                            onchange="renderMovimientos()"
                             class="bg-slate-100 dark:bg-slate-800 border-none rounded-lg px-2 py-1 text-xs">
 
                         <span class="text-slate-400 font-medium">Hasta:</span>
-                        <input type="date" id="filter-date-to" onchange="renderMovimientos()"
+
+                        <input type="date"
+                            id="filter-date-to"
+                            onchange="renderMovimientos()"
                             class="bg-slate-100 dark:bg-slate-800 border-none rounded-lg px-2 py-1 text-xs">
+
                     </div>
 
-                    <button onclick="clearMovFilters()" class="text-brand-600 hover:underline font-semibold">
+                    <button onclick="clearMovFilters()"
+                        class="text-brand-600 hover:underline font-semibold">
                         Limpiar Filtros
                     </button>
+
                 </div>
 
-                <!-- Etiquetado en bloque -->
+                <!-- ETIQUETADO EN BLOQUE -->
 
                 <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+
                     <i class="fa-solid fa-tags text-indigo-500"></i>
-                    <span class="text-slate-500 font-medium">Etiquetar en bloque los movimientos filtrados:</span>
-                    <input type="text" id="bulk-tag" list="tag-list" placeholder="#ViajeMexico"
+
+                    <span class="text-slate-500 font-medium">
+                        Etiquetar en bloque los movimientos filtrados:
+                    </span>
+
+                    <input type="text"
+                        id="bulk-tag"
+                        list="tag-list"
+                        placeholder="#ViajeMexico"
                         class="px-3 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500 w-40">
-                    <button onclick="bulkTagFiltered()" id="bulk-tag-btn"
+
+                    <button onclick="bulkTagFiltered()"
+                        id="bulk-tag-btn"
                         class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl">
                         Aplicar
                     </button>
+
                     <span class="text-slate-400 hidden md:inline">
                         Truco: filtra por fechas del viaje y aplica la etiqueta de una vez.
                     </span>
+
                 </div>
+
             </div>
 
             <datalist id="tag-list"></datalist>
 
+            <!-- TABLA DE MOVIMIENTOS -->
+
             <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
 
                 <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
-                    <span class="text-xs font-semibold text-slate-500" id="movs-counter"></span>
+
+                    <span id="movs-counter"
+                        class="text-xs font-semibold text-slate-500">
+                    </span>
+
                     <span class="text-xs text-slate-400 hidden sm:inline">
                         <i class="fa-solid fa-mouse-pointer mr-1"></i>
                         Recategoriza y etiqueta directamente en la tabla
                     </span>
+
                 </div>
 
                 <div class="overflow-x-auto">
+
                     <table class="w-full text-left text-xs">
 
                         <thead class="bg-slate-100/70 dark:bg-slate-800/60 text-slate-500 font-semibold uppercase tracking-wider">
+
                             <tr>
                                 <th class="py-3 px-4">Fecha</th>
                                 <th class="py-3 px-4">Concepto</th>
@@ -513,73 +962,124 @@ tailwind.config = {
                                 <th class="py-3 px-4 text-right">Importe</th>
                                 <th class="py-3 px-4 text-right hidden sm:table-cell">Saldo</th>
                             </tr>
+
                         </thead>
 
-                        <tbody id="movs-table-body" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                        <tbody id="movs-table-body"
+                            class="divide-y divide-slate-100 dark:divide-slate-800">
+                        </tbody>
+
                     </table>
+
                 </div>
+
             </div>
+
         </section>
 
-        <!-- ================= ETIQUETAS ================= -->
 
-        <section id="v-tags" class="tab-content hidden space-y-4">
+        <!-- ==========================================
+             ETIQUETAS
+             ========================================== -->
+
+        <section id="v-tags"
+            class="tab-content hidden space-y-4">
 
             <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                <h2 class="text-base font-bold tracking-tight">Coste real de eventos y proyectos</h2>
+
+                <h2 class="text-base font-bold tracking-tight">
+                    Coste real de eventos y proyectos
+                </h2>
+
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Las etiquetas son transversales: no cambian la categoría de cada gasto.
                     El coste neto descuenta los Bizums vinculados y los ingresos etiquetados.
                 </p>
+
             </div>
 
-            <div id="tags-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            <div id="tags-container"
+                class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            </div>
+
         </section>
 
-        <!-- ================= INVERSIÓN ================= -->
 
-        <section id="v-inversion" class="tab-content hidden space-y-6">
+        <!-- ==========================================
+             INVERSIÓN
+             ========================================== -->
+
+        <section id="v-inversion"
+            class="tab-content hidden space-y-6">
 
             <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                <h2 class="text-base font-bold tracking-tight">Cuenta de Inversión</h2>
+
+                <h2 class="text-base font-bold tracking-tight">
+                    Cuenta de Inversión
+                </h2>
+
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Cuenta independiente: sus movimientos no se mezclan con los gastos del día a día.
                     El importador detecta las columnas y recuerda el mapeo para próximas cargas.
                 </p>
+
             </div>
+
+            <!-- INDICADORES INVERSIÓN -->
 
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
 
                 <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     <div class="text-xs text-slate-500 mb-1">Aportado neto</div>
-                    <div class="text-lg font-bold text-brand-600 dark:text-brand-400" id="inv-kpi-neto">0,00 €</div>
+                    <div id="inv-kpi-neto"
+                        class="text-lg font-bold text-brand-600 dark:text-brand-400">
+                        0,00 €
+                    </div>
                 </div>
 
                 <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     <div class="text-xs text-slate-500 mb-1">Aportaciones</div>
-                    <div class="text-lg font-bold text-emerald-600 dark:text-emerald-400" id="inv-kpi-in">0,00 €</div>
+                    <div id="inv-kpi-in"
+                        class="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                        0,00 €
+                    </div>
                 </div>
 
                 <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     <div class="text-xs text-slate-500 mb-1">Retiradas</div>
-                    <div class="text-lg font-bold text-rose-600 dark:text-rose-400" id="inv-kpi-out">0,00 €</div>
+                    <div id="inv-kpi-out"
+                        class="text-lg font-bold text-rose-600 dark:text-rose-400">
+                        0,00 €
+                    </div>
                 </div>
 
                 <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <div class="text-xs text-slate-500 mb-1" id="inv-kpi-valor-label">Valor actual</div>
-                    <div class="text-lg font-bold" id="inv-kpi-valor">—</div>
+                    <div id="inv-kpi-valor-label"
+                        class="text-xs text-slate-500 mb-1">
+                        Valor actual
+                    </div>
+                    <div id="inv-kpi-valor"
+                        class="text-lg font-bold">
+                        —
+                    </div>
                 </div>
 
                 <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     <div class="text-xs text-slate-500 mb-1">Rentabilidad</div>
-                    <div class="text-lg font-bold" id="inv-kpi-rent">—</div>
-                    <div class="text-[10px] text-slate-400" id="inv-kpi-rent-pct"></div>
+                    <div id="inv-kpi-rent"
+                        class="text-lg font-bold">
+                        —
+                    </div>
+                    <div id="inv-kpi-rent-pct"
+                        class="text-[10px] text-slate-400">
+                    </div>
                 </div>
+
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- IMPORTACIÓN Y AJUSTES DE INVERSIÓN -->
 
-                <!-- Importador -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
                 <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
 
@@ -591,17 +1091,27 @@ tailwind.config = {
                     <div id="inv-drop"
                         class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-brand-500 rounded-2xl p-6 text-center cursor-pointer bg-slate-50/50 dark:bg-slate-800/20">
 
-                        <input type="file" id="inv-file-input" accept=".csv,.txt,text/csv" class="hidden"
+                        <input type="file"
+                            id="inv-file-input"
+                            accept=".csv,.txt,text/csv"
+                            class="hidden"
                             onchange="handleInvFile(event)">
 
                         <i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-400 mb-1"></i>
-                        <p class="text-xs font-semibold">Arrastra o haz clic para elegir el CSV</p>
+
+                        <p class="text-xs font-semibold">
+                            Arrastra o haz clic para elegir el CSV
+                        </p>
+
                         <p class="text-[11px] text-slate-400 mt-1">
                             Detecta separador (; , tab), fechas y decimales automáticamente
                         </p>
+
                     </div>
 
-                    <div id="inv-result" class="hidden p-3 rounded-xl text-xs font-medium"></div>
+                    <div id="inv-result"
+                        class="hidden p-3 rounded-xl text-xs font-medium">
+                    </div>
 
                     <div id="inv-map-panel"
                         class="hidden space-y-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700">
@@ -610,13 +1120,18 @@ tailwind.config = {
                             Indica qué columna es cada dato (solo la primera vez, luego se recuerda):
                         </p>
 
-                        <div class="grid grid-cols-2 gap-2 text-xs" id="inv-map-selects"></div>
+                        <div id="inv-map-selects"
+                            class="grid grid-cols-2 gap-2 text-xs">
+                        </div>
 
                         <div class="overflow-x-auto">
-                            <table class="w-full text-[11px]" id="inv-map-preview"></table>
+                            <table id="inv-map-preview"
+                                class="w-full text-[11px]">
+                            </table>
                         </div>
 
                         <div class="flex gap-2">
+
                             <button onclick="confirmInvMapping()"
                                 class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold">
                                 Importar
@@ -626,114 +1141,184 @@ tailwind.config = {
                                 class="px-3 py-1.5 bg-slate-200 dark:bg-slate-700 rounded-xl text-xs font-semibold">
                                 Cancelar
                             </button>
+
                         </div>
+
                     </div>
 
                     <div class="flex flex-wrap gap-2 text-xs pt-1">
-                        <button onclick="forgetInvMap()" class="text-brand-600 hover:underline font-semibold">
+
+                        <button onclick="forgetInvMap()"
+                            class="text-brand-600 hover:underline font-semibold">
                             Olvidar mapeo de columnas
                         </button>
+
                         <span class="text-slate-300">·</span>
-                        <button onclick="wipeInvData()" class="text-rose-600 hover:underline font-semibold">
+
+                        <button onclick="wipeInvData()"
+                            class="text-rose-600 hover:underline font-semibold">
                             Borrar datos de inversión
                         </button>
+
                     </div>
+
                 </div>
 
-                <!-- Ajustes y valor -->
+                <!-- AJUSTES DE INVERSIÓN -->
 
                 <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
 
                     <div>
-                        <h3 class="font-bold text-sm tracking-tight mb-1">Signo de los importes</h3>
-                        <select id="inv-sign" onchange="setInvSign(this.value)"
+
+                        <h3 class="font-bold text-sm tracking-tight mb-1">
+                            Signo de los importes
+                        </h3>
+
+                        <select id="inv-sign"
+                            onchange="setInvSign(this.value)"
                             class="w-full py-1.5 px-3 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none">
 
-                            <option value="1">Importe positivo = aportación (dinero que entra en inversión)</option>
-                            <option value="-1">Importe negativo = aportación (dinero que sale hacia inversión)</option>
+                            <option value="1">
+                                Importe positivo = aportación (dinero que entra en inversión)
+                            </option>
+
+                            <option value="-1">
+                                Importe negativo = aportación (dinero que sale hacia inversión)
+                            </option>
+
                         </select>
+
                     </div>
 
                     <div>
-                        <h3 class="font-bold text-sm tracking-tight mb-1">Valor actual de la cartera</h3>
+
+                        <h3 class="font-bold text-sm tracking-tight mb-1">
+                            Valor actual de la cartera
+                        </h3>
+
                         <p class="text-[11px] text-slate-500 mb-2">
                             Introdúcelo cuando quieras (ej. a fin de mes) para calcular rentabilidad y dibujar la curva.
                         </p>
 
                         <div class="flex flex-wrap gap-2 items-center">
-                            <input type="date" id="inv-val-date"
+
+                            <input type="date"
+                                id="inv-val-date"
                                 class="bg-slate-100 dark:bg-slate-800 border-none rounded-lg px-2 py-1.5 text-xs">
 
-                            <input type="number" step="0.01" id="inv-val-amount" placeholder="Valor en €"
+                            <input type="number"
+                                step="0.01"
+                                id="inv-val-amount"
+                                placeholder="Valor en €"
                                 class="w-28 px-2 py-1.5 text-xs rounded-lg bg-slate-100 dark:bg-slate-800 border-none">
 
                             <button onclick="addInvValue()"
                                 class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 text-white rounded-xl text-xs font-semibold">
                                 Guardar
                             </button>
+
                         </div>
 
-                        <div id="inv-values-list" class="mt-2 space-y-1 text-xs"></div>
+                        <div id="inv-values-list"
+                            class="mt-2 space-y-1 text-xs">
+                        </div>
+
                     </div>
+
                 </div>
+
             </div>
 
+            <!-- GRÁFICO DE INVERSIÓN -->
+
             <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+
                 <h3 class="font-bold text-sm tracking-tight mb-3">
                     Aportación neta acumulada vs. valor de la cartera
                 </h3>
+
                 <div class="relative h-64 w-full">
                     <canvas id="chart-inv"></canvas>
                 </div>
+
             </div>
+
+            <!-- TABLA DE INVERSIÓN -->
 
             <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
 
-                <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-500"
-                     id="inv-counter"></div>
+                <div id="inv-counter"
+                    class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-500">
+                </div>
 
                 <div class="overflow-x-auto">
+
                     <table class="w-full text-left text-xs">
 
                         <thead class="bg-slate-100/70 dark:bg-slate-800/60 text-slate-500 font-semibold uppercase">
+
                             <tr>
                                 <th class="py-3 px-4">Fecha</th>
                                 <th class="py-3 px-4">Concepto</th>
                                 <th class="py-3 px-4 text-right">Importe</th>
                                 <th class="py-3 px-4 text-right hidden sm:table-cell">Saldo</th>
                             </tr>
+
                         </thead>
 
-                        <tbody id="inv-table-body" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                        <tbody id="inv-table-body"
+                            class="divide-y divide-slate-100 dark:divide-slate-800">
+                        </tbody>
+
                     </table>
+
                 </div>
+
             </div>
+
         </section>
 
-        <!-- ================= PRESUPUESTOS ================= -->
 
-        <section id="v-presupuestos" class="tab-content hidden space-y-6">
+        <!-- ==========================================
+             PRESUPUESTOS
+             ========================================== -->
+
+        <section id="v-presupuestos"
+            class="tab-content hidden space-y-6">
 
             <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+
                 <h2 class="text-base font-bold tracking-tight mb-1">
                     Gestión de Presupuestos Mensuales
                 </h2>
 
                 <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
-                    Límites máximos de gasto por categoría (mes más reciente importado, neto de Bizums vinculados).
+                    Límites máximos de gasto por categoría
+                    (mes más reciente importado, neto de Bizums vinculados).
                 </p>
 
-                <div id="budgets-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                <div id="budgets-container"
+                    class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                </div>
+
             </div>
+
         </section>
 
-        <!-- ================= REGLAS ================= -->
 
-        <section id="v-reglas" class="tab-content hidden space-y-6">
+        <!-- ==========================================
+             REGLAS AUTOMÁTICAS
+             ========================================== -->
+
+        <section id="v-reglas"
+            class="tab-content hidden space-y-6">
 
             <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
 
-                <h2 class="text-base font-bold tracking-tight">Motor de Clasificación Automática</h2>
+                <h2 class="text-base font-bold tracking-tight">
+                    Motor de Clasificación Automática
+                </h2>
+
                 <p class="text-xs text-slate-500">
                     Define palabras clave. Cuando el CSV contenga el texto
                     (sin importar mayúsculas/tildes), se categorizará solo.
@@ -742,28 +1327,44 @@ tailwind.config = {
                 <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
 
                     <div class="sm:col-span-6">
-                        <label class="block text-xs font-medium text-slate-500 mb-1">
+
+                        <label for="rule-pattern"
+                            class="block text-xs font-medium text-slate-500 mb-1">
                             Si el concepto contiene:
                         </label>
-                        <input type="text" id="rule-pattern" placeholder="Ej: MERCADONA, UBER, LUZ..."
+
+                        <input type="text"
+                            id="rule-pattern"
+                            placeholder="Ej: MERCADONA, UBER, LUZ..."
                             class="w-full px-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500">
+
                     </div>
 
                     <div class="sm:col-span-4">
-                        <label class="block text-xs font-medium text-slate-500 mb-1">
+
+                        <label for="rule-category"
+                            class="block text-xs font-medium text-slate-500 mb-1">
                             Asignar Categoría:
                         </label>
+
                         <select id="rule-category"
-                            class="w-full px-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500"></select>
+                            class="w-full px-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500">
+                        </select>
+
                     </div>
 
                     <div class="sm:col-span-2 flex items-end">
+
                         <button onclick="addRuleFromInput()"
                             class="w-full py-2 px-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs rounded-xl">
-                            <i class="fa-solid fa-plus mr-1"></i> Añadir
+                            <i class="fa-solid fa-plus mr-1"></i>
+                            Añadir
                         </button>
+
                     </div>
+
                 </div>
+
             </div>
 
             <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
@@ -773,81 +1374,114 @@ tailwind.config = {
                 </div>
 
                 <div class="overflow-x-auto">
+
                     <table class="w-full text-left text-xs">
 
                         <thead class="bg-slate-100/70 dark:bg-slate-800/60 text-slate-500 font-semibold uppercase">
+
                             <tr>
                                 <th class="py-3 px-4">Patrón / Texto</th>
                                 <th class="py-3 px-4">Categoría Asignada</th>
                                 <th class="py-3 px-4 text-right">Acción</th>
                             </tr>
+
                         </thead>
 
-                        <tbody id="rules-table-body" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                        <tbody id="rules-table-body"
+                            class="divide-y divide-slate-100 dark:divide-slate-800">
+                        </tbody>
+
                     </table>
+
                 </div>
+
             </div>
+
         </section>
 
-        <!-- ================= DATOS & SYNC ================= -->
 
-        <section id="v-datos" class="tab-content hidden space-y-6">
+        <!-- ==========================================
+             DATOS Y SINCRONIZACIÓN ANTIGUA
+             ========================================== -->
+
+        <section id="v-datos"
+            class="tab-content hidden space-y-6">
+
+            <!-- IMPORTADOR ANTIGUO -->
 
             <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
 
                 <div class="flex items-center space-x-3">
+
                     <div class="p-3 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-xl">
                         <i class="fa-solid fa-file-csv text-2xl"></i>
                     </div>
 
                     <div>
-                        <h2 class="text-base font-bold tracking-tight">Importador CSV - Laboral Kutxa</h2>
+
+                        <h2 class="text-base font-bold tracking-tight">
+                            Importador CSV - Laboral Kutxa
+                        </h2>
+
                         <p class="text-xs text-slate-500">
                             Sube tus extractos. Los movimientos ya importados se omiten automáticamente,
                             así que puedes subir solo los meses nuevos.
                         </p>
+
                     </div>
+
                 </div>
 
-                <!-- SELECTOR DE CUENTA BANCARIA -->
+                <!-- SELECTOR DE CUENTA -->
 
                 <div class="space-y-2">
+
                     <label for="import-account"
                         class="block text-xs font-semibold text-slate-600 dark:text-slate-300">
                         Cuenta bancaria de destino
                     </label>
 
                     <select id="import-account"
-                        class="w-full px-3 py-2.5 rounded-xl border
-                            border-slate-300 dark:border-slate-700
-                            bg-white dark:bg-slate-800 text-sm">
+                        class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm">
                         <option value="">Cargando cuentas...</option>
                     </select>
 
                     <p class="text-xs text-slate-500 dark:text-slate-400">
                         Los movimientos se guardarán únicamente en la cuenta seleccionada.
                     </p>
+
                 </div>
+
+                <!-- ZONA DE ARCHIVO ANTIGUA -->
 
                 <div id="drop-zone"
                     class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-brand-500 rounded-2xl p-8 text-center transition-colors cursor-pointer bg-slate-50/50 dark:bg-slate-800/20">
 
-                    <input type="file" id="csv-file-input" accept=".csv,text/csv" class="hidden"
+                    <input type="file"
+                        id="csv-file-input"
+                        accept=".csv,text/csv"
+                        class="hidden"
                         onchange="handleFileSelect(event)">
 
                     <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400 mb-2"></i>
+
                     <p class="text-sm font-semibold">
                         Arrastra aquí tu archivo CSV o haz clic para seleccionar
                     </p>
+
                     <p class="text-xs text-slate-400 mt-1">
                         Formato de extracto Laboral Kutxa (;)
                     </p>
+
                 </div>
 
-                <div id="import-result" class="hidden p-4 rounded-xl text-xs font-medium"></div>
+                <div id="import-result"
+                    class="hidden p-4 rounded-xl text-xs font-medium">
+                </div>
+
             </div>
 
-            <!-- Ajustes Bizum -->
+            <!-- CONFIGURACIÓN BIZUM -->
 
             <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
 
@@ -864,46 +1498,78 @@ tailwind.config = {
                 <div class="flex flex-wrap items-center gap-3 text-xs">
 
                     <label class="flex items-center gap-2">
+
                         Gasto mínimo
-                        <input type="number" id="set-bizum-min" min="1" step="1"
+
+                        <input type="number"
+                            id="set-bizum-min"
+                            min="1"
+                            step="1"
                             onchange="saveBizumSettings()"
                             class="w-20 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border-none text-right">
+
                         €
+
                     </label>
 
                     <label class="flex items-center gap-2">
+
                         Ventana
-                        <input type="number" id="set-bizum-days" min="1" max="14" step="1"
+
+                        <input type="number"
+                            id="set-bizum-days"
+                            min="1"
+                            max="14"
+                            step="1"
                             onchange="saveBizumSettings()"
                             class="w-16 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border-none text-right">
+
                         días
+
                     </label>
 
-                    <button onclick="resetDismissed()" class="text-brand-600 hover:underline font-semibold">
+                    <button onclick="resetDismissed()"
+                        class="text-brand-600 hover:underline font-semibold">
                         Recuperar sugerencias descartadas
                     </button>
+
                 </div>
+
             </div>
+
+            <!-- HISTORIAL -->
 
             <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
 
-                <h3 class="font-bold text-sm tracking-tight mb-3">Histórico de Importaciones</h3>
+                <h3 class="font-bold text-sm tracking-tight mb-3">
+                    Histórico de Importaciones
+                </h3>
 
                 <div class="overflow-x-auto">
+
                     <table class="w-full text-left text-xs">
 
                         <thead class="bg-slate-100/70 dark:bg-slate-800/60 text-slate-500 font-semibold">
+
                             <tr>
                                 <th class="py-2 px-3">Fecha y Hora</th>
                                 <th class="py-2 px-3 text-right">Registros Nuevos</th>
                                 <th class="py-2 px-3 text-right">Duplicados Omitidos</th>
                             </tr>
+
                         </thead>
 
-                        <tbody id="import-history-body" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                        <tbody id="import-history-body"
+                            class="divide-y divide-slate-100 dark:divide-slate-800">
+                        </tbody>
+
                     </table>
+
                 </div>
+
             </div>
+
+            <!-- COPIA DE SEGURIDAD Y GOOGLE -->
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -915,24 +1581,37 @@ tailwind.config = {
                     </h3>
 
                     <p class="text-xs text-slate-500">
-                        Incluye movimientos, etiquetas, vínculos Bizum, reglas, presupuestos y la cuenta de inversión.
+                        Incluye movimientos, etiquetas, vínculos Bizum,
+                        reglas, presupuestos y la cuenta de inversión.
                     </p>
 
                     <div class="flex flex-wrap gap-2 pt-2">
 
                         <button onclick="exportBackupJSON()"
                             class="px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white dark:bg-slate-700 dark:hover:bg-slate-600 rounded-xl text-xs font-semibold">
+
                             <i class="fa-solid fa-download mr-1.5"></i>
                             Descargar Backup (.json)
+
                         </button>
 
                         <label class="px-3 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl text-xs font-semibold cursor-pointer inline-block">
+
                             <i class="fa-solid fa-upload mr-1.5"></i>
                             Restaurar Backup
-                            <input type="file" accept=".json" class="hidden" onchange="importBackupJSON(event)">
+
+                            <input type="file"
+                                accept=".json"
+                                class="hidden"
+                                onchange="importBackupJSON(event)">
+
                         </label>
+
                     </div>
+
                 </div>
+
+                <!-- GOOGLE SHEETS ANTIGUO -->
 
                 <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
 
@@ -947,13 +1626,16 @@ tailwind.config = {
                         Si cambias algo en los dos a la vez, gana el último guardado.
                     </p>
 
-                    <div id="cloud-status-text" class="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    <div id="cloud-status-text"
+                        class="text-xs font-semibold text-slate-600 dark:text-slate-300">
                         Comprobando…
                     </div>
 
-                    <div id="cloud-cid-box" class="hidden space-y-1">
+                    <div id="cloud-cid-box"
+                        class="hidden space-y-1">
 
-                        <input id="cloud-cid" type="text"
+                        <input id="cloud-cid"
+                            type="text"
                             placeholder="ID de cliente de Google (termina en .apps.googleusercontent.com)"
                             class="w-full px-2 py-1.5 text-xs rounded-lg bg-slate-100 dark:bg-slate-800 border-none">
 
@@ -961,35 +1643,48 @@ tailwind.config = {
                             class="px-3 py-1.5 bg-slate-800 dark:bg-slate-700 text-white rounded-lg text-xs font-semibold">
                             Guardar ID
                         </button>
+
                     </div>
 
-                    <button id="cloud-sync-btn" onclick="cloudSyncNow()"
+                    <button id="cloud-sync-btn"
+                        onclick="cloudSyncNow()"
                         class="px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold">
+
                         <i class="fa-solid fa-arrows-rotate mr-1.5"></i>
                         Conectar con Google
+
                     </button>
+
                 </div>
+
             </div>
+
+            <!-- RESTABLECER APLICACIÓN -->
 
             <div class="bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40 p-4 rounded-2xl flex items-center justify-between">
 
                 <div>
+
                     <h4 class="text-xs font-bold text-rose-800 dark:text-rose-300">
                         Restablecer la aplicación
                     </h4>
 
                     <p class="text-[11px] text-rose-600 dark:text-rose-400">
-                        Elimina todos los datos guardados (movimientos, reglas, inversión) en este dispositivo
-                        (la hoja de Google no se borra).
+                        Elimina todos los datos guardados (movimientos, reglas, inversión)
+                        en este dispositivo (la hoja de Google no se borra).
                     </p>
+
                 </div>
 
                 <button onclick="wipeAllData()"
                     class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl">
                     Borrar Todo
                 </button>
+
             </div>
+
         </section>
+
     </main>
 
     <!-- ==========================================
@@ -999,8 +1694,12 @@ tailwind.config = {
     <div id="toast-message"
         class="fixed bottom-4 right-4 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 border border-slate-700 text-xs font-medium">
 
-        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+        <i id="toast-icon"
+            class="fa-solid fa-circle-check text-emerald-400 text-base">
+        </i>
+
         <span id="toast-text">Mensaje</span>
+
     </div>
 
     <div id="confirm-modal"
@@ -1008,9 +1707,12 @@ tailwind.config = {
 
         <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl p-5 max-w-sm w-full space-y-4">
 
-            <p id="confirm-text" class="text-sm whitespace-pre-line"></p>
+            <p id="confirm-text"
+                class="text-sm whitespace-pre-line">
+            </p>
 
             <div class="flex justify-end gap-2">
+
                 <button id="confirm-no"
                     class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 dark:bg-slate-800">
                     Cancelar
@@ -1020,13 +1722,17 @@ tailwind.config = {
                     class="px-4 py-2 rounded-xl text-xs font-semibold bg-brand-600 text-white">
                     Aceptar
                 </button>
+
             </div>
+
         </div>
+
     </div>
 
     <div id="cloud-pill" class="hidden"></div>
 
 </div>
+
 
 <!-- ==========================================
      SUPABASE
@@ -1037,6 +1743,7 @@ tailwind.config = {
 <script src="js/auth.js"></script>
 <script src="js/database.js"></script>
 
+
 <!-- ==========================================
      JAVASCRIPT DE LA APLICACIÓN
      ========================================== -->
@@ -1045,6 +1752,7 @@ tailwind.config = {
 <script src="js/utils.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/csv.js"></script>
+<script src="js/csv-universal.js"></script>
 <script src="js/bizum.js"></script>
 <script src="js/tags.js"></script>
 <script src="js/dashboard.js"></script>
@@ -1058,7 +1766,10 @@ tailwind.config = {
 <script src="js/cloud.js"></script>
 <script src="js/app.js"></script>
 
-<!-- SERVICE WORKER -->
+
+<!-- ==========================================
+     SERVICE WORKER
+     ========================================== -->
 
 <script>
 if ('serviceWorker' in navigator) {
