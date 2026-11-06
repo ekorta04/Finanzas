@@ -94,10 +94,16 @@
                         <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Control & Análisis Personal</p>
                     </div>
                 </div>
+                <div class="flex items-center gap-2">
+                <button id="cloud-dot" onclick="cloudDotClick()" title="Estado de la sincronización" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800">
+                    <span id="cloud-dot-i" class="inline-block w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                    <span id="cloud-dot-t">Sin conexión</span>
+                </button>
                 <button onclick="switchTab('v-datos')" class="inline-flex items-center space-x-2 px-3 py-1.5 text-sm font-medium bg-brand-50 hover:bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300 dark:hover:bg-brand-900/60 rounded-lg transition-colors border border-brand-200 dark:border-brand-800">
                     <i class="fa-solid fa-file-csv"></i>
                     <span class="hidden sm:inline">Importar CSV</span>
                 </button>
+            </div>
             </div>
 
             <nav class="flex space-x-1 sm:space-x-3 border-t border-slate-100 dark:border-slate-800/60 overflow-x-auto no-scrollbar py-2" id="nav-tabs">
@@ -1530,7 +1536,7 @@
         /* ==========================================================================
            NUBE: Google Sheets (inicio de sesión con Google, scope drive.file)
            ========================================================================== */
-        const GOOGLE_CLIENT_ID = '797986917764-ptbtkb45epmnuqjr2nvnh26e4vvt7g3r.apps.googleusercontent.com'; // <- pega aquí tu ID de cliente de Google (ver GUIA.md)
+        const GOOGLE_CLIENT_ID = ''; // <- pega aquí tu ID de cliente de Google (ver GUIA.md)
         const SHEET_TITLE = 'Finanzas KUTXA';
         const LS_CID = 'finanzas_gclient', LS_SID = 'finanzas_sheet_id', LS_CONN = 'finanzas_gconn';
         const MOV_HEAD = ['Clave', 'Fecha', 'Fecha valor', 'Concepto', 'Importe', 'Saldo', 'Categoría', 'Manual', 'Etiquetas', 'Bizums vinculados', 'Vinculado a'];
@@ -1545,9 +1551,21 @@
             const el = document.getElementById('cloud-status-text'); if (el) el.textContent = txt;
             const pill = document.getElementById('cloud-pill');
             if (pill) { pill.textContent = txt; pill.classList.toggle('hidden', kind === 'ok' || kind === 'off'); }
+            const dot = document.getElementById('cloud-dot-i'), dt = document.getElementById('cloud-dot-t');
+            if (dot) {
+                dot.className = 'inline-block w-2.5 h-2.5 rounded-full ' + (kind === 'ok' ? 'bg-emerald-500' : kind === 'busy' ? 'bg-amber-400 animate-pulse' : 'bg-rose-500');
+                dt.textContent = kind === 'ok' ? 'Sincronizado' : kind === 'busy' ? 'Sincronizando…' : kind === 'login' ? 'Toca para conectar' : kind === 'err' ? 'Error: toca' : 'Sin conexión';
+                document.getElementById('cloud-dot').title = txt;
+            }
             const btn = document.getElementById('cloud-sync-btn');
             if (btn) btn.lastChild.textContent = (kind === 'login' || kind === 'off') ? 'Conectar con Google' : 'Sincronizar ahora';
         }
+        function cloudDotClick() {
+            if (Cloud.state === 'ok' || Cloud.state === 'busy') { switchTab('v-datos'); return; }
+            if (!clientId()) { switchTab('v-datos'); return; }
+            cloudSyncNow();
+        }
+        setInterval(() => { if (Cloud.token && Date.now() > Cloud.exp && Cloud.state !== 'login') setCloudStatus('Sesión caducada: toca el punto para reconectar', 'login'); }, 15000);
         function saveClientIdFromInput() {
             const v = document.getElementById('cloud-cid').value.trim();
             if (!v) return; lsSet(LS_CID, v); showToast('ID guardado'); initCloud();
@@ -1558,7 +1576,8 @@
             if (!clientId()) { setCloudStatus('Falta el ID de cliente de Google (mira la guía)', 'off'); return; }
             if (!window.google || !google.accounts) { setCloudStatus('No se pudo cargar el inicio de sesión de Google', 'off'); return; }
             Cloud.client = google.accounts.oauth2.initTokenClient({
-                client_id: clientId(), scope: 'https://www.googleapis.com/auth/drive.file', callback: () => {}
+                client_id: clientId(), scope: 'https://www.googleapis.com/auth/drive.file', callback: () => {},
+                error_callback: e => { if (Cloud.rej) Cloud.rej(new Error((e && e.type) || 'auth')); }
             });
             Cloud.sid = lsGet(LS_SID) || null;
             setCloudStatus(lsGet(LS_CONN) ? 'Pulsa para reconectar con Google' : 'Conecta tu cuenta de Google para sincronizar', 'login');
@@ -1567,11 +1586,13 @@
         function getToken() {   // debe llamarse desde un gesto del usuario la primera vez
             if (Cloud.token && Date.now() < Cloud.exp - 30000) return Promise.resolve(Cloud.token);
             return new Promise((res, rej) => {
+                Cloud.rej = rej; const to = setTimeout(() => rej(new Error('auth: Google no respondió')), 90000);
                 Cloud.client.callback = r => {
+                    clearTimeout(to);
                     if (r.error) return rej(new Error(r.error));
                     Cloud.token = r.access_token; Cloud.exp = Date.now() + (r.expires_in || 3600) * 1000; lsSet(LS_CONN, '1'); res(Cloud.token);
                 };
-                Cloud.client.error_callback = e => rej(new Error((e && e.type) || 'auth'));
+                setCloudStatus('Esperando a Google…', 'busy');
                 Cloud.client.requestAccessToken({ prompt: lsGet(LS_CONN) ? '' : 'consent' });
             });
         }
@@ -1640,8 +1661,8 @@
         function setCloudOk() { setCloudStatus('Sincronizado ' + new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }), 'ok'); }
         function cloudFail(e) {
             console.error(e);
-            if (String(e.message).startsWith('auth') || e.message === 'popup_closed' || e.message === 'access_denied') setCloudStatus('Pulsa para reconectar con Google', 'login');
-            else setCloudStatus('No se pudo sincronizar con Google', 'err');
+            if (String(e.message).startsWith('auth') || e.message === 'popup_closed' || e.message === 'popup_failed_to_open' || e.message === 'access_denied') setCloudStatus('Pulsa el punto rojo para reconectar con Google', 'login');
+            else setCloudStatus('Error con Google: ' + String(e.message).slice(0, 160), 'err');
         }
         function cloudSchedule() {
             if (!Cloud.token) return;
@@ -1661,6 +1682,7 @@
         }
         async function cloudSyncNow() {
             if (!Cloud.client) { initCloud(); if (!Cloud.client) { showToast('Configura primero el ID de cliente de Google', 'error'); return; } }
+            setCloudStatus('Conectando con Google…', 'busy');
             try { await getToken(); } catch (e) { cloudFail(e); showToast('No se pudo conectar con Google', 'error'); return; }
             if (Cloud.dirty) await cloudPush(); else await cloudPull(false);
             showToast(Cloud.state === 'ok' ? 'Sincronizado' : 'No se pudo sincronizar', Cloud.state === 'ok' ? 'success' : 'error');
