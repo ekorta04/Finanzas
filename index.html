@@ -156,6 +156,51 @@ tailwind.config = {
                     <option value="">Selecciona una cuenta</option>
                 </select>
 
+                <!-- Motivo real si no se pueden leer las cuentas -->
+                <p id="account-load-error"
+                    class="hidden text-sm text-red-600 dark:text-red-400"
+                    role="alert"></p>
+
+            </div>
+
+            <!-- CREAR CUENTA BANCARIA (solo aparece si no tienes ninguna) -->
+
+            <div id="account-create-box"
+                class="hidden space-y-3 p-4 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800">
+
+                <div>
+                    <p class="text-sm font-semibold">
+                        Todavía no tienes ninguna cuenta bancaria guardada.
+                    </p>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                        Créala aquí. Solo hace falta una vez; después aparecerá en el desplegable.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input id="account-create-name"
+                        type="text"
+                        maxlength="60"
+                        placeholder="Nombre (p. ej. Cuenta nómina)"
+                        class="sm:col-span-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+                    <input id="account-create-bank"
+                        type="text"
+                        maxlength="60"
+                        value="Laboral Kutxa"
+                        class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+                    <button id="account-create-btn"
+                        type="button"
+                        onclick="createAccountFromForm()"
+                        class="px-3 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-semibold rounded-lg">
+                        Crear cuenta
+                    </button>
+                </div>
+
+                <p id="account-create-message"
+                    class="hidden text-xs"
+                    role="status"
+                    aria-live="polite"></p>
+
             </div>
 
             <!-- ARCHIVO CSV -->
@@ -415,8 +460,9 @@ tailwind.config = {
 
             <button id="open-dashboard-button"
                 type="button"
+                disabled
                 onclick="openSelectedDashboard()"
-                class="w-full px-4 py-3 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-xl">
+                class="w-full px-4 py-3 bg-slate-800 hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl">
                 Abrir Dashboard
             </button>
 
