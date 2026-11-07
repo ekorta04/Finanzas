@@ -1,4 +1,3 @@
-
 /* =====================================================
    FINANZAS KUTXA
    AUTENTICACIÓN CON SUPABASE
@@ -80,11 +79,22 @@ async function showSupabaseImportScreen() {
     // Todavía no permitimos importar archivos
     importButton.disabled = true;
 
-    // Cargar las cuentas desde PostgreSQL
+    setupAccountSelectorOnce();
+    await reloadAccountSelector(user);
+}
+
+
+// Rellena el desplegable de cuentas y explica qué pasa si no se puede
+async function reloadAccountSelector(user, selectId) {
+    const selector = document.getElementById('supabase-import-account');
+    const errorBox = document.getElementById('account-load-error');
+    const createBox = document.getElementById('account-create-box');
+
     selector.disabled = true;
-    selector.replaceChildren(
-        new Option('Cargando cuentas...', '')
-    );
+    selector.replaceChildren(new Option('Cargando cuentas...', ''));
+    errorBox.classList.add('hidden');
+    createBox.classList.add('hidden');
+    updateOpenDashboardButton();
 
     try {
         const accounts = await getMyAccounts();
@@ -97,6 +107,16 @@ async function showSupabaseImportScreen() {
             return;
         }
 
+        if (accounts.length === 0) {
+            // Antes el desplegable se quedaba bloqueado sin explicación
+            selector.replaceChildren(
+                new Option('No tienes cuentas bancarias', '')
+            );
+            createBox.classList.remove('hidden');
+            document.getElementById('account-create-name').focus();
+            return;
+        }
+
         selector.replaceChildren(
             new Option('Selecciona una cuenta bancaria', '')
         );
@@ -104,33 +124,29 @@ async function showSupabaseImportScreen() {
         accounts.forEach(account => {
             selector.add(
                 new Option(
-                    `${account.name} — ${account.bank_name}`,
+                    account.bank_name
+                        ? `${account.name} — ${account.bank_name}`
+                        : account.name,
                     account.id
                 )
             );
         });
 
-        if (accounts.length === 0) {
-            selector.replaceChildren(
-                new Option('No tienes cuentas bancarias', '')
-            );
-        }
+        selector.disabled = false;
 
-        selector.disabled = accounts.length === 0;
-
-        
-        // Recordar la última cuenta seleccionada,
-        // pero dejar que el usuario decida qué hacer.
+        // Elegir la cuenta recién creada, la última usada
+        // o, si solo hay una, esa misma.
         const lastAccountId = localStorage.getItem(
             dashboardAccountKey(user.id)
         );
 
-        const rememberedAccount = accounts.find(
-            account => account.id === lastAccountId
-        );
+        const preferred =
+            accounts.find(a => a.id === selectId) ||
+            accounts.find(a => a.id === lastAccountId) ||
+            (accounts.length === 1 ? accounts[0] : null);
 
-        if (rememberedAccount) {
-            selector.value = rememberedAccount.id;
+        if (preferred) {
+            selector.value = preferred.id;
         }
 
     } catch (error) {
@@ -141,6 +157,92 @@ async function showSupabaseImportScreen() {
         );
 
         selector.disabled = true;
+
+        errorBox.textContent =
+            'No se pudieron cargar tus cuentas: ' +
+            describeSupabaseError(error);
+
+        errorBox.classList.remove('hidden');
+
+    } finally {
+        updateOpenDashboardButton();
+        selector.dispatchEvent(new Event('change'));   // actualiza también el botón de importar
+    }
+}
+
+
+// "Abrir Dashboard" solo se activa con una cuenta elegida
+function updateOpenDashboardButton() {
+    const selector = document.getElementById('supabase-import-account');
+    const button = document.getElementById('open-dashboard-button');
+
+    if (button && selector) {
+        button.disabled = selector.disabled || !selector.value;
+    }
+}
+
+function setupAccountSelectorOnce() {
+    if (window.accountSelectorReady) return;
+    window.accountSelectorReady = true;
+
+    document.getElementById('supabase-import-account')
+        .addEventListener('change', updateOpenDashboardButton);
+
+    document.getElementById('account-create-name')
+        .addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                createAccountFromForm();
+            }
+        });
+}
+
+
+// Crear una cuenta bancaria desde la pantalla de inicio
+async function createAccountFromForm() {
+    const nameInput = document.getElementById('account-create-name');
+    const bankInput = document.getElementById('account-create-bank');
+    const button = document.getElementById('account-create-btn');
+    const message = document.getElementById('account-create-message');
+
+    const name = nameInput.value.trim();
+
+    if (!name) {
+        message.textContent = 'Escribe un nombre para la cuenta.';
+        message.className = 'text-xs text-red-600 dark:text-red-400';
+        nameInput.focus();
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Creando...';
+    message.classList.add('hidden');
+
+    try {
+        const user = await getCurrentUser();
+
+        if (!user) {
+            showLoginScreen();
+            return;
+        }
+
+        const account = await createMyAccount(name, bankInput.value);
+
+        nameInput.value = '';
+        await reloadAccountSelector(user, account.id);
+
+    } catch (error) {
+        console.error('Error creando la cuenta:', error);
+
+        message.textContent =
+            'No se pudo crear la cuenta: ' +
+            describeSupabaseError(error);
+
+        message.className = 'text-xs text-red-600 dark:text-red-400';
+
+    } finally {
+        button.disabled = false;
+        button.textContent = 'Crear cuenta';
     }
 }
 
