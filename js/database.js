@@ -1,4 +1,3 @@
-
 /* =====================================================
    FINANZAS KUTXA
    BASE DE DATOS SUPABASE
@@ -23,7 +22,78 @@ async function getMyAccounts() {
         throw error;
     }
 
+    return data || [];
+}
+
+
+/* =====================================================
+   CREAR UNA CUENTA BANCARIA DEL USUARIO CONECTADO
+   ===================================================== */
+
+async function createMyAccount(name, bankName) {
+    const { data: userData, error: userError } =
+        await supabaseClient.auth.getUser();
+
+    if (userError || !userData.user) {
+        throw new Error('Debes iniciar sesión.');
+    }
+
+    name = String(name || '').trim();
+    bankName = String(bankName || '').trim();
+
+    if (!name) {
+        throw new Error('Escribe un nombre para la cuenta.');
+    }
+
+    const { data, error } = await supabaseClient
+        .from('accounts')
+        .insert([{
+            user_id: userData.user.id,   // la cuenta queda asociada a tu usuario (RLS)
+            name,
+            bank_name: bankName || 'Laboral Kutxa',
+            currency: 'EUR'
+        }])
+        .select('id, name, bank_name, currency')
+        .single();
+
+    if (error) {
+        throw error;
+    }
+
     return data;
+}
+
+
+/* =====================================================
+   EXPLICAR LOS ERRORES DE SUPABASE EN CASTELLANO
+   ===================================================== */
+
+function describeSupabaseError(error) {
+    const msg = String((error && error.message) || error || '');
+    const code = String((error && error.code) || '');
+
+    if (code === '42501' || /row-level security|permission denied/i.test(msg)) {
+        return 'La base de datos no te da permiso sobre la tabla "accounts" ' +
+            '(faltan políticas RLS para tu usuario).';
+    }
+
+    if (code === 'PGRST205' || code === '42P01' || /could not find the table|does not exist/i.test(msg)) {
+        return 'La tabla "accounts" no existe en Supabase (o tiene otro nombre).';
+    }
+
+    if (code === '42703' || code === 'PGRST204' || /column/i.test(msg)) {
+        return 'A la tabla "accounts" le falta una columna: ' + msg;
+    }
+
+    if (/failed to fetch|network|load failed/i.test(msg)) {
+        return 'No hay conexión con Supabase. Revisa tu conexión a internet.';
+    }
+
+    if (/jwt|token|session/i.test(msg)) {
+        return 'Tu sesión ha caducado. Cierra sesión y vuelve a entrar.';
+    }
+
+    return msg || 'Error desconocido.';
 }
 
 
