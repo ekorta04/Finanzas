@@ -14,7 +14,7 @@ Aplicación web para gestionar y analizar las finanzas personales a partir de ex
 - Presupuestos mensuales.
 - Gráficos y estadísticas.
 - Copias de seguridad en formato JSON.
-- Sincronización con Google Sheets.
+- Base de datos propia en Supabase (inicio de sesión con correo, opción de mantener la sesión iniciada).
 - Instalación como aplicación web (PWA).
 
 ## Tecnologías
@@ -24,7 +24,7 @@ Aplicación web para gestionar y analizar las finanzas personales a partir de ex
 - JavaScript
 - Tailwind CSS
 - Chart.js
-- Google Drive y Google Sheets API
+- Supabase (autenticación y base de datos PostgreSQL)
 - LocalStorage
 - Service Workers
 
@@ -47,9 +47,10 @@ Aplicación web para gestionar y analizar las finanzas personales a partir de ex
 
 ## Almacenamiento
 
-Los datos se guardan localmente en el navegador.
-La aplicación permite sincronizarlos con Google Sheets
-y exportar copias de seguridad en formato JSON.
+Los movimientos bancarios se guardan en la base de datos de Supabase
+(tablas `accounts`, `transactions` e `imports`), ligados a tu usuario.
+Reglas, etiquetas, presupuestos e inversión se guardan en el navegador.
+También se pueden exportar copias de seguridad en formato JSON.
 
 ## Estado
 

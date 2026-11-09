@@ -18,7 +18,6 @@
 <link rel="stylesheet" href="css/styles.css">
 
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <script>
 tailwind.config = {
@@ -91,6 +90,14 @@ tailwind.config = {
                     placeholder="Tu contraseña">
             </div>
 
+            <label for="auth-remember" class="flex items-center gap-2 text-sm select-none cursor-pointer">
+                <input id="auth-remember"
+                    type="checkbox"
+                    checked
+                    class="w-4 h-4 rounded border-slate-300 text-blue-600">
+                <span>¿Mantener la sesión iniciada en este dispositivo?</span>
+            </label>
+
             <p id="auth-message"
                 class="hidden text-sm text-center"
                 role="status"
@@ -118,382 +125,11 @@ tailwind.config = {
 
 
 <!-- ==========================================
-     IMPORTADOR UNIVERSAL SUPABASE
-     ========================================== -->
-
-<section id="supabase-import-screen"
-    class="hidden min-h-screen bg-slate-50 dark:bg-slate-950 p-6 text-slate-800 dark:text-slate-100">
-
-    <div class="max-w-2xl mx-auto space-y-6">
-
-        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 space-y-4">
-
-            <h1 class="text-2xl font-bold">
-                Finanzas KUTXA
-            </h1>
-
-            <p class="text-sm text-slate-500 dark:text-slate-400">
-                Importación de movimientos a Supabase
-            </p>
-
-            <button type="button"
-                onclick="logoutFinanzas()"
-                class="px-3 py-2 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg">
-                Cerrar sesión
-            </button>
-
-            <!-- CUENTA BANCARIA -->
-
-            <div class="space-y-2">
-
-                <label for="supabase-import-account"
-                    class="block text-sm font-semibold">
-                    Cuenta bancaria
-                </label>
-
-                <select id="supabase-import-account"
-                    class="w-full px-3 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800">
-                    <option value="">Selecciona una cuenta</option>
-                </select>
-
-                <!-- Motivo real si no se pueden leer las cuentas -->
-                <p id="account-load-error"
-                    class="hidden text-sm text-red-600 dark:text-red-400"
-                    role="alert"></p>
-
-            </div>
-
-            <!-- CREAR CUENTA BANCARIA (solo aparece si no tienes ninguna) -->
-
-            <div id="account-create-box"
-                class="hidden space-y-3 p-4 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800">
-
-                <div>
-                    <p class="text-sm font-semibold">
-                        Todavía no tienes ninguna cuenta bancaria guardada.
-                    </p>
-                    <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                        Créala aquí. Solo hace falta una vez; después aparecerá en el desplegable.
-                    </p>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <input id="account-create-name"
-                        type="text"
-                        maxlength="60"
-                        placeholder="Nombre (p. ej. Cuenta nómina)"
-                        class="sm:col-span-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
-                    <input id="account-create-bank"
-                        type="text"
-                        maxlength="60"
-                        value="Laboral Kutxa"
-                        class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
-                    <button id="account-create-btn"
-                        type="button"
-                        onclick="createAccountFromForm()"
-                        class="px-3 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-semibold rounded-lg">
-                        Crear cuenta
-                    </button>
-                </div>
-
-                <p id="account-create-message"
-                    class="hidden text-xs"
-                    role="status"
-                    aria-live="polite"></p>
-
-            </div>
-
-            <!-- ARCHIVO CSV -->
-
-            <div class="space-y-2">
-
-                <label for="supabase-import-file"
-                    class="block text-sm font-semibold">
-                    Archivo CSV bancario
-                </label>
-
-                <input id="supabase-import-file"
-                    type="file"
-                    accept=".csv,text/csv"
-                    class="block w-full text-sm border border-slate-300 dark:border-slate-700 rounded-xl p-3">
-
-            </div>
-
-            <!-- ==========================================
-                 CONFIGURACIÓN DEL CSV UNIVERSAL
-                 ========================================== -->
-
-            <div id="csv-mapping-panel"
-                class="hidden space-y-5 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 bg-slate-50 dark:bg-slate-800/40">
-
-                <div>
-
-                    <h3 class="text-lg font-bold">
-                        Configurar columnas del CSV
-                    </h3>
-
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        Comprueba qué columna corresponde a cada dato.
-                        Puedes corregir las selecciones antes de importar.
-                    </p>
-
-                </div>
-
-                <!-- INFORMACIÓN DEL ARCHIVO -->
-
-                <div id="csv-file-info"
-                    class="text-xs text-slate-500 dark:text-slate-400">
-                </div>
-
-                <!-- CORRESPONDENCIA DE COLUMNAS -->
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                    <div>
-                        <label for="csv-map-date" class="block text-xs font-semibold mb-1">
-                            Fecha de operación *
-                        </label>
-                        <select id="csv-map-date"
-                            class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
-                        </select>
-                    </div>
-
-                    <div>
-                        <label for="csv-map-value-date" class="block text-xs font-semibold mb-1">
-                            Fecha valor (opcional)
-                        </label>
-                        <select id="csv-map-value-date"
-                            class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
-                        </select>
-                    </div>
-
-                    <div>
-                        <label for="csv-map-description" class="block text-xs font-semibold mb-1">
-                            Concepto / Descripción *
-                        </label>
-                        <select id="csv-map-description"
-                            class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
-                        </select>
-                    </div>
-
-                    <div>
-                        <label for="csv-map-amount" class="block text-xs font-semibold mb-1">
-                            Importe
-                        </label>
-                        <select id="csv-map-amount"
-                            class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
-                        </select>
-                    </div>
-
-                    <div>
-                        <label for="csv-map-debit" class="block text-xs font-semibold mb-1">
-                            Cargo / Dinero que sale
-                        </label>
-                        <select id="csv-map-debit"
-                            class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
-                        </select>
-                    </div>
-
-                    <div>
-                        <label for="csv-map-credit" class="block text-xs font-semibold mb-1">
-                            Abono / Dinero que entra
-                        </label>
-                        <select id="csv-map-credit"
-                            class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
-                        </select>
-                    </div>
-
-                    <div>
-                        <label for="csv-map-balance" class="block text-xs font-semibold mb-1">
-                            Saldo (opcional)
-                        </label>
-                        <select id="csv-map-balance"
-                            class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
-                        </select>
-                    </div>
-
-                </div>
-
-                <p class="text-xs text-slate-500 dark:text-slate-400">
-                    * Campos obligatorios. Se necesita una columna de importe
-                    o bien columnas de cargo y abono.
-                </p>
-
-                <!-- ==========================================
-                     FORMATOS DE FECHA E IMPORTE
-                     ========================================== -->
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                    <div>
-
-                        <label for="csv-date-format"
-                            class="block text-xs font-semibold mb-1">
-                            Formato de fecha
-                        </label>
-
-                        <select id="csv-date-format"
-                            class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
-
-                            <option value="DMY">
-                                DD/MM/AAAA (España)
-                            </option>
-
-                            <option value="MDY">
-                                MM/DD/AAAA (EE. UU.)
-                            </option>
-
-                            <option value="YMD">
-                                AAAA-MM-DD (ISO)
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                    <div>
-
-                        <label for="csv-number-format"
-                            class="block text-xs font-semibold mb-1">
-                            Formato de importes
-                        </label>
-
-                        <select id="csv-number-format"
-                            class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
-
-                            <option value="EU">
-                                1.234,56 (Europeo)
-                            </option>
-
-                            <option value="US">
-                                1,234.56 (Internacional)
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                </div>
-
-                <!-- ==========================================
-                     VISTA PREVIA ORIGINAL
-                     ========================================== -->
-
-                <div class="space-y-2">
-
-                    <h4 class="text-sm font-bold">
-                        Vista previa del archivo
-                    </h4>
-
-                    <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-
-                        <table id="csv-preview-table"
-                            class="w-full text-xs text-left">
-                        </table>
-
-                    </div>
-
-                </div>
-
-                <!-- MENSAJES DE VALIDACIÓN -->
-
-                <p id="csv-mapping-message"
-                    class="hidden text-sm"
-                    role="status"
-                    aria-live="polite">
-                </p>
-
-                <!-- BOTÓN VALIDAR -->
-
-                <button id="csv-confirm-mapping"
-                    type="button"
-                    disabled
-                    class="w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold rounded-xl">
-                    Validar columnas y revisar movimientos
-                </button>
-
-                <!-- ==========================================
-                     VISTA PREVIA FINAL
-                     ========================================== -->
-
-                <div id="csv-final-preview"
-                    class="hidden space-y-3 mt-5">
-
-                    <h3 class="text-base font-bold">
-                        Movimientos preparados para importar
-                    </h3>
-
-                    <p id="csv-final-summary"
-                        class="text-sm text-slate-500 dark:text-slate-400">
-                    </p>
-
-                    <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-
-                        <table class="w-full text-xs text-left">
-
-                            <thead class="bg-slate-200 dark:bg-slate-700">
-                                <tr>
-                                    <th class="px-3 py-2">Fecha</th>
-                                    <th class="px-3 py-2">Concepto</th>
-                                    <th class="px-3 py-2 text-right">Importe</th>
-                                    <th class="px-3 py-2 text-right">Saldo</th>
-                                </tr>
-                            </thead>
-
-                            <tbody id="csv-final-preview-body">
-                            </tbody>
-
-                        </table>
-
-                    </div>
-
-                    <p class="text-xs text-amber-700 dark:text-amber-400">
-                        Revisa las fechas, los importes y sus signos.
-                        Esta vista previa no guarda datos en Supabase.
-                    </p>
-
-                </div>
-
-            </div>
-
-            <!-- ABRIR DASHBOARD SIN IMPORTAR -->
-
-            <button id="open-dashboard-button"
-                type="button"
-                disabled
-                onclick="openSelectedDashboard()"
-                class="w-full px-4 py-3 bg-slate-800 hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl">
-                Abrir Dashboard
-            </button>
-
-            <!-- IMPORTADOR ANTERIOR: DESACTIVADO TEMPORALMENTE -->
-
-            <button id="supabase-import-button"
-                type="button"
-                disabled
-                class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl">
-                Importar movimientos
-            </button>
-
-            <p id="supabase-import-message"
-                class="hidden text-sm"
-                role="status"
-                aria-live="polite">
-            </p>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ==========================================
      APLICACIÓN PRINCIPAL
      ========================================== -->
 
 <div id="app-root"
-    class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-full flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+    class="hidden bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-full flex flex-col antialiased selection:bg-brand-500 selection:text-white">
 
     <!-- ==========================================
          CABECERA
@@ -533,7 +169,7 @@ tailwind.config = {
                         Cerrar sesión
                     </button>
 
-                    <!-- GOOGLE CLOUD ANTIGUO -->
+                    <!-- ESTADO DE LA BASE DE DATOS -->
 
                     <button id="cloud-dot"
                         onclick="cloudDotClick()"
@@ -1615,7 +1251,7 @@ tailwind.config = {
 
             </div>
 
-            <!-- COPIA DE SEGURIDAD Y GOOGLE -->
+            <!-- COPIA DE SEGURIDAD Y BASE DE DATOS -->
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -1657,19 +1293,18 @@ tailwind.config = {
 
                 </div>
 
-                <!-- GOOGLE SHEETS ANTIGUO -->
+                <!-- BASE DE DATOS (SUPABASE) -->
 
                 <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
 
                     <h3 class="font-bold text-sm tracking-tight flex items-center space-x-2">
-                        <i class="fa-solid fa-arrows-rotate text-brand-500"></i>
-                        <span>Excel en tu Google Drive</span>
+                        <i class="fa-solid fa-database text-brand-500"></i>
+                        <span>Base de datos en la nube</span>
                     </h3>
 
                     <p class="text-xs text-slate-500">
-                        Tus datos se guardan en una hoja de cálculo "Finanzas KUTXA" en tu Google Drive
-                        (puedes abrirla y descargarla como Excel). Funciona igual en el iPhone y en el PC.
-                        Si cambias algo en los dos a la vez, gana el último guardado.
+                        Tus movimientos se guardan en tu base de datos (Supabase), ligados a tu usuario.
+                        Entra con el mismo correo en el iPhone y en el PC y verás lo mismo.
                     </p>
 
                     <div id="cloud-status-text"
@@ -1677,29 +1312,23 @@ tailwind.config = {
                         Comprobando…
                     </div>
 
-                    <div id="cloud-cid-box"
-                        class="hidden space-y-1">
-
-                        <input id="cloud-cid"
-                            type="text"
-                            placeholder="ID de cliente de Google (termina en .apps.googleusercontent.com)"
-                            class="w-full px-2 py-1.5 text-xs rounded-lg bg-slate-100 dark:bg-slate-800 border-none">
-
-                        <button onclick="saveClientIdFromInput()"
-                            class="px-3 py-1.5 bg-slate-800 dark:bg-slate-700 text-white rounded-lg text-xs font-semibold">
-                            Guardar ID
-                        </button>
-
+                    <div class="text-xs text-slate-500">
+                        Sesión: <span id="cloud-user" class="font-semibold"></span>
+                        <span id="cloud-remember" class="block mt-0.5"></span>
                     </div>
 
-                    <button id="cloud-sync-btn"
-                        onclick="cloudSyncNow()"
-                        class="px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold">
-
-                        <i class="fa-solid fa-arrows-rotate mr-1.5"></i>
-                        Conectar con Google
-
-                    </button>
+                    <div class="flex flex-wrap gap-2">
+                        <button id="cloud-sync-btn"
+                            onclick="cloudSyncNow()"
+                            class="px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold">
+                            <i class="fa-solid fa-arrows-rotate mr-1.5"></i>
+                            Recargar datos
+                        </button>
+                        <button onclick="logoutFinanzas()"
+                            class="px-3 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl text-xs font-semibold">
+                            Cerrar sesión
+                        </button>
+                    </div>
 
                 </div>
 
@@ -1717,7 +1346,7 @@ tailwind.config = {
 
                     <p class="text-[11px] text-rose-600 dark:text-rose-400">
                         Elimina todos los datos guardados (movimientos, reglas, inversión)
-                        en este dispositivo (la hoja de Google no se borra).
+                        en este dispositivo (los movimientos guardados en la base de datos no se borran).
                     </p>
 
                 </div>

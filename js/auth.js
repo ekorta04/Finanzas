@@ -33,7 +33,7 @@ async function signOut() {
     if (error) throw error;
 }
 
-// Obtener usuario autenticado
+// Obtener usuario autenticado (comprueba con el servidor)
 async function getCurrentUser() {
     const { data, error } = await supabaseClient.auth.getUser();
 
@@ -41,208 +41,33 @@ async function getCurrentUser() {
     return data.user;
 }
 
+// Sesión guardada en el dispositivo (no necesita red)
+async function getStoredSession() {
+    const { data } = await supabaseClient.auth.getSession();
+    return data && data.session ? data.session : null;
+}
+
 // Mostrar exclusivamente la pantalla de login
 function showLoginScreen() {
     document.getElementById('app-root').classList.add('hidden');
-
-    document.getElementById('supabase-import-screen')
-        .classList.add('hidden');
-
-    document.getElementById('auth-screen')
-        .classList.remove('hidden');
+    document.getElementById('auth-screen').classList.remove('hidden');
 }
 
-// Mostrar la pantalla de importación
-async function showSupabaseImportScreen() {
-    const user = await getCurrentUser();
-
-    if (!user) {
-        showLoginScreen();
-        return;
-    }
-
-    const selector =
-        document.getElementById('supabase-import-account');
-
-    const importButton =
-        document.getElementById('supabase-import-button');
-
-    // Mantener el Dashboard antiguo bloqueado
-    document.getElementById('app-root').classList.add('hidden');
-
-    // Ocultar login y mostrar importador
+// Tras iniciar sesión: directo al Dashboard
+async function enterApp() {
     document.getElementById('auth-screen').classList.add('hidden');
-
-    document.getElementById('supabase-import-screen')
-        .classList.remove('hidden');
-
-    // Todavía no permitimos importar archivos
-    importButton.disabled = true;
-
-    setupAccountSelectorOnce();
-    await reloadAccountSelector(user);
-}
-
-
-// Rellena el desplegable de cuentas y explica qué pasa si no se puede
-async function reloadAccountSelector(user, selectId) {
-    const selector = document.getElementById('supabase-import-account');
-    const errorBox = document.getElementById('account-load-error');
-    const createBox = document.getElementById('account-create-box');
-
-    selector.disabled = true;
-    selector.replaceChildren(new Option('Cargando cuentas...', ''));
-    errorBox.classList.add('hidden');
-    createBox.classList.add('hidden');
-    updateOpenDashboardButton();
+    document.getElementById('app-root').classList.remove('hidden');
 
     try {
-        const accounts = await getMyAccounts();
-
-        // Verificar que la sesión no ha cambiado
-        const currentUser = await getCurrentUser();
-
-        if (!currentUser || currentUser.id !== user.id) {
-            showLoginScreen();
-            return;
-        }
-
-        if (accounts.length === 0) {
-            // Antes el desplegable se quedaba bloqueado sin explicación
-            selector.replaceChildren(
-                new Option('No tienes cuentas bancarias', '')
-            );
-            createBox.classList.remove('hidden');
-            document.getElementById('account-create-name').focus();
-            return;
-        }
-
-        selector.replaceChildren(
-            new Option('Selecciona una cuenta bancaria', '')
-        );
-
-        accounts.forEach(account => {
-            selector.add(
-                new Option(
-                    account.bank_name
-                        ? `${account.name} — ${account.bank_name}`
-                        : account.name,
-                    account.id
-                )
-            );
-        });
-
-        selector.disabled = false;
-
-        // Elegir la cuenta recién creada, la última usada
-        // o, si solo hay una, esa misma.
-        const lastAccountId = localStorage.getItem(
-            dashboardAccountKey(user.id)
-        );
-
-        const preferred =
-            accounts.find(a => a.id === selectId) ||
-            accounts.find(a => a.id === lastAccountId) ||
-            (accounts.length === 1 ? accounts[0] : null);
-
-        if (preferred) {
-            selector.value = preferred.id;
-        }
-
+        await loadUserDashboard();
     } catch (error) {
-        console.error('Error cargando cuentas:', error);
-
-        selector.replaceChildren(
-            new Option('Error al cargar las cuentas', '')
+        console.error('Error cargando el Dashboard:', error);
+        setCloudStatus('Error con la base de datos: ' + describeSupabaseError(error), 'err');
+        showToast(
+            'No se pudieron cargar tus movimientos: ' +
+            describeSupabaseError(error),
+            'error'
         );
-
-        selector.disabled = true;
-
-        errorBox.textContent =
-            'No se pudieron cargar tus cuentas: ' +
-            describeSupabaseError(error);
-
-        errorBox.classList.remove('hidden');
-
-    } finally {
-        updateOpenDashboardButton();
-        selector.dispatchEvent(new Event('change'));   // actualiza también el botón de importar
-    }
-}
-
-
-// "Abrir Dashboard" solo se activa con una cuenta elegida
-function updateOpenDashboardButton() {
-    const selector = document.getElementById('supabase-import-account');
-    const button = document.getElementById('open-dashboard-button');
-
-    if (button && selector) {
-        button.disabled = selector.disabled || !selector.value;
-    }
-}
-
-function setupAccountSelectorOnce() {
-    if (window.accountSelectorReady) return;
-    window.accountSelectorReady = true;
-
-    document.getElementById('supabase-import-account')
-        .addEventListener('change', updateOpenDashboardButton);
-
-    document.getElementById('account-create-name')
-        .addEventListener('keydown', event => {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                createAccountFromForm();
-            }
-        });
-}
-
-
-// Crear una cuenta bancaria desde la pantalla de inicio
-async function createAccountFromForm() {
-    const nameInput = document.getElementById('account-create-name');
-    const bankInput = document.getElementById('account-create-bank');
-    const button = document.getElementById('account-create-btn');
-    const message = document.getElementById('account-create-message');
-
-    const name = nameInput.value.trim();
-
-    if (!name) {
-        message.textContent = 'Escribe un nombre para la cuenta.';
-        message.className = 'text-xs text-red-600 dark:text-red-400';
-        nameInput.focus();
-        return;
-    }
-
-    button.disabled = true;
-    button.textContent = 'Creando...';
-    message.classList.add('hidden');
-
-    try {
-        const user = await getCurrentUser();
-
-        if (!user) {
-            showLoginScreen();
-            return;
-        }
-
-        const account = await createMyAccount(name, bankInput.value);
-
-        nameInput.value = '';
-        await reloadAccountSelector(user, account.id);
-
-    } catch (error) {
-        console.error('Error creando la cuenta:', error);
-
-        message.textContent =
-            'No se pudo crear la cuenta: ' +
-            describeSupabaseError(error);
-
-        message.className = 'text-xs text-red-600 dark:text-red-400';
-
-    } finally {
-        button.disabled = false;
-        button.textContent = 'Crear cuenta';
     }
 }
 
@@ -252,10 +77,15 @@ function setupAuthScreen() {
     const switchBtn = document.getElementById('auth-switch');
     const message = document.getElementById('auth-message');
     const submitBtn = document.getElementById('auth-submit');
+    const remember = document.getElementById('auth-remember');
 
     if (!form || !switchBtn || !message || !submitBtn) {
         console.error('Faltan elementos del formulario de acceso.');
         return;
+    }
+
+    if (remember) {
+        remember.checked = getRememberSession();
     }
 
     let isRegister = false;
@@ -299,6 +129,10 @@ function setupAuthScreen() {
         const password = document.getElementById('auth-password')
             .value;
 
+        // Guardar la elección ANTES de iniciar sesión, para que
+        // la sesión se almacene en el sitio correcto.
+        setRememberSession(!remember || remember.checked);
+
         submitBtn.disabled = true;
         submitBtn.textContent = 'Procesando...';
 
@@ -311,12 +145,13 @@ function setupAuthScreen() {
                         'Revisa tu correo para confirmar tu cuenta.'
                     );
                 } else {
-                    await showSupabaseImportScreen();
+                    await enterApp();
                 }
 
             } else {
                 await signIn(email, password);
-                await showSupabaseImportScreen();
+                document.getElementById('auth-password').value = '';
+                await enterApp();
             }
 
         } catch (error) {
@@ -333,21 +168,29 @@ function setupAuthScreen() {
 
 // Inicializar autenticación al abrir la aplicación
 document.addEventListener('DOMContentLoaded', async () => {
-    showLoginScreen();
     setupAuthScreen();
 
     try {
-        // Si ya existe una sesión, no pedir login de nuevo
-        const user = await getCurrentUser();
+        // Si hay una sesión guardada, entrar sin pedir login
+        const session = await getStoredSession();
 
-        if (user) {
-            await showSupabaseImportScreen();
+        if (session) {
+            await enterApp();
+        } else {
+            showLoginScreen();
         }
 
     } catch (error) {
         console.error('Error comprobando sesión:', error);
         showLoginScreen();
     }
+
+    // Si la sesión caduca o se cierra en otra pestaña
+    supabaseClient.auth.onAuthStateChange(event => {
+        if (event === 'SIGNED_OUT') {
+            showLoginScreen();
+        }
+    });
 });
 
 
@@ -355,13 +198,10 @@ document.addEventListener('DOMContentLoaded', async () => {
    CERRAR SESIÓN DE FINANZAS KUTXA
    ===================================================== */
 
-   async function logoutFinanzas() {
+async function logoutFinanzas() {
     try {
         // Ocultar inmediatamente los datos financieros
         document.getElementById('app-root')
-            .classList.add('hidden');
-
-        document.getElementById('supabase-import-screen')
             .classList.add('hidden');
 
         // Cerrar la sesión de Supabase
@@ -370,25 +210,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Limpiar los datos financieros de la memoria
         AppState = defaultState();
         BizumSugg = [];
-
-        // Limpiar selección y archivo de importación
-        const selector = document.getElementById(
-            'supabase-import-account'
-        );
-
-        const file = document.getElementById(
-            'supabase-import-file'
-        );
-
-        if (selector) {
-            selector.replaceChildren(
-                new Option('Selecciona una cuenta', '')
-            );
-        }
-
-        if (file) {
-            file.value = '';
-        }
+        window.activeSupabaseAccountId = null;
 
         // Regresar al inicio de sesión
         window.location.replace(

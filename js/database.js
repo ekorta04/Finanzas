@@ -245,186 +245,6 @@ function describeSupabaseError(error) {
 
 
 /* =====================================================
-   CARGAR CUENTAS EN EL SELECTOR DE IMPORTACIÓN
-   ===================================================== */
-
-   async function loadImportAccounts() {
-    const selector = document.getElementById('import-account');
-
-    if (!selector) {
-        throw new Error('No existe el selector de cuentas.');
-    }
-
-    selector.disabled = true;
-    selector.replaceChildren(
-        new Option('Cargando cuentas...', '')
-    );
-
-    try {
-        // Obtener las cuentas del usuario autenticado
-        const accounts = await getMyAccounts();
-
-        // Limpiar el selector
-        selector.replaceChildren(
-            new Option('Selecciona una cuenta bancaria', '')
-        );
-
-        // Añadir las cuentas obtenidas de Supabase
-        accounts.forEach(account => {
-            const option = new Option(
-                `${account.name} — ${account.bank_name}`,
-                account.id
-            );
-
-            selector.add(option);
-        });
-
-        if (accounts.length === 0) {
-            selector.replaceChildren(
-                new Option('No tienes cuentas bancarias', '')
-            );
-        }
-
-        selector.disabled = accounts.length === 0;
-
-        return accounts;
-
-    } catch (error) {
-        selector.replaceChildren(
-            new Option('Error al cargar las cuentas', '')
-        );
-
-        console.error('Error cargando cuentas:', error);
-        throw error;
-    }
-}
-
-
-/* =====================================================
-   IMPORTADOR CSV - INTERFAZ SUPABASE
-   ===================================================== */
-
-   function setupSupabaseCSVImport() {
-    const selector = document.getElementById(
-        'supabase-import-account'
-    );
-
-    const fileInput = document.getElementById(
-        'supabase-import-file'
-    );
-
-    const button = document.getElementById(
-        'supabase-import-button'
-    );
-
-    const message = document.getElementById(
-        'supabase-import-message'
-    );
-
-    if (!selector || !fileInput || !button || !message) {
-        console.error('Faltan elementos del importador.');
-        return;
-    }
-
-    let importing = false;
-
-    // Activar el botón solamente cuando haya cuenta y archivo
-    function updateButton() {
-        button.disabled =
-            importing ||
-            !selector.value ||
-            fileInput.files.length === 0;
-    }
-
-    selector.addEventListener('change', updateButton);
-    fileInput.addEventListener('change', updateButton);
-
-    button.addEventListener('click', async () => {
-        if (importing || !selector.value || !fileInput.files.length) {
-            return;
-        }
-
-        const accountId = selector.value;
-        const file = fileInput.files[0];
-
-        importing = true;
-        button.disabled = true;
-        button.textContent = 'Importando movimientos...';
-
-        message.classList.add('hidden');
-
-        try {
-            const { parsedRows, badRows } =
-                parseLaboralKutxaCSV(await file.text());
-
-            if (!parsedRows.length) {
-                throw new Error(
-                    'El CSV no contiene movimientos válidos.'
-                );
-            }
-
-            // Guardar en PostgreSQL mediante la función RPC
-            const result = await importBankCSV(
-                accountId,
-                file.name,
-                parsedRows,
-                badRows
-            );
-
-            message.textContent =
-                `Importación completada: ` +
-                `${result.imported_rows} nuevos, ` +
-                `${result.duplicate_rows} duplicados, ` +
-                `${result.error_rows} filas con errores.`;
-
-            message.className =
-                'text-sm text-green-700 dark:text-green-400';
-
-            // Limpiar el archivo para evitar importaciones accidentales
-            fileInput.value = '';
-        
-            // Limpiar el archivo para evitar importaciones accidentales
-            fileInput.value = '';
-
-            // Abrir automáticamente el Dashboard con los datos
-            // de la cuenta bancaria seleccionada.
-            await previewSupabaseDashboard(accountId);
-
-            const usuarioImportacion = await getCurrentUser();
-
-            if (usuarioImportacion) {
-                localStorage.setItem(
-                    dashboardAccountKey(usuarioImportacion.id),
-                    accountId
-                );
-            }
-
-
-        } catch (error) {
-            console.error('Error importando CSV:', error);
-
-            message.textContent =
-                'Error al importar: ' + error.message;
-
-            message.className =
-                'text-sm text-red-600 dark:text-red-400';
-
-        } finally {
-            importing = false;
-            button.textContent = 'Importar movimientos';
-            updateButton();
-        }
-    });
-
-    updateButton();
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    setupSupabaseCSVImport();
-});
-
-
-/* =====================================================
    CARGAR MOVIMIENTOS PARA EL DASHBOARD
    ===================================================== */
 
@@ -505,65 +325,7 @@ async function prepareAccountDashboard(accountId) {
 
 
 /* =====================================================
-   VISTA PRELIMINAR DEL DASHBOARD DESDE SUPABASE
-   Solo lectura durante la migración
-   ===================================================== */
-
-   async function previewSupabaseDashboard(accountId) {
-    const user = await getCurrentUser();
-
-    if (!user) {
-        throw new Error('Debes iniciar sesión.');
-    }
-
-    const accounts = await getMyAccounts();
-    const account = accounts.find(a => a.id === accountId);
-
-    if (!account) {
-        throw new Error('Cuenta bancaria no autorizada.');
-    }
-
-    const rows = await prepareAccountDashboard(accountId);
-
-    // Recordar qué cuenta estamos visualizando
-    window.activeSupabaseAccountId = accountId;
-
-    // La vista preliminar no utiliza el almacenamiento antiguo.
-    AppState = normalizeState({
-        rows,
-        rules: DEFAULT_RULES.slice(),
-        imports: [],
-        inv: [],
-        invValues: [],
-        budgets: {},
-        dismissed: []
-    });
-
-    // Mostrar la interfaz principal
-    document.getElementById('auth-screen').classList.add('hidden');
-    document.getElementById('supabase-import-screen').classList.add('hidden');
-    document.getElementById('app-root').classList.remove('hidden');
-
-    // Inicializar la navegación una única vez
-    if (!window.supabasePreviewInitialized) {
-        populateCategorySelects();
-        setupTabNavigation();
-        window.supabasePreviewInitialized = true;
-    }
-
-    renderAllViews();
-    switchTab('v-dashboard');
-
-    console.log(
-        'Dashboard de prueba cargado:',
-        rows.length,
-        'movimientos'
-    );
-}
-
-
-/* =====================================================
-   ACCESO AL DASHBOARD DESDE SUPABASE
+   DASHBOARD DESDE SUPABASE
    ===================================================== */
 
 // Recordar la cuenta elegida para cada usuario.
@@ -573,51 +335,142 @@ function dashboardAccountKey(userId) {
     return `finanzas_dashboard_account_${userId}`;
 }
 
+// Cuenta que se muestra: la última usada, o la primera.
+// Si el usuario no tiene ninguna y se pide, se crea una.
 
-// Abrir el Dashboard sin importar un CSV.
+async function resolveActiveAccount(userId, createIfMissing = false) {
+    const accounts = await getMyAccounts();
+    let lastId = null;
 
-async function openSelectedDashboard() {
-    const selector = document.getElementById(
-        'supabase-import-account'
-    );
+    try { lastId = localStorage.getItem(dashboardAccountKey(userId)); } catch (e) {}
 
-    const button = document.getElementById(
-        'open-dashboard-button'
-    );
+    let account =
+        accounts.find(a => a.id === window.activeSupabaseAccountId) ||
+        accounts.find(a => a.id === lastId) ||
+        accounts[0] ||
+        null;
 
-    if (!selector.value) {
-        alert('Selecciona primero una cuenta bancaria.');
+    if (!account && createIfMissing) {
+        account = await createMyAccount('Cuenta principal', 'Laboral Kutxa');
+        accounts.push(account);
+    }
+
+    return { accounts, account };
+}
+
+// Rellenar el selector de cuenta de "Datos & Sync"
+
+function renderImportAccountSelector(accounts, activeId) {
+    const selector = document.getElementById('import-account');
+
+    if (!selector) return;
+
+    if (!accounts.length) {
+        selector.replaceChildren(
+            new Option('Se creará "Cuenta principal" al importar', '')
+        );
+        selector.disabled = true;
         return;
     }
 
-    button.disabled = true;
-    button.textContent = 'Cargando Dashboard...';
+    selector.replaceChildren(...accounts.map(a => new Option(
+        a.bank_name ? `${a.name} — ${a.bank_name}` : a.name,
+        a.id
+    )));
 
-    try {
-        const user = await getCurrentUser();
+    selector.value = activeId || accounts[0].id;
+    selector.disabled = accounts.length < 2;
+}
 
-        if (!user) {
-            throw new Error('Debes iniciar sesión.');
-        }
+// Inicializar la interfaz principal una única vez
 
-        const accountId = selector.value;
+function initMainUIOnce() {
+    if (window.mainUIInitialized) return;
+    window.mainUIInitialized = true;
 
-        await previewSupabaseDashboard(accountId);
+    populateCategorySelects();
+    setupTabNavigation();
+    setupDropZone();
+    setupInvDropZone();
 
-        // Recordar la cuenta para próximos accesos
-        localStorage.setItem(
-            dashboardAccountKey(user.id),
-            accountId
-        );
+    const invDate = document.getElementById('inv-val-date');
+    if (invDate) invDate.value = new Date().toISOString().slice(0, 10);
 
-    } catch (error) {
-        console.error(error);
-        alert('No se pudo cargar el Dashboard: ' + error.message);
+    // Cambiar de cuenta desde "Datos & Sync"
+    const selector = document.getElementById('import-account');
 
-    } finally {
-        button.disabled = false;
-        button.textContent = 'Abrir Dashboard';
+    if (selector) {
+        selector.addEventListener('change', async () => {
+            if (!selector.value) return;
+            window.activeSupabaseAccountId = selector.value;
+
+            try {
+                await loadUserDashboard({ keepTab: true });
+            } catch (error) {
+                showToast('No se pudo cambiar de cuenta: ' + describeSupabaseError(error), 'error');
+            }
+        });
     }
+}
+
+// Cargar los movimientos del usuario y mostrar el Dashboard.
+// Los movimientos vienen de la base de datos; reglas, presupuestos,
+// etiquetas, inversión y ajustes se conservan del dispositivo.
+
+async function loadUserDashboard(options = {}) {
+    const session = await getStoredSession();
+
+    if (!session) {
+        showLoginScreen();
+        return;
+    }
+
+    const user = session.user;
+
+    initMainUIOnce();
+    setCloudUser(user);
+    setCloudStatus('Cargando datos…', 'busy');
+
+    // Datos locales (reglas, etiquetas, presupuestos, inversión…)
+    loadState();
+    const localByKey = new Map(AppState.rows.map(r => [r.k, r]));
+
+    const { accounts, account } = await resolveActiveAccount(user.id);
+    renderImportAccountSelector(accounts, account && account.id);
+
+    let rows = [];
+
+    if (account) {
+        window.activeSupabaseAccountId = account.id;
+
+        try { localStorage.setItem(dashboardAccountKey(user.id), account.id); } catch (e) {}
+
+        rows = (await prepareAccountDashboard(account.id)).map(row => {
+            const local = localByKey.get(row.k);
+
+            if (local) {
+                if (local.t) row.t = local.t;
+                if (local.bz) row.bz = local.bz;
+                if (local.lk) row.lk = local.lk;
+            }
+
+            return row;
+        });
+    }
+
+    rows.sort((a, b) => b.d.localeCompare(a.d) || (b.s ?? 0) - (a.s ?? 0));
+    AppState.rows = rows;
+
+    // Guardar en el dispositivo sin volver a subir nada
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState)); } catch (e) {}
+
+    renderAllViews();
+
+    if (!options.keepTab) {
+        switchTab('v-dashboard');
+    }
+
+    setCloudOk();
 }
 
 

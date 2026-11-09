@@ -3,7 +3,7 @@
    Caché de los archivos de la aplicación
    ========================================================================== */
 
-   const CACHE = 'finanzas-v4';
+   const CACHE = 'finanzas-v5';
 
    const FILES = [
        './',
@@ -15,10 +15,14 @@
        './css/styles.css',
    
        // JavaScript
+       './js/supabase.js',
+       './js/auth.js',
+       './js/database.js',
        './js/state.js',
        './js/utils.js',
        './js/storage.js',
        './js/csv.js',
+       './js/csv-universal.js',
        './js/bizum.js',
        './js/tags.js',
        './js/dashboard.js',

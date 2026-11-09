@@ -17,13 +17,7 @@
     renderAllViews();
     switchTab('v-dashboard');
 
-    // MIGRACIÓN A SUPABASE
-    // Desactivamos la conexión automática con Google Sheets.
-    // Los datos locales se mantienen sin cambios.
-    setCloudStatus(
-        'Google Sheets desactivado durante la migración a Supabase',
-        'off'
-    );
+    // Los datos se cargan desde Supabase al iniciar sesión (ver loadUserDashboard)
 }
 
 function renderAllViews() {
@@ -149,14 +143,5 @@ function updateUnclassifiedAlert() {
     }
 }
 
-// =====================================================
-// MIGRACIÓN A SUPABASE
-// =====================================================
-
-// El Dashboard no se inicializa automáticamente.
-// La aplicación permanece bloqueada hasta que
-// comprobemos la sesión y carguemos los datos
-// correspondientes al usuario autenticado.
-
-// initApp() se ejecutará cuando esté preparada
-// la nueva conexión de datos con Supabase.
+// La aplicación arranca en auth.js: si hay sesión guardada,
+// va directa al Dashboard; si no, muestra el inicio de sesión.

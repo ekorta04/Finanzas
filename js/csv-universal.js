@@ -1002,11 +1002,9 @@ function setupUniversalCSVInterface() {
         'csv-confirm-mapping'
     );
 
+    // La pantalla del importador universal se ha retirado:
+    // la importación se hace desde "Datos & Sync".
     if (!fileInput || !confirmButton) {
-        console.error(
-            'No se encontraron los elementos ' +
-            'del importador universal.'
-        );
         return;
     }
 

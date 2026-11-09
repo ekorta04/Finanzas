@@ -10,17 +10,47 @@
     }
     function handleFileSelect(e) { if (e.target.files.length) processCSVFile(e.target.files[0]); e.target.value = ''; }
     
+    // Los movimientos se guardan en la base de datos (Supabase),
+    // en la cuenta seleccionada. Los duplicados los omite el servidor.
+    let csvImporting = false;
+
     async function processCSVFile(file) {
+        if (csvImporting) return;
+        csvImporting = true;
+        showImportResult('Importando movimientos…', 'success');
+
         try {
             const { parsedRows, badRows } = parseLaboralKutxaCSV(await file.text());
             if (!parsedRows.length) { showImportResult('No se encontraron movimientos válidos en el archivo.', 'error'); return; }
-            const { addedCount, dupCount } = mergeIncomingRows(parsedRows);
-            AppState.imports.push({ at: new Date().toLocaleString('es-ES'), added: addedCount, dup: dupCount });
-            saveState(); renderAllViews();
+
+            const session = await getStoredSession();
+            if (!session) { showLoginScreen(); return; }
+
+            const { account } = await resolveActiveAccount(session.user.id, true);
+            window.activeSupabaseAccountId = account.id;
+
+            const rowsWithKeys = parsedRows.map(r => ({ ...r, k: generateRowKey(r) }));
+            const result = await importBankCSV(account.id, file.name, rowsWithKeys, badRows);
+
+            const added = (result && result.imported_rows) || 0;
+            const dup = (result && result.duplicate_rows) || 0;
+            const errs = ((result && result.error_rows) || 0);
+
+            await loadUserDashboard({ keepTab: true });
+
+            AppState.imports.push({ at: new Date().toLocaleString('es-ES'), added, dup });
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState)); } catch (e) {}
+            renderImportHistory();
+
             const sug = BizumSugg.length;
-            showImportResult(`Importación completada: <strong>${addedCount} nuevos movimientos añadidos</strong>, ${dupCount} duplicados omitidos` + (badRows ? `, ${badRows} filas ilegibles.` : '.') + (sug ? ` <strong>${sug} sugerencia(s) de vinculación Bizum</strong> te esperan arriba.` : ''), 'success');
-            showToast(`+${addedCount} movimientos importados`);
-        } catch (err) { console.error(err); showImportResult('Error al leer el archivo CSV.', 'error'); }
+            showImportResult(`Importación completada en <strong>${esc(account.name)}</strong>: <strong>${added} nuevos movimientos añadidos</strong>, ${dup} duplicados omitidos` + (errs ? `, ${errs} filas ilegibles.` : '.') + (sug ? ` <strong>${sug} sugerencia(s) de vinculación Bizum</strong> te esperan arriba.` : ''), 'success');
+            showToast(`+${added} movimientos importados`);
+        } catch (err) {
+            console.error(err);
+            showImportResult('Error al importar: ' + esc(describeSupabaseError(err)), 'error');
+        } finally {
+            csvImporting = false;
+        }
     }
     function showImportResult(msg, type) {
         const el = document.getElementById('import-result');
