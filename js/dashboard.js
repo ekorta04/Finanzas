@@ -15,17 +15,124 @@ function netTotals(rows) {
     return { gasto: Math.max(0, gasto), ingreso, recovered, cat };
 }
 
+// Fecha de hoy (hora local) en formato AAAA-MM-DD
+function todayIso() {
+    const t = new Date();
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+}
+
+// Periodo elegido en el Resumen: '30d' (últimos 30 días), '' (todo) o 'AAAA-MM'
+function dashPeriod(value) {
+    if (value === '30d') {
+        const to = todayIso();
+        return { from: addDays(to, -29), to, days: 30 };
+    }
+    if (value) {
+        const [y, m] = value.split('-').map(Number);
+        const last = new Date(y, m, 0).getDate();
+        return { from: `${value}-01`, to: `${value}-${String(last).padStart(2, '0')}`, days: last };
+    }
+    return { from: null, to: null, days: null };
+}
+
+// Saldo de cierre de cada día del periodo. Los días sin movimientos
+// mantienen el saldo del día anterior. Las filas llegan de más nuevas a
+// más antiguas, así que la primera de cada día es la última del día.
+function balanceSeries(period) {
+    const close = new Map();
+    AppState.rows.forEach(r => { if (r.s != null && !close.has(r.d)) close.set(r.d, r.s); });
+    const days = [...close.keys()].sort();
+    if (!days.length) return { labels: [], data: [] };
+
+    const first = days[0], lastData = days[days.length - 1];
+    let from = period.from || first;
+    let to = period.to || lastData;
+    if (to > todayIso()) to = todayIso();   // sin días futuros
+    if (from < first) from = first;
+    if (to < from) return { labels: [], data: [] };
+
+    let i = 0, last = null;
+    while (i < days.length && days[i] < from) { last = close.get(days[i]); i++; }
+    const labels = [], data = [];
+    for (let d = from; d <= to; d = addDays(d, 1)) {
+        while (i < days.length && days[i] <= d) { last = close.get(days[i]); i++; }
+        labels.push(d);
+        data.push(last);
+    }
+    return { labels, data };
+}
+
+function renderChartSaldo(period) {
+    const canvas = document.getElementById('chart-saldo');
+    if (!canvas) return;
+    const box = canvas.parentElement;
+    const range = document.getElementById('saldo-range');
+    if (chartSaldoInstance) { chartSaldoInstance.destroy(); chartSaldoInstance = null; }
+
+    const { labels, data } = balanceSeries(period);
+    if (data.length < 2) {   // con un solo punto no hay evolución que mostrar
+        box.classList.add('hidden');
+        range.textContent = '';
+        return;
+    }
+    box.classList.remove('hidden');
+    range.textContent = `Mín ${formatEur(Math.min(...data))} · Máx ${formatEur(Math.max(...data))}`;
+
+    const th = chartTheme();
+    const blue = cssVar('--blue');
+    const short = labels.length <= 62;
+    chartSaldoInstance = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Saldo', data, borderColor: blue, backgroundColor: blue + '22', fill: true,
+                tension: 0.3, borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 4
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: { ...th.tooltip, callbacks: {
+                    title: c => formatDateEs(labels[c[0].dataIndex]),
+                    label: c => ` Saldo: ${formatEur(c.raw)}`
+                } }
+            },
+            scales: {
+                x: {
+                    grid: { display: false }, border: { display: false },
+                    ticks: {
+                        maxTicksLimit: 5, maxRotation: 0,
+                        callback: v => {
+                            const d = labels[v];
+                            if (!d) return '';
+                            return short ? shortDate(d) : `${MONTHS_ES[Number(d.slice(5, 7)) - 1].slice(0, 3)} ${d.slice(2, 4)}`;
+                        }
+                    }
+                },
+                y: {
+                    grace: '8%', grid: { color: th.grid }, border: { display: false },
+                    ticks: { maxTicksLimit: 4, callback: v => Math.abs(v) >= 1000 ? (v / 1000).toLocaleString('es-ES') + ' k' : v }
+                }
+            }
+        }
+    });
+}
+
 function renderDashboard() {
     const month = document.getElementById('dash-month').value;
+    const period = dashPeriod(month);
     let rows = AppState.rows;
-    if (month) rows = rows.filter(r => r.d.startsWith(month));
+    if (period.from) rows = rows.filter(r => r.d >= period.from && r.d <= period.to);
 
     const { gasto, ingreso, recovered, cat } = netTotals(rows);
     const balance = ingreso - gasto;
     const tasa = ingreso > 0 ? Math.max(0, (balance / ingreso) * 100) : 0;
 
     let days = 30;
-    if (month) { const [y, m] = month.split('-').map(Number); days = new Date(y, m, 0).getDate(); }
+    if (period.days) { days = period.days; }
     else if (rows.length) {
         const ds = rows.map(r => new Date(r.d));
         days = Math.max(1, Math.ceil(Math.abs(Math.max(...ds) - Math.min(...ds)) / 86400000));
@@ -47,6 +154,7 @@ function renderDashboard() {
     if (inv.valor != null) { pat.classList.remove('hidden'); pat.textContent = `Con inversión: ${formatEur(saldo + inv.valor)}`; }
     else pat.classList.add('hidden');
 
+    renderChartSaldo(period);
     renderChartMensual();
     renderChartCategorias(cat);
     renderTopShops(rows.filter(r => r.i < 0 && r.cat !== 'Inversión'));

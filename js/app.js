@@ -123,7 +123,9 @@ function populateMonthOptions() {
         const el = document.getElementById(id);
         const cur = el.value;
 
-        el.innerHTML = id === 'dash-month' ? '<option value="">Todo</option>' : '<option value="">Todos</option>';
+        el.innerHTML = id === 'dash-month'
+            ? '<option value="30d">Últimos 30 días</option><option value="">Todo</option>'
+            : '<option value="">Todos</option>';
 
         months.forEach(m => {
             const [y, mm] = m.split('-');
@@ -132,7 +134,8 @@ function populateMonthOptions() {
                 `<option value="${m}">${monthName(m)}</option>`;
         });
 
-        if (cur && months.includes(cur)) {
+        // Se conserva la elección (los 30 días, "Todo" o un mes concreto)
+        if (months.includes(cur) || (id === 'dash-month' && (cur === '30d' || cur === ''))) {
             el.value = cur;
         }
     });

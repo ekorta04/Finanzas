@@ -124,6 +124,7 @@
                     <h1 class="large-title">Resumen</h1>
                 </div>
                 <select id="dash-month" onchange="renderDashboard()" class="field sm" aria-label="Periodo">
+                    <option value="30d">Últimos 30 días</option>
                     <option value="">Todo</option>
                 </select>
             </div>
@@ -147,6 +148,8 @@
                 <div class="hero-label">Saldo actual</div>
                 <div id="kpi-saldo" class="hero-amount num">0,00 €</div>
                 <div id="kpi-patrimonio" class="hero-sub num hidden"></div>
+                <div id="saldo-range" class="hero-sub num"></div>
+                <div class="chart-box hero-chart"><canvas id="chart-saldo"></canvas></div>
             </div>
 
             <div class="grid-2 grid-4">

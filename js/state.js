@@ -61,4 +61,4 @@ const defaultState = () => ({
 let AppState = defaultState();
 let BizumSugg = [];
 let pendingInv = null;
-let chartMensualInstance = null, chartCategoriasInstance = null, chartInvInstance = null;
+let chartMensualInstance = null, chartCategoriasInstance = null, chartInvInstance = null, chartSaldoInstance = null;
