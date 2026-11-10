@@ -474,13 +474,21 @@ select.field.sm { padding-right: 26px; background-position: right 8px center; }
 
 /* ---------- Alerta de confirmación (estilo iOS) ---------- */
 
-#confirm-modal, #cat-modal {
+#confirm-modal, #cat-modal, #bizum-modal {
     position: fixed; inset: 0; z-index: 80;
     display: flex; align-items: center; justify-content: center; padding: 24px;
     background: rgba(0, 0, 0, .32);
     animation: fade .2s ease;
 }
-#confirm-modal.hidden, #cat-modal.hidden { display: none; }
+#confirm-modal.hidden, #cat-modal.hidden, #bizum-modal.hidden { display: none; }
+.pick-list { max-height: 260px; overflow-y: auto; padding: 0 16px; text-align: left; }
+.pick-row {
+    display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 8px;
+    padding: 9px 0; border-top: .5px solid var(--sep); font-size: 14px;
+}
+.pick-row input, .pick-all input { width: 18px; height: 18px; margin: 0; }
+.pick-all { display: flex; align-items: center; gap: 8px; padding: 10px 16px 4px; text-align: left; color: var(--label-2); }
+.pick-sum { padding: 6px 16px 12px; font-size: 14px; text-align: center; }
 .alert.cat-new { width: 320px; max-width: 100%; }
 .cat-new-body { padding: 0 16px 10px; display: grid; gap: 12px; text-align: left; }
 .cat-new-name { display: flex; align-items: center; gap: 10px; }

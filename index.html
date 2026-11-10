@@ -546,6 +546,20 @@
     </div>
 </div>
 
+<div id="bizum-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="bizum-pick-title">
+    <div class="alert cat-new">
+        <p id="bizum-pick-title" style="padding-bottom:2px;font-weight:600;font-size:17px">Agrupar Bizums</p>
+        <div id="bizum-pick-sub" class="xsmall muted" style="padding:0 16px 8px"></div>
+        <div id="bizum-pick-list" class="pick-list" onchange="onBizumPickToggle(event)"></div>
+        <label class="pick-all xsmall"><input type="checkbox" id="bizum-pick-all" onchange="onBizumPickAll(this.checked)"> Mostrar también ingresos que no son Bizum</label>
+        <div id="bizum-pick-sum" class="pick-sum"></div>
+        <div class="alert-actions">
+            <button type="button" onclick="closeBizumPicker()">Cancelar</button>
+            <button type="button" onclick="applyBizumPick()">Guardar grupo</button>
+        </div>
+    </div>
+</div>
+
 <div id="cat-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="cat-modal-title">
     <div class="alert cat-new">
         <p id="cat-modal-title" style="padding-bottom:10px;font-weight:600;font-size:17px">Nueva categoría</p>

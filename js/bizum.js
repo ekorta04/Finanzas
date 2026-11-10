@@ -14,11 +14,14 @@
         for (const e of exps) {
             const total = Math.abs(e.i);
             const end = addDays(e.d, bizumDays);
-            const cands = incomes.filter(b => !used.has(b.k) && b.d >= e.d && b.d <= end).sort((a, b) => a.d.localeCompare(b.d));
+            const start = addDays(e.d, -1);   // a veces el Bizum llega el día antes de que se cargue el pago
+            const cands = incomes.filter(b => !used.has(b.k) && b.d >= start && b.d <= end).sort((a, b) => a.d.localeCompare(b.d));
             if (!cands.length) continue;
             for (let n = 2; n <= 6; n++) {
                 const share = total / n;
-                const match = cands.filter(b => Math.abs(b.i - share) <= 0.021);
+                // Los amigos suelen redondear (24,60 € → 25 €): se admite un pequeño margen
+                const tol = Math.max(0.021, share * (n === 2 ? 0.01 : 0.03));
+                const match = cands.filter(b => Math.abs(b.i - share) <= tol);
                 const need = n === 2 ? 1 : 2;
                 if (match.length >= need) options.push({ exp: e, n, share, need, match });
             }
@@ -57,7 +60,7 @@
                         <span class="icon-tile round" style="background:var(--teal)"><i class="ic ic-users"></i></span>
                         <div class="row-main">
                             <div class="row-title bold" style="font-size:15px">${esc(s.exp.c)} entre ${s.n}</div>
-                            <div class="row-sub" style="white-space:normal">Pagaste ${formatEur(-s.exp.i)} el ${shortDate(s.exp.d)} y te llegaron ${s.bz.length} Bizum${s.bz.length > 1 ? 's' : ''} de ${formatEur(s.share)}. ¿Los agrupo?</div>
+                            <div class="row-sub" style="white-space:normal">Pagaste ${formatEur(-s.exp.i)} el ${shortDate(s.exp.d)} y te llegaron ${s.bz.length} Bizum${s.bz.length > 1 ? 's' : ''} por ${formatEur(s.bz.reduce((a, b) => a + b.i, 0))}. Tu parte quedaría en ${formatEur(-s.exp.i - s.bz.reduce((a, b) => a + b.i, 0))}. ¿Los agrupo?</div>
                             <div class="flex gap-2 mt-2">
                                 <button onclick="applyBizumLink(${idx})" class="btn xs">Agrupar</button>
                                 <button onclick="dismissBizum(${idx})" class="btn xs gray">Ahora no</button>
@@ -74,6 +77,98 @@
         saveState(); renderAllViews();
         showToast('Gasto compartido agrupado');
     }
+    /* ----------------------------------------------------------------------
+       Agrupar a mano: elegir qué ingresos forman parte de un gasto compartido
+       (sirve cuando cada amigo paga un importe distinto)
+       ---------------------------------------------------------------------- */
+    let BizumPick = null;   // { k: clave del gasto, sel: Set de claves, all: bool }
+
+    function openBizumPicker(encKey) {
+        const k = decodeURIComponent(encKey);
+        const e = AppState.rows.find(r => r.k === k);
+        if (!e || e.i >= 0) return;
+        BizumPick = { k, sel: new Set(e.bz || []), all: false };
+        document.getElementById('bizum-pick-all').checked = false;
+        paintBizumPicker();
+        document.getElementById('bizum-modal').classList.remove('hidden');
+    }
+
+    function bizumPickCandidates() {
+        const e = AppState.rows.find(r => r.k === BizumPick.k);
+        const from = addDays(e.d, -3), to = addDays(e.d, 14);
+        return AppState.rows.filter(b =>
+            b.i > 0 && b.k !== e.k && (
+                BizumPick.sel.has(b.k) ||
+                (!b.lk && b.d >= from && b.d <= to && (BizumPick.all || isBizum(b)))
+            )
+        ).sort((a, b) => a.d.localeCompare(b.d) || a.k.localeCompare(b.k));
+    }
+
+    function updateBizumPickSummary() {
+        const e = AppState.rows.find(r => r.k === BizumPick.k);
+        const sum = AppState.rows.filter(b => BizumPick.sel.has(b.k)).reduce((a, b) => a + b.i, 0);
+        document.getElementById('bizum-pick-sum').innerHTML =
+            `Recibido ${formatEur(sum)} · <b>Tu parte ${formatEur(-e.i - sum)}</b>`;
+    }
+
+    function paintBizumPicker() {
+        const e = AppState.rows.find(r => r.k === BizumPick.k);
+        const list = bizumPickCandidates();
+        document.getElementById('bizum-pick-title').textContent = e.c;
+        document.getElementById('bizum-pick-sub').textContent =
+            `Pagaste ${formatEur(-e.i)} el ${shortDate(e.d)}. Marca los ingresos que te devolvieron.`;
+        document.getElementById('bizum-pick-list').innerHTML = list.length
+            ? list.map(b => `
+                <label class="pick-row">
+                    <input type="checkbox" data-k="${enc(b.k)}" ${BizumPick.sel.has(b.k) ? 'checked' : ''}>
+                    <span class="truncate">${shortDate(b.d)} · ${esc(b.c)}</span>
+                    <span class="num pos">+${formatEur(b.i)}</span>
+                </label>`).join('')
+            : '<div class="muted small" style="padding:14px 0">No hay ingresos cerca de esa fecha.</div>';
+        updateBizumPickSummary();
+    }
+
+    function onBizumPickToggle(ev) {
+        const cb = ev.target.closest('input[data-k]');
+        if (!cb || !BizumPick) return;
+        const k = decodeURIComponent(cb.dataset.k);
+        if (cb.checked) BizumPick.sel.add(k); else BizumPick.sel.delete(k);
+        updateBizumPickSummary();
+    }
+
+    function onBizumPickAll(checked) {
+        if (!BizumPick) return;
+        BizumPick.all = checked;
+        paintBizumPicker();
+    }
+
+    function closeBizumPicker() {
+        document.getElementById('bizum-modal').classList.add('hidden');
+        BizumPick = null;
+    }
+
+    function applyBizumPick() {
+        if (!BizumPick) return;
+        const map = byKeyMap();
+        const e = map.get(BizumPick.k);
+        if (!e) { closeBizumPicker(); return; }
+
+        // Soltar los anteriores y vincular los marcados
+        (e.bz || []).forEach(bk => { const b = map.get(bk); if (b) delete b.lk; });
+        const chosen = [...BizumPick.sel].filter(bk => map.has(bk));
+        if (chosen.length) {
+            e.bz = chosen;
+            chosen.forEach(bk => { map.get(bk).lk = e.k; });
+        } else {
+            delete e.bz;
+            if (!AppState.dismissed.includes(e.k)) AppState.dismissed.push(e.k);
+        }
+
+        closeBizumPicker();
+        saveState(); renderAllViews();
+        showToast(chosen.length ? 'Gasto compartido agrupado' : 'Bizums desvinculados');
+    }
+
     function dismissBizum(idx) {
         const s = BizumSugg[idx]; if (!s) return;
         if (!AppState.dismissed.includes(s.exp.k)) AppState.dismissed.push(s.exp.k);

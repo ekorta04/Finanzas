@@ -122,6 +122,7 @@
                 </summary>
                 <div class="mov-edit">
                     ${split}
+                    ${r.i < 0 && !isBizum(r) && r.cat !== 'Inversión' ? `<button class="link small" style="margin:2px 0 8px" onclick="openBizumPicker('${ek}')">${g ? 'Editar Bizums del grupo' : 'Agrupar Bizums a mano…'}</button>` : ''}
                     <label>Categoría
                         <select class="field" onchange="updateRowCategory('${ek}', this.value)">${opts.replace(`value="${esc(r.cat)}"`, m => m + ' selected')}</select>
                     </label>
