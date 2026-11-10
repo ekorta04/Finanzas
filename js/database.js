@@ -392,6 +392,7 @@ function initMainUIOnce() {
     setupTabNavigation();
     setupDropZone();
     setupInvDropZone();
+    setupXRayDropZone();
 
     const invDate = document.getElementById('inv-val-date');
     if (invDate) invDate.value = new Date().toISOString().slice(0, 10);

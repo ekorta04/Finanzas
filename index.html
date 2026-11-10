@@ -327,9 +327,27 @@
                 <div class="chart-box"><canvas id="chart-inv"></canvas></div>
             </div>
 
+            <div id="xray-card" class="card hidden">
+                <div class="card-head">
+                    <h2 class="card-title">Composición de la cartera</h2>
+                    <span class="xsmall muted">Informe X-Ray</span>
+                </div>
+                <div id="xray-body"></div>
+            </div>
+
             <div class="grid-lg-2 stack">
                 <div>
-                    <h3 class="group-header">Valor de la cartera</h3>
+                    <h3 class="group-header">Informe X-Ray (PDF)</h3>
+                    <div id="xray-drop" class="drop" role="button" tabindex="0">
+                        <input type="file" id="xray-file-input" accept=".pdf,application/pdf" class="hidden" onchange="handleXRayFile(event)">
+                        <span class="icon-tile"><i class="ic ic-file-up"></i></span>
+                        <span class="bold">Subir informe X-Ray</span>
+                        <span class="small muted">PDF de MyInvestor · una vez al mes</span>
+                    </div>
+                    <div id="xray-result" class="hidden result mt-2"></div>
+                    <p class="group-footer">Se actualizan el reparto, los fondos y el valor de la cartera.</p>
+
+                    <h3 class="group-header mt-3">Valor de la cartera</h3>
                     <div class="group">
                         <div class="row">
                             <span class="row-main row-title">Fecha</span>
@@ -582,6 +600,23 @@
     </div>
 </div>
 
+<div id="xray-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="xray-modal-title">
+    <div class="alert cat-new">
+        <p id="xray-modal-title" style="padding-bottom:10px;font-weight:600;font-size:17px">Informe X-Ray</p>
+        <div class="cat-new-body">
+            <div id="xray-summary" class="small"></div>
+            <label class="small" style="display:grid;gap:6px">Valor total de tu cartera (€)
+                <input id="xray-total" class="field" type="text" inputmode="decimal" autocomplete="off">
+            </label>
+            <div id="xray-error" class="xsmall" style="color:var(--red);min-height:16px"></div>
+        </div>
+        <div class="alert-actions">
+            <button id="xray-cancel" type="button">Cancelar</button>
+            <button id="xray-ok" type="button">Guardar</button>
+        </div>
+    </div>
+</div>
+
 <script src="vendor/supabase-2.118.0.min.js"></script>
 <script src="vendor/chart-4.4.1.min.js"></script>
 <script src="vendor/papaparse-5.5.3.min.js"></script>
@@ -597,6 +632,7 @@
 <script src="js/dashboard.js"></script>
 <script src="js/movimientos.js"></script>
 <script src="js/inversion.js"></script>
+<script src="js/xray.js"></script>
 <script src="js/reglas.js"></script>
 <script src="js/importacion.js"></script>
 <script src="js/backup.js"></script>

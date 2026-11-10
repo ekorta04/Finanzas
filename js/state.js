@@ -53,6 +53,7 @@ const defaultState = () => ({
     invMap: null,        // { date, concept, amount, balance } (nombres de cabecera recordados)
     invSign: 1,
     invValues: [],       // [{ d, v }]
+    invXray: [],         // informes X-Ray: [{ d, v, assets, countries, sectors, top, funds, rent }]
     dismissed: [],       // gastos cuyas sugerencias Bizum se descartaron
     customCats: [],      // categorías creadas por el usuario: { n, ic, col }
     settings: { bizumMin: 30, bizumDays: 4 }

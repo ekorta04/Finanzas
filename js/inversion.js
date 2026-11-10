@@ -34,6 +34,7 @@
         } else { vEl.textContent = '—'; rEl.textContent = ''; rEl.className = ''; pEl.textContent = 'Añade el valor actual de la cartera para ver la rentabilidad'; }
     
         document.getElementById('inv-sign').value = String(AppState.invSign || 1);
+        renderXRay();
     
         // Lista de valores
         const vl = document.getElementById('inv-values-list');
@@ -106,7 +107,7 @@
     function forgetInvMap() { AppState.invMap = null; saveState(); showToast('Mapeo olvidado: se te preguntará en la próxima importación'); }
     async function wipeInvData() {
         if (!(await askConfirm('¿Borrar todos los movimientos y valores de la cuenta de inversión?'))) return;
-        AppState.inv = []; AppState.invValues = []; saveState(); renderAllViews(); showToast('Datos de inversión borrados');
+        AppState.inv = []; AppState.invValues = []; AppState.invXray = []; saveState(); renderAllViews(); showToast('Datos de inversión borrados');
     }
     
     // CSV genérico con comillas y separador autodetectado

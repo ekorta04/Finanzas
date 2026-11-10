@@ -10,6 +10,7 @@
     setupTabNavigation();
     setupDropZone();
     setupInvDropZone();
+    setupXRayDropZone();
 
     document.getElementById('inv-val-date').value =
         new Date().toISOString().slice(0, 10);

@@ -7,6 +7,10 @@
         st.settings = Object.assign({ bizumMin: 30, bizumDays: 4 }, (p && p.settings) || {});
         if (!Array.isArray(st.rules)) st.rules = DEFAULT_RULES.slice();
         ['rows', 'imports', 'inv', 'invValues', 'dismissed'].forEach(k => { if (!Array.isArray(st[k])) st[k] = []; });
+        st.invXray = (Array.isArray(st.invXray) ? st.invXray : [])
+            .filter(x => x && /^\d{4}-\d{2}-\d{2}$/.test(x.d) && typeof x.v === 'number' && Array.isArray(x.assets))
+            .map(x => Object.assign({ countries: [], sectors: [], top: [], funds: [], rent: {} }, x))
+            .sort((a, b) => a.d.localeCompare(b.d)).slice(-36);
         if (!st.budgets || typeof st.budgets !== 'object') st.budgets = {};
         st.customCats = (Array.isArray(st.customCats) ? st.customCats : [])
             .filter(c => c && typeof c.n === 'string' && c.n.trim())
