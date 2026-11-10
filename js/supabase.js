@@ -3,9 +3,9 @@
    CONEXIÓN CON SUPABASE
    ========================================== */
 
-const SUPABASE_URL = 'https://suhuvgoafcbgdsduxscb.supabase.co';
+const SUPABASE_URL = 'https://humxabihxylctmrjspiw.supabase.co';
 
-const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_s9lEFM2fuQf76q0miwdTjA_QkULdaKa';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_xInkf8ehKMddG5C5c5oq5g__JwLGaeg';
 
 
 /* ------------------------------------------
