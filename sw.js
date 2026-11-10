@@ -1,9 +1,9 @@
 /* ==========================================================================
-   SERVICE WORKER - FINANZAS KUTXA
+   SERVICE WORKER - FINANZAS
    Caché de los archivos de la aplicación
    ========================================================================== */
 
-   const CACHE = 'finanzas-v6';
+   const CACHE = 'finanzas-v7';
 
    const FILES = [
        './',

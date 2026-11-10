@@ -1,6 +1,6 @@
 
 /* =====================================================
-   FINANZAS KUTXA
+   FINANZAS
    IMPORTADOR UNIVERSAL DE ARCHIVOS CSV
    =====================================================
 

@@ -1,5 +1,5 @@
 
-# Finanzas KUTXA
+# Finanzas
 
 Aplicación web para gestionar y analizar las finanzas personales a partir de extractos bancarios de Laboral Kutxa.
 

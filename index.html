@@ -13,7 +13,7 @@
 <link rel="icon" href="assets/icons/icon-192.png">
 <link rel="apple-touch-icon" href="assets/icons/icon-180.png">
 
-<title>Finanzas KUTXA</title>
+<title>Finanzas</title>
 
 <link rel="stylesheet" href="css/tailwind.css">
 <link rel="stylesheet" href="css/styles.css">
@@ -33,7 +33,7 @@
         <div class="text-center space-y-2">
             <div class="text-4xl" aria-hidden="true">💳</div>
             <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
-                Finanzas KUTXA
+                Finanzas
             </h1>
             <p class="text-sm text-slate-500 dark:text-slate-400">
                 Gestiona tus finanzas personales
@@ -126,7 +126,7 @@
 
                     <div class="min-w-0">
                         <h1 class="font-bold text-base sm:text-lg leading-tight tracking-tight whitespace-nowrap truncate">
-                            Finanzas KUTXA
+                            Finanzas
                         </h1>
                         <p class="hidden sm:block text-xs text-slate-500 dark:text-slate-400 font-medium">
                             Control &amp; Análisis Personal
@@ -611,19 +611,24 @@
 
                 </div>
 
-                <div class="overflow-x-auto">
+                <!-- Lista en tarjetas para el móvil -->
+                <div id="movs-cards"
+                    class="sm:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                </div>
+
+                <div class="hidden sm:block overflow-x-auto">
 
                     <table class="w-full text-left text-xs">
 
                         <thead class="bg-slate-100/70 dark:bg-slate-800/60 text-slate-500 font-semibold uppercase tracking-wider">
 
                             <tr>
-                                <th class="py-3 px-2 sm:px-4">Fecha</th>
-                                <th class="py-3 px-2 sm:px-4">Concepto</th>
-                                <th class="py-3 px-2 sm:px-4">Categoría</th>
-                                <th class="py-3 px-2 sm:px-4">Etiquetas</th>
-                                <th class="py-3 px-2 sm:px-4 text-right">Importe</th>
-                                <th class="py-3 px-2 sm:px-4 text-right hidden sm:table-cell">Saldo</th>
+                                <th class="py-3 px-4">Fecha</th>
+                                <th class="py-3 px-4">Concepto</th>
+                                <th class="py-3 px-4">Categoría</th>
+                                <th class="py-3 px-4">Etiquetas</th>
+                                <th class="py-3 px-4 text-right">Importe</th>
+                                <th class="py-3 px-4 text-right">Saldo</th>
                             </tr>
 
                         </thead>

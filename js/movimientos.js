@@ -22,44 +22,96 @@
         });
     }
     
+    // Un gasto pagado por ti y los Bizums que te devolvieron se muestran
+    // juntos, como un único movimiento con el importe neto.
+    function groupLinkedRows(rows, map) {
+        return rows.filter(r => !(r.lk && map.has(r.lk)));
+    }
+
+    function bizumGroup(r, map) {
+        if (!(r.bz && r.bz.length)) return null;
+        const items = r.bz.map(bk => map.get(bk)).filter(Boolean);
+        const sum = items.reduce((a, b) => a + (b.i || 0), 0);
+        return { items, sum, net: r.i + sum, people: items.length + 1 };
+    }
+
     function renderMovimientos() {
+        const map = byKeyMap();
         const filtered = getFilteredRows();
-        document.getElementById('movs-counter').textContent = `Mostrando ${Math.min(filtered.length, 250)} de ${filtered.length} filtrados (${AppState.rows.length} en total)`;
+        // Si un Bizum vinculado cumple el filtro, mostrar su gasto agrupado
+        const shown = new Set();
+        const grouped = [];
+        for (const r of filtered) {
+            const row = (r.lk && map.has(r.lk)) ? map.get(r.lk) : r;
+            if (shown.has(row.k)) continue;
+            shown.add(row.k);
+            grouped.push(row);
+        }
+        const LIMIT = 250;
+        document.getElementById('movs-counter').textContent = `Mostrando ${Math.min(grouped.length, LIMIT)} de ${grouped.length} filtrados (${groupLinkedRows(AppState.rows, map).length} en total)`;
         document.getElementById('bulk-tag-btn').textContent = `Aplicar a ${filtered.length}`;
         const tbody = document.getElementById('movs-table-body');
-        const show = filtered.slice(0, 250);
-        if (!show.length) { tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400">No se encontraron movimientos que coincidan con los filtros.</td></tr>`; return; }
-        const map = byKeyMap();
-    
-        tbody.innerHTML = show.map(r => {
+        const cards = document.getElementById('movs-cards');
+        const show = grouped.slice(0, LIMIT);
+        if (!show.length) {
+            tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400">No se encontraron movimientos que coincidan con los filtros.</td></tr>`;
+            if (cards) cards.innerHTML = `<p class="py-6 text-center text-xs text-slate-400">No se encontraron movimientos que coincidan con los filtros.</p>`;
+            return;
+        }
+
+        const parts = show.map(r => {
             const ek = enc(r.k);
-            const exp = r.i < 0;
+            const g = bizumGroup(r, map);
+            const amount = g ? g.net : r.i;
+            const exp = amount < 0;
+            const amountCls = exp ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400';
             const opts = CATEGORIES.map(c => `<option value="${c}" ${c === r.cat ? 'selected' : ''}>${c}</option>`).join('');
-            let badge = '';
-            if (r.bz && r.bz.length) {
-                const sum = r.bz.reduce((a, bk) => a + ((map.get(bk) || {}).i || 0), 0);
-                badge = `<div class="mt-0.5"><button onclick="unlinkBizums('${ek}')" title="Desvincular" class="text-[10px] font-semibold text-sky-600 dark:text-sky-400 hover:underline"><i class="fa-solid fa-link mr-1"></i>${r.bz.length} Bizums (+${formatEur(sum)}) · neto ${formatEur(r.i + sum)} ✕</button></div>`;
-            } else if (r.lk) {
-                const e = map.get(r.lk);
-                badge = `<div class="mt-0.5 text-[10px] font-semibold text-sky-600 dark:text-sky-400"><i class="fa-solid fa-link mr-1"></i>Vinculado a ${esc(e ? e.c : 'gasto')}</div>`;
-            }
+            const select = `<select onchange="updateRowCategory('${ek}', this.value)" aria-label="Categoría" class="max-w-full text-xs bg-slate-100 dark:bg-slate-800 border-none rounded-lg py-1 pl-2 pr-7 focus:ring-2 focus:ring-brand-500 font-medium">${opts}</select>`;
             const chips = (r.t || []).map(t => `<span class="tag-chip">#${esc(t)}<button onclick="removeTag('${ek}','${enc(t)}')" title="Quitar">✕</button></span>`).join('');
-            return `
+            const tagInput = `<input type="text" list="tag-list" placeholder="+ #etiqueta" onchange="addTagFromInput(this,'${ek}')" class="w-24 px-2 py-0.5 text-[11px] rounded-lg bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500">`;
+
+            let detail = '';
+            if (g) {
+                detail = `
+                <details class="mt-1 text-[11px] text-sky-700 dark:text-sky-300">
+                    <summary class="cursor-pointer font-semibold select-none"><i class="fa-solid fa-link mr-1"></i>Entre ${g.people} · pagaste ${formatEur(r.i)} · ${g.items.length} Bizum${g.items.length > 1 ? 's' : ''} +${formatEur(g.sum)}</summary>
+                    <ul class="mt-1 space-y-0.5 pl-4 text-slate-500 dark:text-slate-400 font-normal">
+                        ${g.items.map(b => `<li class="flex justify-between gap-3"><span class="truncate">${formatDateEs(b.d)} · ${esc(b.c)}</span><span class="font-mono text-emerald-600 dark:text-emerald-400 whitespace-nowrap">+${formatEur(b.i)}</span></li>`).join('')}
+                    </ul>
+                    <button onclick="unlinkBizums('${ek}')" class="mt-1 ml-4 text-[11px] font-semibold text-slate-500 hover:text-rose-600 hover:underline">Separar Bizums</button>
+                </details>`;
+            }
+
+            const row = `
             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors align-top">
-                <td class="py-2.5 px-2 sm:px-4 font-mono text-slate-500 whitespace-nowrap">${formatDateEs(r.d)}</td>
-                <td class="py-2.5 px-2 sm:px-4 font-medium">${esc(r.c)}${badge}</td>
-                <td class="py-2.5 px-2 sm:px-4">
-                    <select onchange="updateRowCategory('${ek}', this.value)" class="text-xs bg-slate-100 dark:bg-slate-800 border-none rounded-lg py-1 px-2 focus:ring-2 focus:ring-brand-500 font-medium">${opts}</select>
+                <td class="py-2.5 px-4 font-mono text-slate-500 whitespace-nowrap">${formatDateEs(r.d)}</td>
+                <td class="py-2.5 px-4 font-medium">${esc(r.c)}${detail}</td>
+                <td class="py-2.5 px-4">${select}</td>
+                <td class="py-2.5 px-4">
+                    <div class="flex flex-wrap items-center gap-1 min-w-[140px]">${chips}${tagInput}</div>
                 </td>
-                <td class="py-2.5 px-2 sm:px-4">
-                    <div class="flex flex-wrap items-center gap-1 min-w-[140px]">${chips}
-                        <input type="text" list="tag-list" placeholder="+ #etiqueta" onchange="addTagFromInput(this,'${ek}')" class="w-24 px-2 py-0.5 text-[11px] rounded-lg bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500">
-                    </div>
-                </td>
-                <td class="py-2.5 px-2 sm:px-4 text-right font-bold font-mono whitespace-nowrap ${exp ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">${formatEur(r.i)}</td>
-                <td class="py-2.5 px-2 sm:px-4 text-right font-mono text-slate-400 hidden sm:table-cell whitespace-nowrap">${formatEur(r.s)}</td>
+                <td class="py-2.5 px-4 text-right font-bold font-mono whitespace-nowrap ${amountCls}">${formatEur(amount)}</td>
+                <td class="py-2.5 px-4 text-right font-mono text-slate-400 whitespace-nowrap">${formatEur(r.s)}</td>
             </tr>`;
-        }).join('');
+
+            const card = `
+            <div class="px-4 py-3 space-y-1.5">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-sm font-semibold leading-snug break-words">${esc(r.c)}</p>
+                        <p class="text-[11px] font-mono text-slate-400">${formatDateEs(r.d)}</p>
+                    </div>
+                    <p class="shrink-0 text-sm font-bold font-mono ${amountCls}">${formatEur(amount)}</p>
+                </div>
+                ${detail}
+                <div class="flex flex-wrap items-center gap-1.5">${select}${chips}${tagInput}</div>
+            </div>`;
+
+            return { row, card };
+        });
+
+        tbody.innerHTML = parts.map(p => p.row).join('');
+        if (cards) cards.innerHTML = parts.map(p => p.card).join('');
     }
     
     

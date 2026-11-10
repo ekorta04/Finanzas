@@ -1,5 +1,5 @@
 /* =====================================================
-   FINANZAS KUTXA
+   FINANZAS
    AUTENTICACIÓN CON SUPABASE
    ===================================================== */
 
@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 /* =====================================================
-   CERRAR SESIÓN DE FINANZAS KUTXA
+   CERRAR SESIÓN DE FINANZAS
    ===================================================== */
 
 async function logoutFinanzas() {
