@@ -632,3 +632,28 @@ async function loadUserDashboard(options = {}) {
 
     return results;
 }
+
+
+/* =====================================================
+   APLICAR UNA REGLA A VARIOS MOVIMIENTOS
+   Solo afecta a movimientos no clasificados a mano.
+   ===================================================== */
+
+async function updateTransactionsAutoCategory(accountId, sourceKeys, newCategory) {
+    if (!accountId || !sourceKeys.length) return;
+
+    if (!CATEGORIES.includes(newCategory)) {
+        throw new Error('Categoría no válida.');
+    }
+
+    for (let i = 0; i < sourceKeys.length; i += 100) {
+        const { error } = await supabaseClient
+            .from('transactions')
+            .update({ category: newCategory })
+            .eq('account_id', accountId)
+            .eq('manual_category', false)
+            .in('source_key', sourceKeys.slice(i, i + 100));
+
+        if (error) throw error;
+    }
+}

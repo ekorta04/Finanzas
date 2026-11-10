@@ -203,10 +203,54 @@ async function updateRowCategory(encKey, newCategory) {
             'No se pudo guardar la categoría',
             'error'
         );
+        return;
+    }
+
+    // Sugerir guardarlo como regla para el futuro
+    await suggestRuleFor(row, newCategory, accountId);
+}
+
+async function suggestRuleFor(row, newCategory, accountId) {
+    const cn = norm(row.c);
+    const generic = /^(SIN CONCEPTO|ENVIO DE DINERO CON BIZUM|BIZUM)/.test(cn);
+
+    if (generic || newCategory === 'Sin clasificar' ||
+        AppState.rules.some(x => norm(x.p) === cn)) {
+        return;
+    }
+
+    const same = AppState.rows.filter(x =>
+        norm(x.c) === cn && x.k !== row.k && !x.man
+    );
+
+    const msg = `¿Recordar "${row.c}" → ${newCategory} para siempre?` +
+        (same.length > 0
+            ? `\nSe aplicará automáticamente a otros ${same.length} movimientos iguales.`
+            : '');
+
+    if (!(await askConfirm(msg))) return;
+
+    AppState.rules.unshift({ p: row.c, c: newCategory });
+    same.forEach(x => { x.cat = newCategory; });
+    saveState();
+    renderAllViews();
+
+    try {
+        if (same.length) {
+            await updateTransactionsAutoCategory(
+                accountId,
+                same.map(x => x.k),
+                newCategory
+            );
+        }
+        showToast('Regla guardada y movimientos actualizados');
+    } catch (error) {
+        console.error('Error aplicando la regla en Supabase:', error);
+        showToast('Regla guardada, pero no se pudieron actualizar todos los movimientos en la base de datos', 'error');
     }
 }
 
-    
+
     function clearMovFilters() {
         movsLimit = 150;
         ['filter-search', 'filter-cat', 'filter-tag', 'filter-month', 'filter-date-from', 'filter-date-to'].forEach(id => document.getElementById(id).value = '');
