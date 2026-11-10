@@ -642,7 +642,6 @@
 
 <script>
 if ('serviceWorker' in navigator) {
-    const openedAt = Date.now();
     const hadController = !!navigator.serviceWorker.controller;
 
     navigator.serviceWorker
@@ -652,11 +651,7 @@ if ('serviceWorker' in navigator) {
     // Cuando se publica una versión nueva, aplicarla enseguida
     navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (!hadController) return;
-        if (Date.now() - openedAt < 15000) {
-            window.location.reload();
-        } else if (typeof showToast === 'function') {
-            showToast('Hay una versión nueva. Cierra y vuelve a abrir la app.');
-        }
+        window.location.reload();   // los datos ya están guardados en el dispositivo
     });
 }
 </script>
