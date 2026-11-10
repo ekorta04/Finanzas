@@ -64,3 +64,9 @@ Proyecto en desarrollo.
 - Las librerías (Supabase, Chart.js, PapaParse) están en `vendor/` con versión fija.
 - Al publicar cambios, sube el número de `CACHE` en `sw.js` para que el móvil
   descargue la versión nueva.
+
+## Sincronización entre dispositivos
+
+Reglas, presupuestos, etiquetas, Bizums vinculados, ajustes, histórico de
+importaciones e inversión se guardan en la tabla `user_settings` de Supabase.
+Para crearla, ejecuta una vez `supabase/user_settings.sql` en el SQL Editor de Supabase.

@@ -39,7 +39,7 @@
             await loadUserDashboard({ keepTab: true });
 
             AppState.imports.push({ at: new Date().toLocaleString('es-ES'), added, dup });
-            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState)); } catch (e) {}
+            saveState();
             renderImportHistory();
 
             const sug = BizumSugg.length;

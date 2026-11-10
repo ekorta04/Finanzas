@@ -457,11 +457,17 @@ async function loadUserDashboard(options = {}) {
     setCloudUser(user);
     setCloudStatus('Cargando datos…', 'busy');
 
+    // Subir antes cualquier cambio pendiente para no pisarlo
+    await cloudFlush();
+
     // Datos locales (reglas, etiquetas, presupuestos, inversión…)
     loadState();
     const localByKey = new Map(AppState.rows.map(r => [r.k, r]));
 
-    const { accounts, account } = await resolveActiveAccount(user.id);
+    const [{ accounts, account }, cloudData] = await Promise.all([
+        resolveActiveAccount(user.id),
+        fetchCloudSettings(user.id)
+    ]);
     renderImportAccountSelector(accounts, account && account.id);
 
     let rows = [];
@@ -487,6 +493,15 @@ async function loadUserDashboard(options = {}) {
     rows.sort((a, b) => b.d.localeCompare(a.d) || (b.s ?? 0) - (a.s ?? 0));
     AppState.rows = rows;
 
+    if (cloudData) {
+        // Lo guardado en la nube manda (lo último hecho en cualquier dispositivo)
+        applyCloudData(cloudData);
+    } else if (cloudData === null) {
+        // Primera vez: subir lo que había en este dispositivo
+        Cloud.dirty = true;
+        await cloudFlush();
+    }
+
     // Guardar en el dispositivo sin volver a subir nada
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState));
@@ -499,7 +514,11 @@ async function loadUserDashboard(options = {}) {
         switchTab('v-dashboard');
     }
 
-    setCloudOk();
+    if (Cloud.settingsAvailable === false) {
+        setCloudStatus('Movimientos al día. Falta crear la tabla "user_settings" en Supabase para sincronizar reglas, etiquetas y Bizums.', 'err');
+    } else {
+        setCloudOk();
+    }
 }
 
 
