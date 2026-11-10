@@ -55,3 +55,12 @@ También se pueden exportar copias de seguridad en formato JSON.
 ## Estado
 
 Proyecto en desarrollo.
+
+## Rendimiento y cambios de estilo
+
+- Los estilos de Tailwind están precompilados en `css/tailwind.css`.
+  Si se añaden clases nuevas en el HTML o el JS, hay que regenerarlo:
+  `npx tailwindcss@3.4.17 -i css/tailwind.src.css -o css/tailwind.css --minify`
+- Las librerías (Supabase, Chart.js, PapaParse) están en `vendor/` con versión fija.
+- Al publicar cambios, sube el número de `CACHE` en `sw.js` para que el móvil
+  descargue la versión nueva.

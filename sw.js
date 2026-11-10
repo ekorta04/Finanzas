@@ -3,7 +3,7 @@
    Caché de los archivos de la aplicación
    ========================================================================== */
 
-   const CACHE = 'finanzas-v5';
+   const CACHE = 'finanzas-v6';
 
    const FILES = [
        './',
@@ -12,7 +12,13 @@
        './manifest.webmanifest',
    
        // CSS
+       './css/tailwind.css',
        './css/styles.css',
+
+       // Librerías (copiadas en el repositorio, versión fija)
+       './vendor/supabase-2.118.0.min.js',
+       './vendor/chart-4.4.1.min.js',
+       './vendor/papaparse-5.5.3.min.js',
    
        // JavaScript
        './js/supabase.js',
@@ -64,28 +70,33 @@
        );
    });
    
-   // Solicitudes: primero red, después caché
+   // Solicitudes: se responde al instante desde la caché y, a la vez,
+   // se descarga la versión nueva para la próxima vez.
+   // Las llamadas a Supabase (otro dominio) no pasan por aquí.
    self.addEventListener('fetch', e => {
        const url = new URL(e.request.url);
-   
+
        if (
            e.request.method !== 'GET' ||
            url.origin !== self.location.origin
        ) return;
-   
+
        e.respondWith(
-           fetch(e.request)
-               .then(response => {
-                   if (response.ok) {
-                       const copy = response.clone();
-   
-                       caches.open(CACHE)
-                           .then(cache => cache.put(e.request, copy));
+           caches.open(CACHE).then(cache =>
+               cache.match(e.request, { ignoreSearch: true }).then(cached => {
+                   const network = fetch(e.request)
+                       .then(response => {
+                           if (response.ok) cache.put(e.request, response.clone());
+                           return response;
+                       })
+                       .catch(() => cached);
+
+                   if (cached) {
+                       e.waitUntil(network);
+                       return cached;
                    }
-   
-                   return response;
+                   return network;
                })
-               .catch(() => caches.match(e.request))
+           )
        );
    });
-   

@@ -413,6 +413,32 @@ function initMainUIOnce() {
     }
 }
 
+// Dueño de los datos guardados en el dispositivo, para no mostrar
+// los movimientos de otro usuario que usó el mismo navegador.
+const CACHE_OWNER_KEY = 'finanzas_cache_owner';
+
+// Mostrar el Dashboard con los datos guardados en el dispositivo.
+// Devuelve true si había datos de este usuario que mostrar.
+function showCachedDashboard() {
+    try {
+        const userId = getStoredSessionUserId();
+
+        if (!userId || localStorage.getItem(CACHE_OWNER_KEY) !== userId) return false;
+
+        initMainUIOnce();
+        loadState();
+        if (!AppState.rows.length) return false;
+
+        renderAllViews();
+        switchTab('v-dashboard');
+        setCloudStatus('Actualizando…', 'busy');
+        return true;
+    } catch (e) {
+        console.warn('No se pudieron mostrar los datos guardados:', e);
+        return false;
+    }
+}
+
 // Cargar los movimientos del usuario y mostrar el Dashboard.
 // Los movimientos vienen de la base de datos; reglas, presupuestos,
 // etiquetas, inversión y ajustes se conservan del dispositivo.
@@ -462,7 +488,10 @@ async function loadUserDashboard(options = {}) {
     AppState.rows = rows;
 
     // Guardar en el dispositivo sin volver a subir nada
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState)); } catch (e) {}
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState));
+        localStorage.setItem(CACHE_OWNER_KEY, user.id);
+    } catch (e) {}
 
     renderAllViews();
 

@@ -60,6 +60,19 @@ const sessionStore = {
     }
 };
 
+// Usuario de la sesión guardada en el dispositivo, leído al instante
+// (sin esperar a internet). Devuelve null si no hay sesión.
+function getStoredSessionUserId() {
+    try {
+        const ref = new URL(SUPABASE_URL).hostname.split('.')[0];
+        const raw = sessionStore.getItem(`sb-${ref}-auth-token`);
+        const stored = raw ? JSON.parse(raw) : null;
+        return (stored && stored.user && stored.user.id) || null;
+    } catch (e) {
+        return null;
+    }
+}
+
 // Cliente de Supabase
 const supabaseClient = window.supabase.createClient(
     SUPABASE_URL,

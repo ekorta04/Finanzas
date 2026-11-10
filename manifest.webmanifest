@@ -1,7 +1,7 @@
 {
   "name": "Finanzas KUTXA",
   "short_name": "Finanzas",
-  "description": "Gastos de Laboral Kutxa con sincronización en Google Sheets",
+  "description": "Gastos de Laboral Kutxa con base de datos propia",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

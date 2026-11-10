@@ -14,8 +14,8 @@
         #app-root { min-height: 100vh; padding-left:max(0px, env(safe-area-inset-left,0px)); padding-right:max(0px, env(safe-area-inset-right,0px)); }
         #toast-message { bottom: calc(1rem + env(safe-area-inset-bottom,0px)); }
         #cloud-pill { position:fixed; left:max(12px, env(safe-area-inset-left,0px)); bottom:calc(12px + env(safe-area-inset-bottom,0px)); z-index:45; font-size:11px; font-weight:600; padding:4px 10px; border-radius:9999px; background:#0f172a; color:#e2e8f0; opacity:.85; }
-        select, input, button { font-size:16px; } /* evita el zoom automático en iPhone */
-        @media (min-width:640px){ select, input, button { font-size:inherit; } }
+        /* El zoom automático del iPhone al tocar un campo se evita con
+           maximum-scale=1 en el viewport (se puede seguir ampliando con los dedos). */
 
 .fa-solid{display:inline-block;font-style:normal;font-weight:700;line-height:1;text-align:center;min-width:1em}
 .fa-people-arrows::before{content:"⇄"}
@@ -51,4 +51,6 @@
 .fa-building-columns::before{content:"▥"}
 .fa-arrows-rotate::before{content:"⟳"}
 .fa-arrow-up-long::before{content:"↑"}
-.fa-arrow-down-long::before{content:"↓"}
+.fa-arrow-down-long::before{content:"↓"}.fa-right-from-bracket::before{content:"⎋"}
+.fa-arrows-rotate::before{content:"⟳"}
+.fa-database::before{content:"⛁"}

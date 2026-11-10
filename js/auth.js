@@ -58,9 +58,24 @@ async function enterApp() {
     document.getElementById('auth-screen').classList.add('hidden');
     document.getElementById('app-root').classList.remove('hidden');
 
+    // Pintar al instante los últimos datos guardados en este dispositivo
+    // y actualizarlos desde la base de datos sin bloquear la pantalla.
+    const shownFromCache = showCachedDashboard();
+
+    if (!navigator.onLine && shownFromCache) {
+        setCloudStatus('Sin conexión: mostrando los últimos datos guardados', 'off');
+        return;
+    }
+
     try {
-        await loadUserDashboard();
+        await loadUserDashboard({ keepTab: shownFromCache });
     } catch (error) {
+        if (shownFromCache) {
+            console.warn('Sin conexión con la base de datos; se muestran datos guardados.', error);
+            setCloudStatus('Sin conexión: mostrando los últimos datos guardados', 'off');
+            return;
+        }
+
         console.error('Error cargando el Dashboard:', error);
         setCloudStatus('Error con la base de datos: ' + describeSupabaseError(error), 'err');
         showToast(
@@ -171,8 +186,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupAuthScreen();
 
     try {
-        // Si hay una sesión guardada, entrar sin pedir login
-        const session = await getStoredSession();
+        // Si hay una sesión guardada, entrar sin pedir login.
+        // Se comprueba primero en el dispositivo para no esperar a internet.
+        const session = getStoredSessionUserId() || await getStoredSession();
 
         if (session) {
             await enterApp();

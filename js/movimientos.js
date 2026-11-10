@@ -46,18 +46,18 @@
             const chips = (r.t || []).map(t => `<span class="tag-chip">#${esc(t)}<button onclick="removeTag('${ek}','${enc(t)}')" title="Quitar">✕</button></span>`).join('');
             return `
             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors align-top">
-                <td class="py-2.5 px-4 font-mono text-slate-500 whitespace-nowrap">${formatDateEs(r.d)}</td>
-                <td class="py-2.5 px-4 font-medium">${esc(r.c)}${badge}</td>
-                <td class="py-2.5 px-4">
+                <td class="py-2.5 px-2 sm:px-4 font-mono text-slate-500 whitespace-nowrap">${formatDateEs(r.d)}</td>
+                <td class="py-2.5 px-2 sm:px-4 font-medium">${esc(r.c)}${badge}</td>
+                <td class="py-2.5 px-2 sm:px-4">
                     <select onchange="updateRowCategory('${ek}', this.value)" class="text-xs bg-slate-100 dark:bg-slate-800 border-none rounded-lg py-1 px-2 focus:ring-2 focus:ring-brand-500 font-medium">${opts}</select>
                 </td>
-                <td class="py-2.5 px-4">
+                <td class="py-2.5 px-2 sm:px-4">
                     <div class="flex flex-wrap items-center gap-1 min-w-[140px]">${chips}
                         <input type="text" list="tag-list" placeholder="+ #etiqueta" onchange="addTagFromInput(this,'${ek}')" class="w-24 px-2 py-0.5 text-[11px] rounded-lg bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500">
                     </div>
                 </td>
-                <td class="py-2.5 px-4 text-right font-bold font-mono whitespace-nowrap ${exp ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">${formatEur(r.i)}</td>
-                <td class="py-2.5 px-4 text-right font-mono text-slate-400 hidden sm:table-cell whitespace-nowrap">${formatEur(r.s)}</td>
+                <td class="py-2.5 px-2 sm:px-4 text-right font-bold font-mono whitespace-nowrap ${exp ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">${formatEur(r.i)}</td>
+                <td class="py-2.5 px-2 sm:px-4 text-right font-mono text-slate-400 hidden sm:table-cell whitespace-nowrap">${formatEur(r.s)}</td>
             </tr>`;
         }).join('');
     }
