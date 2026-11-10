@@ -77,7 +77,8 @@
         }
 
         const show = grouped.slice(0, movsLimit);
-        const opts = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+        const opts = CATEGORIES.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('') +
+            `<option value="${NEW_CAT_VALUE}">＋ Nueva categoría…</option>`;
 
         // Agrupar por mes, como en Wallet
         const months = [];
@@ -122,7 +123,7 @@
                 <div class="mov-edit">
                     ${split}
                     <label>Categoría
-                        <select class="field" onchange="updateRowCategory('${ek}', this.value)">${opts.replace(`value="${r.cat}"`, `value="${r.cat}" selected`)}</select>
+                        <select class="field" onchange="updateRowCategory('${ek}', this.value)">${opts.replace(`value="${esc(r.cat)}"`, m => m + ' selected')}</select>
                     </label>
                     <div class="tags">
                         ${chips}
@@ -155,7 +156,19 @@
    CAMBIAR CATEGORÍA Y GUARDAR EN SUPABASE
    ===================================================== */
 
+const NEW_CAT_VALUE = '__nueva__';
+
 async function updateRowCategory(encKey, newCategory) {
+
+    // Opción "Nueva categoría…": se crea primero y luego se asigna al movimiento
+    if (newCategory === NEW_CAT_VALUE) {
+        const created = await promptNewCategory();
+        if (!created) {
+            renderMovimientos();   // devolver el selector a la categoría anterior
+            return;
+        }
+        newCategory = created;
+    }
 
     const key = decodeURIComponent(encKey);
 
@@ -209,6 +222,84 @@ async function updateRowCategory(encKey, newCategory) {
     // Sugerir guardarlo como regla para el futuro
     await suggestRuleFor(row, newCategory, accountId);
 }
+
+/* =====================================================
+   CREAR CATEGORÍAS PROPIAS
+   Se guardan en AppState.customCats y se sincronizan
+   entre dispositivos junto al resto de ajustes.
+   ===================================================== */
+
+function promptNewCategory() {
+    return new Promise(resolve => {
+        const modal = document.getElementById('cat-modal');
+        const nameEl = document.getElementById('cat-new-name');
+        const errEl = document.getElementById('cat-new-error');
+        const iconsEl = document.getElementById('cat-new-icons');
+        const colorsEl = document.getElementById('cat-new-colors');
+        const previewEl = document.getElementById('cat-new-preview');
+        const okBtn = document.getElementById('cat-new-ok');
+        const cancelBtn = document.getElementById('cat-new-cancel');
+
+        let icon = CAT_ICONS[0];
+        let color = CAT_COLORS[0];
+
+        const paint = () => {
+            iconsEl.innerHTML = CAT_ICONS.map(i =>
+                `<button type="button" data-v="${i}" class="${i === icon ? 'on' : ''}" aria-label="Icono ${i}"><i class="ic ic-${i}"></i></button>`
+            ).join('');
+            colorsEl.innerHTML = CAT_COLORS.map(c =>
+                `<button type="button" data-v="${c}" class="${c === color ? 'on' : ''}" style="background:var(${c})" aria-label="Color ${c.slice(2)}"></button>`
+            ).join('');
+            previewEl.innerHTML =
+                `<span class="icon-tile round" style="background:var(${color})"><i class="ic ic-${icon}"></i></span>`;
+        };
+
+        const done = value => {
+            modal.classList.add('hidden');
+            okBtn.onclick = cancelBtn.onclick = iconsEl.onclick = colorsEl.onclick = nameEl.onkeydown = null;
+            resolve(value);
+        };
+
+        const submit = () => {
+            const name = nameEl.value.trim().replace(/\s+/g, ' ');
+
+            if (!name) { errEl.textContent = 'Escribe un nombre.'; return; }
+            if (/[<>"'&]/.test(name)) { errEl.textContent = 'Evita los caracteres < > " \' &.'; return; }
+            if (CATEGORIES.some(c => norm(c) === norm(name))) {
+                errEl.textContent = 'Esa categoría ya existe.';
+                return;
+            }
+
+            AppState.customCats.push({ n: name, ic: icon, col: color });
+            applyCustomCategories(AppState.customCats);
+            saveState();
+            populateCategorySelects();
+            done(name);
+        };
+
+        iconsEl.onclick = e => {
+            const b = e.target.closest('button[data-v]');
+            if (b) { icon = b.dataset.v; paint(); }
+        };
+        colorsEl.onclick = e => {
+            const b = e.target.closest('button[data-v]');
+            if (b) { color = b.dataset.v; paint(); }
+        };
+        okBtn.onclick = submit;
+        cancelBtn.onclick = () => done(null);
+        nameEl.onkeydown = e => {
+            if (e.key === 'Enter') { e.preventDefault(); submit(); }
+            if (e.key === 'Escape') done(null);
+        };
+
+        nameEl.value = '';
+        errEl.textContent = '';
+        paint();
+        modal.classList.remove('hidden');
+        nameEl.focus();
+    });
+}
+
 
 async function suggestRuleFor(row, newCategory, accountId) {
     const cn = norm(row.c);

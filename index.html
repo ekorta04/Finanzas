@@ -546,6 +546,25 @@
     </div>
 </div>
 
+<div id="cat-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="cat-modal-title">
+    <div class="alert cat-new">
+        <p id="cat-modal-title" style="padding-bottom:10px;font-weight:600;font-size:17px">Nueva categoría</p>
+        <div class="cat-new-body">
+            <div class="cat-new-name">
+                <span id="cat-new-preview"></span>
+                <input id="cat-new-name" class="field" type="text" maxlength="30" placeholder="Nombre (p. ej. Gimnasio)" autocomplete="off">
+            </div>
+            <div id="cat-new-icons" class="cat-picker" aria-label="Icono"></div>
+            <div id="cat-new-colors" class="cat-picker colors" aria-label="Color"></div>
+            <div id="cat-new-error" class="xsmall" style="color:var(--red);min-height:16px"></div>
+        </div>
+        <div class="alert-actions">
+            <button id="cat-new-cancel" type="button">Cancelar</button>
+            <button id="cat-new-ok" type="button">Crear</button>
+        </div>
+    </div>
+</div>
+
 <script src="vendor/supabase-2.118.0.min.js"></script>
 <script src="vendor/chart-4.4.1.min.js"></script>
 <script src="vendor/papaparse-5.5.3.min.js"></script>

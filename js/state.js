@@ -3,7 +3,24 @@
     ========================================================================== */
 const STORAGE_KEY = 'finanzas_kutxa_v2';
 
-const CATEGORIES = ['Restauración','Supermercado','Compras online','Ocio','Transporte','Hogar','Salud','Suscripciones','Nómina','Bizum y transferencias','Inversión','Banco','Otros','Sin clasificar'];
+const BASE_CATEGORIES = ['Restauración','Supermercado','Compras online','Ocio','Transporte','Hogar','Salud','Suscripciones','Nómina','Bizum y transferencias','Inversión','Banco','Otros','Sin clasificar'];
+const CATEGORIES = BASE_CATEGORIES.slice();
+
+// Iconos y colores que se pueden elegir al crear una categoría propia
+const CAT_ICONS = ['wallet','piggy-bank','coins','receipt','store','shopping-cart','car','house','heart-pulse','zap','sparkles','users','ticket','briefcase','lightbulb','tag','utensils','package'];
+const CAT_COLORS = ['--blue','--green','--red','--orange','--yellow','--indigo','--purple','--pink','--teal','--brown','--mint','--gray'];
+
+// Las categorías propias se colocan antes de "Otros" y "Sin clasificar".
+// Se modifica la lista CATEGORIES en el sitio para que todo el código la vea.
+function applyCustomCategories(list) {
+    const tail = ['Otros', 'Sin clasificar'];
+    const head = BASE_CATEGORIES.filter(c => !tail.includes(c));
+    const custom = (Array.isArray(list) ? list : [])
+        .map(c => c && c.n)
+        .filter(n => n && !BASE_CATEGORIES.includes(n));
+    CATEGORIES.length = 0;
+    CATEGORIES.push(...head, ...custom, ...tail);
+}
 
 const DEFAULT_RULES = [
     { p: 'ALBIA KAFE', c: 'Restauración' }, { p: 'KEBAB', c: 'Restauración' }, { p: 'PIZZERIA', c: 'Restauración' },
@@ -37,6 +54,7 @@ const defaultState = () => ({
     invSign: 1,
     invValues: [],       // [{ d, v }]
     dismissed: [],       // gastos cuyas sugerencias Bizum se descartaron
+    customCats: [],      // categorías creadas por el usuario: { n, ic, col }
     settings: { bizumMin: 30, bizumDays: 4 }
 });
 

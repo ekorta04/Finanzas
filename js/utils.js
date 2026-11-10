@@ -54,6 +54,7 @@
         'Otros': ['circle-ellipsis', '--gray'],
         'Sin clasificar': ['circle-help', '--gray']
     };
-    const catStyle = c => CATEGORY_STYLE[c] || ['circle-ellipsis', '--gray'];
+    const customCatStyle = c => { const x = (AppState.customCats || []).find(k => k.n === c); return x ? [x.ic, x.col] : null; };
+    const catStyle = c => CATEGORY_STYLE[c] || customCatStyle(c) || ['circle-ellipsis', '--gray'];
     const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#8e8e93';
     const catIcon = (c, round = true) => { const [ic, col] = catStyle(c); return `<span class="icon-tile${round ? ' round' : ''}" style="background:var(${col})"><i class="ic ic-${ic}"></i></span>`; };

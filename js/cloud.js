@@ -39,7 +39,7 @@ function cloudDotClick() {
    vinculados, sugerencias descartadas, ajustes, histórico e inversión,
    para ver lo mismo en el iPhone y en el ordenador.
    -------------------------------------------------------------------------- */
-const SETTINGS_FIELDS = ['rules', 'budgets', 'imports', 'inv', 'invMap', 'invSign', 'invValues', 'dismissed', 'settings'];
+const SETTINGS_FIELDS = ['rules', 'budgets', 'imports', 'inv', 'invMap', 'invSign', 'invValues', 'dismissed', 'settings', 'customCats'];
 
 // null = aún no se sabe; false = la tabla no existe todavía en Supabase
 Cloud.settingsAvailable = null;

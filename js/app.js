@@ -21,6 +21,7 @@
 }
 
 function renderAllViews() {
+    populateCategorySelects();
     updateUnclassifiedAlert();
     renderBizumSuggestions();
     populateMonthOptions();

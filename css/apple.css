@@ -474,13 +474,25 @@ select.field.sm { padding-right: 26px; background-position: right 8px center; }
 
 /* ---------- Alerta de confirmación (estilo iOS) ---------- */
 
-#confirm-modal {
+#confirm-modal, #cat-modal {
     position: fixed; inset: 0; z-index: 80;
     display: flex; align-items: center; justify-content: center; padding: 24px;
     background: rgba(0, 0, 0, .32);
     animation: fade .2s ease;
 }
-#confirm-modal.hidden { display: none; }
+#confirm-modal.hidden, #cat-modal.hidden { display: none; }
+.alert.cat-new { width: 320px; max-width: 100%; }
+.cat-new-body { padding: 0 16px 10px; display: grid; gap: 12px; text-align: left; }
+.cat-new-name { display: flex; align-items: center; gap: 10px; }
+.cat-new-name .field { flex: 1; min-width: 0; }
+.cat-picker { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.cat-picker button {
+    height: 38px; border-radius: 12px; display: grid; place-items: center;
+    background: var(--fill); color: var(--label); font-size: 18px;
+    border: 2px solid transparent;
+}
+.cat-picker button.on { border-color: var(--blue); }
+.cat-picker.colors button { height: 30px; border-radius: 50%; }
 .alert {
     width: 280px; border-radius: 14px; overflow: hidden; text-align: center;
     background: color-mix(in srgb, var(--card) 88%, transparent);

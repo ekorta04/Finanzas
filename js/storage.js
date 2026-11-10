@@ -8,6 +8,14 @@
         if (!Array.isArray(st.rules)) st.rules = DEFAULT_RULES.slice();
         ['rows', 'imports', 'inv', 'invValues', 'dismissed'].forEach(k => { if (!Array.isArray(st[k])) st[k] = []; });
         if (!st.budgets || typeof st.budgets !== 'object') st.budgets = {};
+        st.customCats = (Array.isArray(st.customCats) ? st.customCats : [])
+            .filter(c => c && typeof c.n === 'string' && c.n.trim())
+            .map(c => ({
+                n: c.n.trim().slice(0, 30),
+                ic: CAT_ICONS.includes(c.ic) ? c.ic : 'tag',
+                col: CAT_COLORS.includes(c.col) ? c.col : '--gray'
+            }));
+        applyCustomCategories(st.customCats);
         return st;
     }
     function loadState() {
