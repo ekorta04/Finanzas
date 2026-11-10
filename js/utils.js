@@ -31,3 +31,29 @@
         else if (/^[-+]?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
         return parseFloat(s);
     }
+    // "2026-11" -> "Noviembre 2026"
+    const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const monthName = ym => { const [y, m] = ym.split('-'); return `${MONTHS_ES[Number(m) - 1]} ${y}`; };
+    // "2026-11-05" -> "5 nov"
+    const shortDate = iso => { if (!iso) return ''; const [, m, d] = iso.split('-'); return `${Number(d)} ${MONTHS_ES[Number(m) - 1].slice(0, 3).toLowerCase()}`; };
+
+    // Icono y color de cada categoría (colores del sistema iOS)
+    const CATEGORY_STYLE = {
+        'Restauración': ['utensils', '--orange'],
+        'Supermercado': ['shopping-cart', '--green'],
+        'Compras online': ['package', '--indigo'],
+        'Ocio': ['ticket', '--pink'],
+        'Transporte': ['car', '--blue'],
+        'Hogar': ['house', '--brown'],
+        'Salud': ['heart-pulse', '--red'],
+        'Suscripciones': ['repeat', '--purple'],
+        'Nómina': ['briefcase', '--mint'],
+        'Bizum y transferencias': ['arrow-left-right', '--teal'],
+        'Inversión': ['trending-up', '--indigo'],
+        'Banco': ['landmark', '--gray'],
+        'Otros': ['circle-ellipsis', '--gray'],
+        'Sin clasificar': ['circle-help', '--gray']
+    };
+    const catStyle = c => CATEGORY_STYLE[c] || ['circle-ellipsis', '--gray'];
+    const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#8e8e93';
+    const catIcon = (c, round = true) => { const [ic, col] = catStyle(c); return `<span class="icon-tile${round ? ' round' : ''}" style="background:var(${col})"><i class="ic ic-${ic}"></i></span>`; };

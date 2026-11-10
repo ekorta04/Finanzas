@@ -35,6 +35,17 @@
         return { items, sum, net: r.i + sum, people: items.length + 1 };
     }
 
+    // Movimientos desplegados y cuántos se muestran (se conservan al repintar)
+    const OpenMovs = new Set();
+    let movsLimit = 150;
+
+    function activeFilterCount() {
+        let n = 0;
+        ['filter-cat', 'filter-tag', 'filter-month', 'filter-date-from', 'filter-date-to'].forEach(id => { if (document.getElementById(id).value) n++; });
+        if (document.getElementById('filter-type').value !== 'all') n++;
+        return n;
+    }
+
     function renderMovimientos() {
         const map = byKeyMap();
         const filtered = getFilteredRows();
@@ -47,71 +58,96 @@
             shown.add(row.k);
             grouped.push(row);
         }
-        const LIMIT = 250;
-        document.getElementById('movs-counter').textContent = `Mostrando ${Math.min(grouped.length, LIMIT)} de ${grouped.length} filtrados (${groupLinkedRows(AppState.rows, map).length} en total)`;
+
+        const nf = activeFilterCount();
+        document.getElementById('filters-count').textContent = nf ? `Filtros · ${nf}` : 'Filtros';
+        document.getElementById('filters-btn').classList.toggle('tinted', nf > 0);
+        document.getElementById('filters-btn').classList.toggle('gray', nf === 0);
+
+        const total = groupLinkedRows(AppState.rows, map).length;
+        document.getElementById('movs-counter').textContent = grouped.length === total
+            ? `${total} movimientos`
+            : `${grouped.length} de ${total} movimientos`;
         document.getElementById('bulk-tag-btn').textContent = `Aplicar a ${filtered.length}`;
-        const tbody = document.getElementById('movs-table-body');
-        const cards = document.getElementById('movs-cards');
-        const show = grouped.slice(0, LIMIT);
-        if (!show.length) {
-            tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400">No se encontraron movimientos que coincidan con los filtros.</td></tr>`;
-            if (cards) cards.innerHTML = `<p class="py-6 text-center text-xs text-slate-400">No se encontraron movimientos que coincidan con los filtros.</p>`;
+
+        const cont = document.getElementById('movs-cards');
+        if (!grouped.length) {
+            cont.innerHTML = `<div class="card center muted" style="padding:32px 16px">No hay movimientos con estos filtros.</div>`;
             return;
         }
 
-        const parts = show.map(r => {
+        const show = grouped.slice(0, movsLimit);
+        const opts = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+
+        // Agrupar por mes, como en Wallet
+        const months = [];
+        show.forEach(r => {
+            const m = r.d.slice(0, 7);
+            const last = months[months.length - 1];
+            if (last && last.m === m) last.rows.push(r); else months.push({ m, rows: [r] });
+        });
+
+        const rowHtml = r => {
             const ek = enc(r.k);
             const g = bizumGroup(r, map);
             const amount = g ? g.net : r.i;
-            const exp = amount < 0;
-            const amountCls = exp ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400';
-            const opts = CATEGORIES.map(c => `<option value="${c}" ${c === r.cat ? 'selected' : ''}>${c}</option>`).join('');
-            const select = `<select onchange="updateRowCategory('${ek}', this.value)" aria-label="Categoría" class="max-w-full text-xs bg-slate-100 dark:bg-slate-800 border-none rounded-lg py-1 pl-2 pr-7 focus:ring-2 focus:ring-brand-500 font-medium">${opts}</select>`;
-            const chips = (r.t || []).map(t => `<span class="tag-chip">#${esc(t)}<button onclick="removeTag('${ek}','${enc(t)}')" title="Quitar">✕</button></span>`).join('');
-            const tagInput = `<input type="text" list="tag-list" placeholder="+ #etiqueta" onchange="addTagFromInput(this,'${ek}')" class="w-24 px-2 py-0.5 text-[11px] rounded-lg bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500">`;
+            const sign = amount > 0 ? '+' : '';
+            const cls = amount > 0 ? 'pos' : 'neg';
+            const chips = (r.t || []).map(t => `<span class="tag-chip">#${esc(t)}<button onclick="removeTag('${ek}','${enc(t)}')" aria-label="Quitar etiqueta">✕</button></span>`).join('');
+            const sub = [r.cat, shortDate(r.d)];
+            if (g) sub.push(`entre ${g.people}`);
+            if (r.t && r.t.length) sub.push(r.t.map(t => '#' + t).join(' '));
 
-            let detail = '';
-            if (g) {
-                detail = `
-                <details class="mt-1 text-[11px] text-sky-700 dark:text-sky-300">
-                    <summary class="cursor-pointer font-semibold select-none"><i class="fa-solid fa-link mr-1"></i>Entre ${g.people} · pagaste ${formatEur(r.i)} · ${g.items.length} Bizum${g.items.length > 1 ? 's' : ''} +${formatEur(g.sum)}</summary>
-                    <ul class="mt-1 space-y-0.5 pl-4 text-slate-500 dark:text-slate-400 font-normal">
-                        ${g.items.map(b => `<li class="flex justify-between gap-3"><span class="truncate">${formatDateEs(b.d)} · ${esc(b.c)}</span><span class="font-mono text-emerald-600 dark:text-emerald-400 whitespace-nowrap">+${formatEur(b.i)}</span></li>`).join('')}
+            const split = g ? `
+                <div class="split">
+                    <div class="flex justify-between bold"><span>Pagaste</span><span class="num">${formatEur(-r.i)}</span></div>
+                    <ul style="margin:4px 0 0;padding:0;list-style:none">
+                        ${g.items.map(b => `<li><span class="truncate muted">${shortDate(b.d)} · ${esc(b.c)}</span><span class="num pos">+${formatEur(b.i)}</span></li>`).join('')}
                     </ul>
-                    <button onclick="unlinkBizums('${ek}')" class="mt-1 ml-4 text-[11px] font-semibold text-slate-500 hover:text-rose-600 hover:underline">Separar Bizums</button>
-                </details>`;
-            }
+                    <div class="flex justify-between bold mt-1"><span>Tu parte</span><span class="num">${formatEur(g.net)}</span></div>
+                    <button class="link small mt-1" onclick="unlinkBizums('${ek}')">Separar Bizums</button>
+                </div>` : '';
 
-            const row = `
-            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors align-top">
-                <td class="py-2.5 px-4 font-mono text-slate-500 whitespace-nowrap">${formatDateEs(r.d)}</td>
-                <td class="py-2.5 px-4 font-medium">${esc(r.c)}${detail}</td>
-                <td class="py-2.5 px-4">${select}</td>
-                <td class="py-2.5 px-4">
-                    <div class="flex flex-wrap items-center gap-1 min-w-[140px]">${chips}${tagInput}</div>
-                </td>
-                <td class="py-2.5 px-4 text-right font-bold font-mono whitespace-nowrap ${amountCls}">${formatEur(amount)}</td>
-                <td class="py-2.5 px-4 text-right font-mono text-slate-400 whitespace-nowrap">${formatEur(r.s)}</td>
-            </tr>`;
-
-            const card = `
-            <div class="px-4 py-3 space-y-1.5">
-                <div class="flex items-start justify-between gap-3">
-                    <div class="min-w-0">
-                        <p class="text-sm font-semibold leading-snug break-words">${esc(r.c)}</p>
-                        <p class="text-[11px] font-mono text-slate-400">${formatDateEs(r.d)}</p>
+            return `
+            <details class="mov" data-k="${ek}" ${OpenMovs.has(r.k) ? 'open' : ''}>
+                <summary class="row with-icon">
+                    ${catIcon(r.cat)}
+                    <span class="row-main">
+                        <span class="row-title" style="display:block;white-space:nowrap">${esc(r.c)}</span>
+                        <span class="row-sub" style="display:block;white-space:nowrap">${esc(sub.join(' · '))}</span>
+                    </span>
+                    <span class="mov-amount num ${cls}">${sign}${formatEur(amount)}${g ? `<small>de ${formatEur(-r.i)}</small>` : ''}</span>
+                    <i class="ic ic-chevron-right row-chevron"></i>
+                </summary>
+                <div class="mov-edit">
+                    ${split}
+                    <label>Categoría
+                        <select class="field" onchange="updateRowCategory('${ek}', this.value)">${opts.replace(`value="${r.cat}"`, `value="${r.cat}" selected`)}</select>
+                    </label>
+                    <div class="tags">
+                        ${chips}
+                        <input type="text" list="tag-list" placeholder="+ Añadir etiqueta" onchange="addTagFromInput(this,'${ek}')" class="field sm" style="width:160px">
                     </div>
-                    <p class="shrink-0 text-sm font-bold font-mono ${amountCls}">${formatEur(amount)}</p>
+                    <div class="xsmall muted num">Fecha ${formatDateEs(r.d)}${r.s != null ? ` · Saldo ${formatEur(r.s)}` : ''}</div>
                 </div>
-                ${detail}
-                <div class="flex flex-wrap items-center gap-1.5">${select}${chips}${tagInput}</div>
-            </div>`;
+            </details>`;
+        };
 
-            return { row, card };
-        });
+        const monthTotal = rows => rows.reduce((a, r) => { const g = bizumGroup(r, map); const v = g ? g.net : r.i; return v < 0 && r.cat !== 'Inversión' ? a - v : a; }, 0);
 
-        tbody.innerHTML = parts.map(p => p.row).join('');
-        if (cards) cards.innerHTML = parts.map(p => p.card).join('');
+        cont.innerHTML = months.map(({ m, rows }) => `
+            <div class="mt-3">
+                <h3 class="group-header flex justify-between"><span>${monthName(m)}</span><span class="num">Gastos ${formatEur(monthTotal(rows))}</span></h3>
+                <div class="group">${rows.map(rowHtml).join('')}</div>
+            </div>`).join('') +
+            (grouped.length > movsLimit
+                ? `<div class="center mt-3"><button class="btn sm gray" onclick="movsLimit += 300; renderMovimientos()">Mostrar más (${grouped.length - movsLimit})</button></div>`
+                : '');
+
+        cont.querySelectorAll('details.mov').forEach(d => d.addEventListener('toggle', () => {
+            const k = decodeURIComponent(d.dataset.k);
+            if (d.open) OpenMovs.add(k); else OpenMovs.delete(k);
+        }));
     }
     
     
@@ -152,7 +188,7 @@ async function updateRowCategory(encKey, newCategory) {
 
         renderAllViews();
 
-        showToast('Categoría guardada en Supabase');
+        showToast('Categoría guardada');
 
     } catch (error) {
         console.error(
@@ -172,8 +208,9 @@ async function updateRowCategory(encKey, newCategory) {
 
     
     function clearMovFilters() {
+        movsLimit = 150;
         ['filter-search', 'filter-cat', 'filter-tag', 'filter-month', 'filter-date-from', 'filter-date-to'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('filter-type').value = 'all';
         renderMovimientos();
     }
-    function filterUnclassified() { clearMovFilters(); document.getElementById('filter-cat').value = 'Sin clasificar'; renderMovimientos(); }
+    function filterUnclassified() { showMovsView('list'); clearMovFilters(); document.getElementById('filter-cat').value = 'Sin clasificar'; renderMovimientos(); }

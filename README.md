@@ -70,3 +70,9 @@ Proyecto en desarrollo.
 Reglas, presupuestos, etiquetas, Bizums vinculados, ajustes, histórico de
 importaciones e inversión se guardan en la tabla `user_settings` de Supabase.
 Para crearla, ejecuta una vez `supabase/user_settings.sql` en el SQL Editor de Supabase.
+
+## Diseño
+
+Estilo inspirado en iOS: `css/apple.css` (colores, listas agrupadas, barra de
+pestañas, alertas) e `css/icons.css` (iconos Lucide, licencia ISC).
+Tipografía del sistema en Apple e Inter en Windows (`assets/fonts`).

@@ -29,7 +29,6 @@ function renderAllViews() {
     renderMovimientos();
     renderTags();
     renderInversion();
-    renderPresupuestos();
     renderReglas();
     renderImportHistory();
     renderSettings();
@@ -44,25 +43,20 @@ function setupTabNavigation() {
 }
 
 function switchTab(targetId) {
+    // Etiquetas vive ahora dentro de Movimientos
+    if (targetId === 'v-tags') { targetId = 'v-movs'; showMovsView('tags'); }
+
+    const prev = document.querySelector('.tab-content:not(.hidden)');
+
     document.querySelectorAll('.tab-btn').forEach(btn => {
-        const on = btn.getAttribute('data-target') === targetId;
-
-        [
-            'bg-slate-100',
-            'dark:bg-slate-800',
-            'text-brand-600',
-            'dark:text-brand-400'
-        ].forEach(c => btn.classList.toggle(c, on));
-
-        [
-            'text-slate-600',
-            'dark:text-slate-400'
-        ].forEach(c => btn.classList.toggle(c, !on));
+        btn.classList.toggle('active', btn.getAttribute('data-target') === targetId);
     });
 
     document.querySelectorAll('.tab-content').forEach(c => {
         c.classList.toggle('hidden', c.id !== targetId);
     });
+
+    if (!prev || prev.id !== targetId) window.scrollTo({ top: 0 });
 
     if (targetId === 'v-dashboard') {
         renderDashboard();
@@ -71,6 +65,23 @@ function switchTab(targetId) {
     if (targetId === 'v-inversion') {
         renderInversion();
     }
+}
+
+// Movimientos / Etiquetas (control segmentado)
+function showMovsView(view) {
+    const tags = view === 'tags';
+    document.getElementById('movs-view').classList.toggle('hidden', tags);
+    document.getElementById('tags-view').classList.toggle('hidden', !tags);
+    document.getElementById('seg-movs').classList.toggle('on', !tags);
+    document.getElementById('seg-tags').classList.toggle('on', tags);
+    if (tags) renderTags();
+}
+
+function toggleFilters(force) {
+    const panel = document.getElementById('filters-panel');
+    const open = typeof force === 'boolean' ? force : panel.classList.contains('hidden');
+    panel.classList.toggle('hidden', !open);
+    document.getElementById('filters-btn').setAttribute('aria-expanded', String(open));
 }
 
 function populateCategorySelects() {
@@ -111,13 +122,13 @@ function populateMonthOptions() {
         const el = document.getElementById(id);
         const cur = el.value;
 
-        el.innerHTML = '<option value="">Todo el Histórico</option>';
+        el.innerHTML = id === 'dash-month' ? '<option value="">Todo</option>' : '<option value="">Todos</option>';
 
         months.forEach(m => {
             const [y, mm] = m.split('-');
 
             el.innerHTML +=
-                `<option value="${m}">${mm}/${y}</option>`;
+                `<option value="${m}">${monthName(m)}</option>`;
         });
 
         if (cur && months.includes(cur)) {
@@ -137,7 +148,7 @@ function updateUnclassifiedAlert() {
         el.classList.remove('hidden');
 
         document.getElementById('unclassified-count').textContent =
-            `Tienes ${count} movimiento(s) asignado(s) como 'Sin clasificar'.`;
+            count === 1 ? 'Hay 1 movimiento por clasificar' : `Hay ${count} movimientos por clasificar`;
     } else {
         el.classList.add('hidden');
     }

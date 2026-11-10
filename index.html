@@ -1,673 +1,291 @@
-
 <!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#2563eb">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Finanzas">
 
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="assets/icons/icon-192.png">
 <link rel="apple-touch-icon" href="assets/icons/icon-180.png">
+<link rel="preload" href="assets/fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
 
 <title>Finanzas</title>
 
 <link rel="stylesheet" href="css/tailwind.css">
-<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/icons.css">
+<link rel="stylesheet" href="css/apple.css">
 </head>
 
 <body>
 
 <!-- ==========================================
-     PANTALLA DE AUTENTICACIÓN
+     PANTALLA DE ACCESO
      ========================================== -->
 
-<section id="auth-screen"
-    class="hidden min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
+<section id="auth-screen" class="auth hidden">
+    <div class="auth-box">
 
-    <div class="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-8 space-y-6 text-slate-800 dark:text-slate-100">
+        <div class="auth-icon"><i class="ic ic-wallet"></i></div>
+        <h1>Finanzas</h1>
+        <p class="lead">Tus cuentas, claras y en un solo sitio.</p>
 
-        <div class="text-center space-y-2">
-            <div class="text-4xl" aria-hidden="true">💳</div>
-            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
-                Finanzas
-            </h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400">
-                Gestiona tus finanzas personales
-            </p>
-        </div>
+        <form id="auth-form" class="stack-sm" novalidate>
 
-        <form id="auth-form" class="space-y-4">
-
-            <div>
-                <label for="auth-email" class="block text-sm font-medium mb-1">
-                    Correo electrónico
-                </label>
-                <input id="auth-email"
-                    type="email"
-                    required
-                    autocomplete="email"
-                    class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
-                    placeholder="tu@email.com">
+            <div class="group">
+                <div class="row">
+                    <label for="auth-email" class="sr-only">Correo electrónico</label>
+                    <input id="auth-email" class="field" type="email" required
+                        autocomplete="email" inputmode="email" placeholder="Correo electrónico">
+                </div>
+                <div class="row">
+                    <label for="auth-password" class="sr-only">Contraseña</label>
+                    <input id="auth-password" class="field" type="password" required minlength="6"
+                        autocomplete="current-password" placeholder="Contraseña">
+                </div>
             </div>
 
-            <div>
-                <label for="auth-password" class="block text-sm font-medium mb-1">
-                    Contraseña
+            <div class="group">
+                <label for="auth-remember" class="row" style="cursor:pointer">
+                    <span class="row-main row-title">Mantener la sesión iniciada</span>
+                    <span class="switch">
+                        <input id="auth-remember" type="checkbox" checked>
+                        <span></span>
+                    </span>
                 </label>
-                <input id="auth-password"
-                    type="password"
-                    required
-                    minlength="6"
-                    autocomplete="current-password"
-                    class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
-                    placeholder="Tu contraseña">
             </div>
+            <p class="group-footer">Si lo desactivas, la sesión se cerrará al cerrar la app.</p>
 
-            <label for="auth-remember" class="flex items-center gap-2 text-sm select-none cursor-pointer">
-                <input id="auth-remember"
-                    type="checkbox"
-                    checked
-                    class="w-4 h-4 rounded border-slate-300 text-blue-600">
-                <span>¿Mantener la sesión iniciada en este dispositivo?</span>
-            </label>
+            <p id="auth-message" class="hidden center small" role="status" aria-live="polite"></p>
 
-            <p id="auth-message"
-                class="hidden text-sm text-center"
-                role="status"
-                aria-live="polite"></p>
-
-            <button id="auth-submit"
-                type="submit"
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl">
-                Iniciar sesión
-            </button>
+            <button id="auth-submit" type="submit" class="btn block">Iniciar sesión</button>
 
         </form>
 
-        <div class="text-center text-sm">
-            <span id="auth-switch-text">¿No tienes cuenta?</span>
-            <button id="auth-switch"
-                type="button"
-                class="text-blue-600 dark:text-blue-400 font-semibold hover:underline ml-1">
-                Regístrate
-            </button>
-        </div>
+        <p class="center small mt-3">
+            <span id="auth-switch-text" class="muted">¿No tienes cuenta?</span>
+            <button id="auth-switch" type="button" class="link">Regístrate</button>
+        </p>
 
     </div>
 </section>
 
 
 <!-- ==========================================
-     APLICACIÓN PRINCIPAL
+     APLICACIÓN
      ========================================== -->
 
-<div id="app-root"
-    class="hidden bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-full flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+<div id="app-root" class="hidden">
 
-    <!-- ==========================================
-         CABECERA
-         ========================================== -->
-
-    <header class="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-            <div class="flex items-center justify-between gap-2 h-14 sm:h-16">
-
-                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-
-                    <div class="p-1.5 sm:p-2 bg-brand-600 text-white rounded-xl shadow-md shadow-brand-500/20 shrink-0">
-                        <i class="fa-solid font-bold fa-wallet text-lg sm:text-xl"></i>
-                    </div>
-
-                    <div class="min-w-0">
-                        <h1 class="font-bold text-base sm:text-lg leading-tight tracking-tight whitespace-nowrap truncate">
-                            Finanzas
-                        </h1>
-                        <p class="hidden sm:block text-xs text-slate-500 dark:text-slate-400 font-medium">
-                            Control &amp; Análisis Personal
-                        </p>
-                    </div>
-
-                </div>
-
-                <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-
-                    <!-- CERRAR SESIÓN -->
-
-                    <button id="logout-button"
-                        type="button"
-                        onclick="logoutFinanzas()"
-                        aria-label="Cerrar sesión"
-                        title="Cerrar sesión"
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-lg">
-                        <span class="sm:hidden">Salir</span>
-                        <span class="hidden sm:inline">Cerrar sesión</span>
-                    </button>
-
-                    <!-- ESTADO DE LA BASE DE DATOS -->
-
-                    <button id="cloud-dot"
-                        onclick="cloudDotClick()"
-                        title="Estado de la sincronización"
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800">
-                        <span id="cloud-dot-i"
-                            class="inline-block w-2.5 h-2.5 rounded-full bg-rose-500">
-                        </span>
-                        <span id="cloud-dot-t" class="hidden sm:inline">Sin conexión</span>
-                    </button>
-
-                    <button onclick="switchTab('v-datos')"
-                        aria-label="Importar CSV"
-                        class="inline-flex items-center space-x-2 px-2.5 sm:px-3 py-1.5 text-sm font-medium bg-brand-50 hover:bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300 dark:hover:bg-brand-900/60 rounded-lg transition-colors border border-brand-200 dark:border-brand-800">
-                        <i class="fa-solid fa-file-csv"></i>
-                        <span class="hidden sm:inline">Importar CSV</span>
-                    </button>
-
-                </div>
-
+    <!-- Barra superior (ordenador) -->
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="brand">
+                <span class="app-icon"><i class="ic ic-wallet"></i></span>
+                Finanzas
             </div>
 
-            <!-- NAVEGACIÓN -->
-
-            <nav id="nav-tabs"
-                class="flex space-x-1 sm:space-x-3 border-t border-slate-100 dark:border-slate-800/60 overflow-x-auto no-scrollbar py-2">
-
-                <button data-target="v-dashboard"
-                    class="tab-btn active px-3 sm:px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                    <i class="fa-solid fa-chart-pie mr-2"></i>Dashboard
-                </button>
-
-                <button data-target="v-movs"
-                    class="tab-btn px-3 sm:px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                    <i class="fa-solid fa-list-check mr-2"></i>Movimientos
-                </button>
-
-                <button data-target="v-tags"
-                    class="tab-btn px-3 sm:px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                    <i class="fa-solid fa-tags mr-2"></i>Etiquetas
-                </button>
-
-                <button data-target="v-inversion"
-                    class="tab-btn px-3 sm:px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                    <i class="fa-solid fa-chart-line mr-2"></i>Inversión
-                </button>
-
-                <button data-target="v-presupuestos"
-                    class="tab-btn px-3 sm:px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                    <i class="fa-solid fa-piggy-bank mr-2"></i>Presupuestos
-                </button>
-
-                <button data-target="v-reglas"
-                    class="tab-btn px-3 sm:px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                    <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Reglas Auto
-                </button>
-
-                <button data-target="v-datos"
-                    class="tab-btn px-3 sm:px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                    <i class="fa-solid fa-arrows-rotate mr-2"></i>Datos &amp; Sync
-                </button>
-
+            <nav class="topnav" aria-label="Secciones">
+                <button class="tab-btn active" data-target="v-dashboard"><i class="ic ic-chart-pie"></i>Resumen</button>
+                <button class="tab-btn" data-target="v-movs"><i class="ic ic-list"></i>Movimientos</button>
+                <button class="tab-btn" data-target="v-inversion"><i class="ic ic-trending-up"></i>Inversión</button>
+                <button class="tab-btn" data-target="v-reglas"><i class="ic ic-wand-sparkles"></i>Reglas</button>
+                <button class="tab-btn" data-target="v-datos"><i class="ic ic-cloud"></i>Datos</button>
             </nav>
 
+            <div class="topbar-actions">
+                <button id="cloud-dot" onclick="cloudDotClick()" title="Estado de la sincronización" class="pill">
+                    <span id="cloud-dot-i" class="legend-dot" style="background:var(--gray)"></span>
+                    <span id="cloud-dot-t">Conectando…</span>
+                </button>
+                <button onclick="switchTab('v-datos')" class="btn sm tinted">
+                    <i class="ic ic-file-up"></i>Importar
+                </button>
+            </div>
         </div>
-
     </header>
 
-    <!-- ==========================================
-         CONTENIDO PRINCIPAL
-         ========================================== -->
-
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-
-        <!-- ALERTA SIN CLASIFICAR -->
-
-        <div id="unclassified-alert"
-            class="hidden bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl p-4 flex items-center justify-between shadow-sm">
-
-            <div class="flex items-center space-x-3">
-
-                <i class="fa-solid fa-circle-exclamation text-amber-500 text-xl"></i>
-
-                <div>
-                    <h4 class="font-semibold text-amber-900 dark:text-amber-200 text-sm">
-                        Movimientos pendientes de categorizar
-                    </h4>
-                    <p id="unclassified-count"
-                        class="text-xs text-amber-700 dark:text-amber-400">
-                    </p>
-                </div>
-
-            </div>
-
-            <button onclick="switchTab('v-movs'); filterUnclassified();"
-                class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded-lg shadow-sm">
-                Categorizar
-            </button>
-
-        </div>
-
-        <!-- SUGERENCIAS BIZUM -->
-
-        <div id="bizum-alert"
-            class="hidden bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/60 rounded-xl p-4 shadow-sm space-y-3">
-        </div>
+    <main class="app-main">
 
         <!-- ==========================================
-             DASHBOARD
+             RESUMEN
              ========================================== -->
 
-        <section id="v-dashboard"
-            class="tab-content space-y-6">
+        <section id="v-dashboard" class="tab-content stack">
 
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-
+            <div class="page-head">
                 <div>
-                    <h2 class="text-base font-bold tracking-tight">
-                        Resumen Ejecutivo
-                    </h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">
-                        Cuenta Laboral Kutxa · los Bizums vinculados restan del gasto original
-                    </p>
+                    <h1 class="large-title">Resumen</h1>
                 </div>
-
-                <div class="flex items-center space-x-2">
-                    <label for="dash-month"
-                        class="text-xs font-medium text-slate-500 dark:text-slate-400">
-                        Periodo:
-                    </label>
-
-                    <select id="dash-month"
-                        onchange="renderDashboard()"
-                        class="bg-slate-100 dark:bg-slate-800 border-none text-xs font-semibold rounded-lg px-3 py-2 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-brand-500">
-                        <option value="">Todo el Histórico</option>
-                    </select>
-                </div>
-
+                <select id="dash-month" onchange="renderDashboard()" class="field sm" aria-label="Periodo">
+                    <option value="">Todo</option>
+                </select>
             </div>
 
-            <!-- INDICADORES -->
-
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 flex items-center justify-between">
-                        Gastos
-                        <i class="fa-solid fa-arrow-down-long text-rose-500"></i>
-                    </div>
-                    <div id="kpi-gasto"
-                        class="text-lg sm:text-xl font-bold text-rose-600 dark:text-rose-400 tracking-tight">
-                        0,00 €
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 flex items-center justify-between">
-                        Ingresos
-                        <i class="fa-solid fa-arrow-up-long text-emerald-500"></i>
-                    </div>
-                    <div id="kpi-ingreso"
-                        class="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">
-                        0,00 €
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 flex items-center justify-between">
-                        Balance Neto
-                        <i class="fa-solid fa-scale-balanced text-brand-500"></i>
-                    </div>
-                    <div id="kpi-balance"
-                        class="text-lg sm:text-xl font-bold tracking-tight">
-                        0,00 €
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 flex items-center justify-between">
-                        Tasa Ahorro
-                        <i class="fa-solid fa-percent text-sky-500"></i>
-                    </div>
-                    <div id="kpi-ahorro"
-                        class="text-lg sm:text-xl font-bold text-sky-600 dark:text-sky-400 tracking-tight">
-                        0,0%
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 flex items-center justify-between">
-                        Gasto/Día
-                        <i class="fa-solid fa-calendar-day text-indigo-500"></i>
-                    </div>
-                    <div id="kpi-diario"
-                        class="text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-400 tracking-tight">
-                        0,00 €
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm bg-gradient-to-br from-brand-50/30 to-transparent dark:from-brand-900/10">
-                    <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 flex items-center justify-between">
-                        Saldo Actual
-                        <i class="fa-solid fa-building-columns text-brand-600"></i>
-                    </div>
-                    <div id="kpi-saldo"
-                        class="text-lg sm:text-xl font-bold text-brand-600 dark:text-brand-400 tracking-tight">
-                        0,00 €
-                    </div>
-                    <div id="kpi-patrimonio"
-                        class="text-[10px] text-slate-400 mt-0.5 hidden">
-                    </div>
-                </div>
-
+            <!-- Avisos -->
+            <div id="unclassified-alert" class="hidden group banner">
+                <button class="row with-icon tap" onclick="switchTab('v-movs'); filterUnclassified();">
+                    <span class="icon-tile" style="background:var(--orange)"><i class="ic ic-circle-help"></i></span>
+                    <span class="row-main">
+                        <span class="row-title" style="display:block">Movimientos sin categoría</span>
+                        <span id="unclassified-count" class="row-sub" style="display:block"></span>
+                    </span>
+                    <i class="ic ic-chevron-right row-chevron"></i>
+                </button>
             </div>
 
-            <!-- GRÁFICOS -->
+            <div id="bizum-alert" class="hidden"></div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-                <div class="lg:col-span-7 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-bold text-sm tracking-tight">
-                            Evolución Mensual (Ingresos vs Gastos)
-                        </h3>
-                        <span class="text-xs text-slate-400">
-                            <i class="fa-solid fa-circle-info mr-1"></i>
-                            Pasa el ratón para ver cifras
-                        </span>
-                    </div>
-
-                    <div class="relative h-64 sm:h-72 w-full">
-                        <canvas id="chart-mensual"></canvas>
-                    </div>
-
-                </div>
-
-                <div class="lg:col-span-5 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-bold text-sm tracking-tight">
-                            Distribución por Categorías
-                        </h3>
-                        <span class="text-xs text-slate-400">% total</span>
-                    </div>
-
-                    <div class="relative h-56 sm:h-64 w-full flex items-center justify-center">
-                        <canvas id="chart-categorias"></canvas>
-                    </div>
-
-                </div>
-
+            <!-- Saldo -->
+            <div class="card hero">
+                <div class="hero-label">Saldo actual</div>
+                <div id="kpi-saldo" class="hero-amount num">0,00 €</div>
+                <div id="kpi-patrimonio" class="hero-sub num hidden"></div>
             </div>
 
-            <!-- COMERCIOS Y HÁBITOS -->
+            <div class="grid-2 grid-4">
+                <div class="card stat">
+                    <div class="stat-top"><span class="dot" style="background:var(--red)"><i class="ic ic-arrow-down"></i></span>Gastos</div>
+                    <div id="kpi-gasto" class="stat-value num">0,00 €</div>
+                </div>
+                <div class="card stat">
+                    <div class="stat-top"><span class="dot" style="background:var(--green)"><i class="ic ic-arrow-up"></i></span>Ingresos</div>
+                    <div id="kpi-ingreso" class="stat-value num">0,00 €</div>
+                </div>
+                <div class="card stat">
+                    <div class="stat-top"><span class="dot" style="background:var(--blue)"><i class="ic ic-scale"></i></span>Balance</div>
+                    <div id="kpi-balance" class="stat-value num">0,00 €</div>
+                </div>
+                <div class="card stat">
+                    <div class="stat-top"><span class="dot" style="background:var(--indigo)"><i class="ic ic-percent"></i></span>Ahorro</div>
+                    <div id="kpi-ahorro" class="stat-value num">0,0%</div>
+                    <div class="row-sub num">Gasto medio <span id="kpi-diario">0,00 €</span>/día</div>
+                </div>
+            </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-
-                    <h3 class="font-bold text-sm tracking-tight mb-4 flex items-center space-x-2">
-                        <i class="fa-solid fa-store text-brand-500"></i>
-                        <span>Top 5 Comercios / Conceptos con mayor gasto</span>
-                    </h3>
-
-                    <div id="top-shops-list" class="space-y-3"></div>
-
+            <div class="grid-lg-3-2 stack">
+                <div class="card">
+                    <div class="card-head">
+                        <h2 class="card-title">Ingresos y gastos</h2>
+                        <span class="xsmall muted">Últimos 12 meses</span>
+                    </div>
+                    <div class="chart-box"><canvas id="chart-mensual"></canvas></div>
                 </div>
 
-                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-
-                    <h3 class="font-bold text-sm tracking-tight mb-4 flex items-center space-x-2">
-                        <i class="fa-solid fa-lightbulb text-amber-500"></i>
-                        <span>Análisis de Hábitos</span>
-                    </h3>
-
-                    <div id="insights-container" class="space-y-3"></div>
-
+                <div class="card">
+                    <div class="card-head">
+                        <h2 class="card-title">Por categoría</h2>
+                    </div>
+                    <div class="chart-box donut"><canvas id="chart-categorias"></canvas></div>
+                    <div id="cat-legend" class="mt-3"></div>
                 </div>
+            </div>
 
+            <div class="grid-lg-2 stack">
+                <div>
+                    <h3 class="group-header">Dónde más gastas</h3>
+                    <div id="top-shops-list" class="group"></div>
+                </div>
+                <div>
+                    <h3 class="group-header">Observaciones</h3>
+                    <div id="insights-container" class="group"></div>
+                </div>
             </div>
 
         </section>
 
 
         <!-- ==========================================
-             MOVIMIENTOS
+             MOVIMIENTOS + ETIQUETAS
              ========================================== -->
 
-        <section id="v-movs"
-            class="tab-content hidden space-y-4">
+        <section id="v-movs" class="tab-content hidden stack">
 
-            <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+            <div class="page-head">
+                <h1 class="large-title">Movimientos</h1>
+            </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+            <div class="seg" role="tablist" aria-label="Vista">
+                <button id="seg-movs" class="on" onclick="showMovsView('list')">Movimientos</button>
+                <button id="seg-tags" onclick="showMovsView('tags')">Etiquetas</button>
+            </div>
 
-                    <div class="lg:col-span-2">
+            <!-- Lista de movimientos -->
+            <div id="movs-view" class="stack">
 
-                        <label for="filter-search"
-                            class="block text-xs font-semibold text-slate-500 mb-1">
-                            Buscar por concepto
-                        </label>
+                <div class="flex gap-2 items-center">
+                    <div class="search grow">
+                        <i class="ic ic-search"></i>
+                        <input type="search" id="filter-search" class="field" oninput="renderMovimientos()" placeholder="Buscar" autocomplete="off">
+                    </div>
+                    <button id="filters-btn" class="btn sm gray" onclick="toggleFilters()" aria-expanded="false">
+                        <i class="ic ic-sliders-horizontal"></i><span id="filters-count">Filtros</span>
+                    </button>
+                </div>
 
-                        <div class="relative">
-
-                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-
-                            <input type="text"
-                                id="filter-search"
-                                oninput="renderMovimientos()"
-                                placeholder="Ej. Bizum, Eroski..."
-                                class="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500">
-
+                <div id="filters-panel" class="hidden stack-sm fade-in">
+                    <div class="group">
+                        <div class="row">
+                            <span class="row-main row-title">Categoría</span>
+                            <select id="filter-cat" class="field sm" onchange="renderMovimientos()"><option value="">Todas</option></select>
                         </div>
-
+                        <div class="row">
+                            <span class="row-main row-title">Etiqueta</span>
+                            <select id="filter-tag" class="field sm" onchange="renderMovimientos()"><option value="">Todas</option></select>
+                        </div>
+                        <div class="row">
+                            <span class="row-main row-title">Tipo</span>
+                            <select id="filter-type" class="field sm" onchange="renderMovimientos()">
+                                <option value="all">Todos</option>
+                                <option value="expense">Gastos</option>
+                                <option value="income">Ingresos</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <span class="row-main row-title">Mes</span>
+                            <select id="filter-month" class="field sm" onchange="renderMovimientos()"><option value="">Todos</option></select>
+                        </div>
+                        <div class="row">
+                            <span class="row-main row-title">Desde</span>
+                            <input type="date" id="filter-date-from" class="field sm" onchange="renderMovimientos()">
+                        </div>
+                        <div class="row">
+                            <span class="row-main row-title">Hasta</span>
+                            <input type="date" id="filter-date-to" class="field sm" onchange="renderMovimientos()">
+                        </div>
+                        <button class="row action" onclick="clearMovFilters()">Quitar filtros</button>
                     </div>
 
                     <div>
-
-                        <label for="filter-cat"
-                            class="block text-xs font-semibold text-slate-500 mb-1">
-                            Categoría
-                        </label>
-
-                        <select id="filter-cat"
-                            onchange="renderMovimientos()"
-                            class="w-full py-1.5 px-3 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500">
-                            <option value="">Todas</option>
-                        </select>
-
+                        <h3 class="group-header">Etiquetar todo lo filtrado</h3>
+                        <div class="group">
+                            <div class="row">
+                                <input type="text" id="bulk-tag" list="tag-list" class="field grow" placeholder="Ej. ViajeMexico">
+                                <button id="bulk-tag-btn" class="btn sm" onclick="bulkTagFiltered()">Aplicar</button>
+                            </div>
+                        </div>
+                        <p class="group-footer">Filtra por las fechas de un viaje o evento y ponles la misma etiqueta de una vez.</p>
                     </div>
-
-                    <div>
-
-                        <label for="filter-tag"
-                            class="block text-xs font-semibold text-slate-500 mb-1">
-                            Etiqueta
-                        </label>
-
-                        <select id="filter-tag"
-                            onchange="renderMovimientos()"
-                            class="w-full py-1.5 px-3 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500">
-                            <option value="">Todas</option>
-                        </select>
-
-                    </div>
-
-                    <div>
-
-                        <label for="filter-type"
-                            class="block text-xs font-semibold text-slate-500 mb-1">
-                            Tipo
-                        </label>
-
-                        <select id="filter-type"
-                            onchange="renderMovimientos()"
-                            class="w-full py-1.5 px-3 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500">
-
-                            <option value="all">Todos</option>
-                            <option value="expense">Solo Gastos (-)</option>
-                            <option value="income">Solo Ingresos (+)</option>
-
-                        </select>
-
-                    </div>
-
-                    <div>
-
-                        <label for="filter-month"
-                            class="block text-xs font-semibold text-slate-500 mb-1">
-                            Periodo
-                        </label>
-
-                        <select id="filter-month"
-                            onchange="renderMovimientos()"
-                            class="w-full py-1.5 px-3 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500">
-                            <option value="">Todo</option>
-                        </select>
-
-                    </div>
-
                 </div>
 
-                <!-- FILTROS DE FECHA -->
+                <datalist id="tag-list"></datalist>
 
-                <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+                <p id="movs-counter" class="group-footer" style="margin:0"></p>
 
-                    <div class="grid grid-cols-[auto_1fr] sm:flex items-center gap-2 w-full sm:w-auto">
-
-                        <span class="text-slate-400 font-medium">Desde:</span>
-
-                        <input type="date"
-                            id="filter-date-from"
-                            onchange="renderMovimientos()"
-                            class="w-full sm:w-auto min-w-0 bg-slate-100 dark:bg-slate-800 border-none rounded-lg px-2 py-1 text-xs">
-
-                        <span class="text-slate-400 font-medium">Hasta:</span>
-
-                        <input type="date"
-                            id="filter-date-to"
-                            onchange="renderMovimientos()"
-                            class="w-full sm:w-auto min-w-0 bg-slate-100 dark:bg-slate-800 border-none rounded-lg px-2 py-1 text-xs">
-
-                    </div>
-
-                    <button onclick="clearMovFilters()"
-                        class="text-brand-600 hover:underline font-semibold">
-                        Limpiar Filtros
-                    </button>
-
-                </div>
-
-                <!-- ETIQUETADO EN BLOQUE -->
-
-                <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
-
-                    <i class="fa-solid fa-tags text-indigo-500"></i>
-
-                    <span class="text-slate-500 font-medium">
-                        Etiquetar en bloque los movimientos filtrados:
-                    </span>
-
-                    <input type="text"
-                        id="bulk-tag"
-                        list="tag-list"
-                        placeholder="#ViajeMexico"
-                        class="px-3 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500 w-40">
-
-                    <button onclick="bulkTagFiltered()"
-                        id="bulk-tag-btn"
-                        class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl">
-                        Aplicar
-                    </button>
-
-                    <span class="text-slate-400 hidden md:inline">
-                        Truco: filtra por fechas del viaje y aplica la etiqueta de una vez.
-                    </span>
-
-                </div>
+                <div id="movs-cards"></div>
 
             </div>
 
-            <datalist id="tag-list"></datalist>
-
-            <!-- TABLA DE MOVIMIENTOS -->
-
-            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-
-                <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
-
-                    <span id="movs-counter"
-                        class="text-xs font-semibold text-slate-500">
-                    </span>
-
-                    <span class="text-xs text-slate-400 hidden sm:inline">
-                        <i class="fa-solid fa-mouse-pointer mr-1"></i>
-                        Recategoriza y etiqueta directamente en la tabla
-                    </span>
-
-                </div>
-
-                <!-- Lista en tarjetas para el móvil -->
-                <div id="movs-cards"
-                    class="sm:hidden divide-y divide-slate-100 dark:divide-slate-800">
-                </div>
-
-                <div class="hidden sm:block overflow-x-auto">
-
-                    <table class="w-full text-left text-xs">
-
-                        <thead class="bg-slate-100/70 dark:bg-slate-800/60 text-slate-500 font-semibold uppercase tracking-wider">
-
-                            <tr>
-                                <th class="py-3 px-4">Fecha</th>
-                                <th class="py-3 px-4">Concepto</th>
-                                <th class="py-3 px-4">Categoría</th>
-                                <th class="py-3 px-4">Etiquetas</th>
-                                <th class="py-3 px-4 text-right">Importe</th>
-                                <th class="py-3 px-4 text-right">Saldo</th>
-                            </tr>
-
-                        </thead>
-
-                        <tbody id="movs-table-body"
-                            class="divide-y divide-slate-100 dark:divide-slate-800">
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ==========================================
-             ETIQUETAS
-             ========================================== -->
-
-        <section id="v-tags"
-            class="tab-content hidden space-y-4">
-
-            <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-
-                <h2 class="text-base font-bold tracking-tight">
-                    Coste real de eventos y proyectos
-                </h2>
-
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Las etiquetas son transversales: no cambian la categoría de cada gasto.
-                    El coste neto descuenta los Bizums vinculados y los ingresos etiquetados.
-                </p>
-
-            </div>
-
-            <div id="tags-container"
-                class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Etiquetas -->
+            <div id="tags-view" class="hidden stack">
+                <p class="page-sub" style="padding:0 4px">Coste real de viajes, eventos y proyectos. Las etiquetas no cambian la categoría y descuentan los Bizums vinculados.</p>
+                <div id="tags-container" class="stack grid-lg-2"></div>
             </div>
 
         </section>
@@ -677,727 +295,256 @@
              INVERSIÓN
              ========================================== -->
 
-        <section id="v-inversion"
-            class="tab-content hidden space-y-6">
+        <section id="v-inversion" class="tab-content hidden stack">
 
-            <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-
-                <h2 class="text-base font-bold tracking-tight">
-                    Cuenta de Inversión
-                </h2>
-
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Cuenta independiente: sus movimientos no se mezclan con los gastos del día a día.
-                    El importador detecta las columnas y recuerda el mapeo para próximas cargas.
-                </p>
-
+            <div class="page-head">
+                <h1 class="large-title">Inversión</h1>
             </div>
 
-            <!-- INDICADORES INVERSIÓN -->
-
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <div class="text-xs text-slate-500 mb-1">Aportado neto</div>
-                    <div id="inv-kpi-neto"
-                        class="text-lg font-bold text-brand-600 dark:text-brand-400">
-                        0,00 €
-                    </div>
+            <div class="card hero">
+                <div id="inv-kpi-valor-label" class="hero-label">Valor actual</div>
+                <div id="inv-kpi-valor" class="hero-amount num">—</div>
+                <div class="hero-sub num">
+                    <span id="inv-kpi-rent">—</span>
+                    <span id="inv-kpi-rent-pct"></span>
                 </div>
-
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <div class="text-xs text-slate-500 mb-1">Aportaciones</div>
-                    <div id="inv-kpi-in"
-                        class="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                        0,00 €
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <div class="text-xs text-slate-500 mb-1">Retiradas</div>
-                    <div id="inv-kpi-out"
-                        class="text-lg font-bold text-rose-600 dark:text-rose-400">
-                        0,00 €
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <div id="inv-kpi-valor-label"
-                        class="text-xs text-slate-500 mb-1">
-                        Valor actual
-                    </div>
-                    <div id="inv-kpi-valor"
-                        class="text-lg font-bold">
-                        —
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <div class="text-xs text-slate-500 mb-1">Rentabilidad</div>
-                    <div id="inv-kpi-rent"
-                        class="text-lg font-bold">
-                        —
-                    </div>
-                    <div id="inv-kpi-rent-pct"
-                        class="text-[10px] text-slate-400">
-                    </div>
-                </div>
-
             </div>
 
-            <!-- IMPORTACIÓN Y AJUSTES DE INVERSIÓN -->
+            <div class="group">
+                <div class="row"><span class="row-main row-title">Aportado neto</span><span id="inv-kpi-neto" class="row-value num">0,00 €</span></div>
+                <div class="row"><span class="row-main row-title">Aportaciones</span><span id="inv-kpi-in" class="row-value num">0,00 €</span></div>
+                <div class="row"><span class="row-main row-title">Retiradas</span><span id="inv-kpi-out" class="row-value num">0,00 €</span></div>
+            </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="card">
+                <div class="card-head">
+                    <h2 class="card-title">Evolución</h2>
+                    <span class="xsmall muted">Aportado vs. valor</span>
+                </div>
+                <div class="chart-box"><canvas id="chart-inv"></canvas></div>
+            </div>
 
-                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-
-                    <h3 class="font-bold text-sm tracking-tight flex items-center space-x-2">
-                        <i class="fa-solid fa-file-csv text-emerald-500"></i>
-                        <span>Importar CSV de inversión</span>
-                    </h3>
-
-                    <div id="inv-drop"
-                        class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-brand-500 rounded-2xl p-6 text-center cursor-pointer bg-slate-50/50 dark:bg-slate-800/20">
-
-                        <input type="file"
-                            id="inv-file-input"
-                            accept=".csv,.txt,text/csv"
-                            class="hidden"
-                            onchange="handleInvFile(event)">
-
-                        <i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-400 mb-1"></i>
-
-                        <p class="text-xs font-semibold">
-                            Arrastra o haz clic para elegir el CSV
-                        </p>
-
-                        <p class="text-[11px] text-slate-400 mt-1">
-                            Detecta separador (; , tab), fechas y decimales automáticamente
-                        </p>
-
-                    </div>
-
-                    <div id="inv-result"
-                        class="hidden p-3 rounded-xl text-xs font-medium">
-                    </div>
-
-                    <div id="inv-map-panel"
-                        class="hidden space-y-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700">
-
-                        <p class="text-xs font-semibold">
-                            Indica qué columna es cada dato (solo la primera vez, luego se recuerda):
-                        </p>
-
-                        <div id="inv-map-selects"
-                            class="grid grid-cols-2 gap-2 text-xs">
+            <div class="grid-lg-2 stack">
+                <div>
+                    <h3 class="group-header">Valor de la cartera</h3>
+                    <div class="group">
+                        <div class="row">
+                            <span class="row-main row-title">Fecha</span>
+                            <input type="date" id="inv-val-date" class="field sm">
                         </div>
-
-                        <div class="overflow-x-auto">
-                            <table id="inv-map-preview"
-                                class="w-full text-[11px]">
-                            </table>
+                        <div class="row">
+                            <span class="row-main row-title">Valor</span>
+                            <input type="number" step="0.01" inputmode="decimal" id="inv-val-amount" class="field sm right" placeholder="0,00 €" style="width:120px">
                         </div>
-
-                        <div class="flex gap-2">
-
-                            <button onclick="confirmInvMapping()"
-                                class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold">
-                                Importar
-                            </button>
-
-                            <button onclick="cancelInvMapping()"
-                                class="px-3 py-1.5 bg-slate-200 dark:bg-slate-700 rounded-xl text-xs font-semibold">
-                                Cancelar
-                            </button>
-
-                        </div>
-
+                        <button class="row action" onclick="addInvValue()">Guardar valor</button>
                     </div>
-
-                    <div class="flex flex-wrap gap-2 text-xs pt-1">
-
-                        <button onclick="forgetInvMap()"
-                            class="text-brand-600 hover:underline font-semibold">
-                            Olvidar mapeo de columnas
-                        </button>
-
-                        <span class="text-slate-300">·</span>
-
-                        <button onclick="wipeInvData()"
-                            class="text-rose-600 hover:underline font-semibold">
-                            Borrar datos de inversión
-                        </button>
-
-                    </div>
-
+                    <p class="group-footer">Añádelo cuando quieras (por ejemplo, a fin de mes) para calcular la rentabilidad.</p>
+                    <div id="inv-values-list" class="group mt-3"></div>
                 </div>
-
-                <!-- AJUSTES DE INVERSIÓN -->
-
-                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-
-                    <div>
-
-                        <h3 class="font-bold text-sm tracking-tight mb-1">
-                            Signo de los importes
-                        </h3>
-
-                        <select id="inv-sign"
-                            onchange="setInvSign(this.value)"
-                            class="w-full py-1.5 px-3 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none">
-
-                            <option value="1">
-                                Importe positivo = aportación (dinero que entra en inversión)
-                            </option>
-
-                            <option value="-1">
-                                Importe negativo = aportación (dinero que sale hacia inversión)
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                    <div>
-
-                        <h3 class="font-bold text-sm tracking-tight mb-1">
-                            Valor actual de la cartera
-                        </h3>
-
-                        <p class="text-[11px] text-slate-500 mb-2">
-                            Introdúcelo cuando quieras (ej. a fin de mes) para calcular rentabilidad y dibujar la curva.
-                        </p>
-
-                        <div class="flex flex-wrap gap-2 items-center">
-
-                            <input type="date"
-                                id="inv-val-date"
-                                class="bg-slate-100 dark:bg-slate-800 border-none rounded-lg px-2 py-1.5 text-xs">
-
-                            <input type="number"
-                                step="0.01"
-                                id="inv-val-amount"
-                                placeholder="Valor en €"
-                                class="w-28 px-2 py-1.5 text-xs rounded-lg bg-slate-100 dark:bg-slate-800 border-none">
-
-                            <button onclick="addInvValue()"
-                                class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 text-white rounded-xl text-xs font-semibold">
-                                Guardar
-                            </button>
-
-                        </div>
-
-                        <div id="inv-values-list"
-                            class="mt-2 space-y-1 text-xs">
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <!-- GRÁFICO DE INVERSIÓN -->
-
-            <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-
-                <h3 class="font-bold text-sm tracking-tight mb-3">
-                    Aportación neta acumulada vs. valor de la cartera
-                </h3>
-
-                <div class="relative h-64 w-full">
-                    <canvas id="chart-inv"></canvas>
-                </div>
-
-            </div>
-
-            <!-- TABLA DE INVERSIÓN -->
-
-            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-
-                <div id="inv-counter"
-                    class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-500">
-                </div>
-
-                <div class="overflow-x-auto">
-
-                    <table class="w-full text-left text-xs">
-
-                        <thead class="bg-slate-100/70 dark:bg-slate-800/60 text-slate-500 font-semibold uppercase">
-
-                            <tr>
-                                <th class="py-3 px-4">Fecha</th>
-                                <th class="py-3 px-4">Concepto</th>
-                                <th class="py-3 px-4 text-right">Importe</th>
-                                <th class="py-3 px-4 text-right hidden sm:table-cell">Saldo</th>
-                            </tr>
-
-                        </thead>
-
-                        <tbody id="inv-table-body"
-                            class="divide-y divide-slate-100 dark:divide-slate-800">
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ==========================================
-             PRESUPUESTOS
-             ========================================== -->
-
-        <section id="v-presupuestos"
-            class="tab-content hidden space-y-6">
-
-            <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-
-                <h2 class="text-base font-bold tracking-tight mb-1">
-                    Gestión de Presupuestos Mensuales
-                </h2>
-
-                <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
-                    Límites máximos de gasto por categoría
-                    (mes más reciente importado, neto de Bizums vinculados).
-                </p>
-
-                <div id="budgets-container"
-                    class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ==========================================
-             REGLAS AUTOMÁTICAS
-             ========================================== -->
-
-        <section id="v-reglas"
-            class="tab-content hidden space-y-6">
-
-            <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-
-                <h2 class="text-base font-bold tracking-tight">
-                    Motor de Clasificación Automática
-                </h2>
-
-                <p class="text-xs text-slate-500">
-                    Define palabras clave. Cuando el CSV contenga el texto
-                    (sin importar mayúsculas/tildes), se categorizará solo.
-                </p>
-
-                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
-
-                    <div class="sm:col-span-6">
-
-                        <label for="rule-pattern"
-                            class="block text-xs font-medium text-slate-500 mb-1">
-                            Si el concepto contiene:
-                        </label>
-
-                        <input type="text"
-                            id="rule-pattern"
-                            placeholder="Ej: MERCADONA, UBER, LUZ..."
-                            class="w-full px-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500">
-
-                    </div>
-
-                    <div class="sm:col-span-4">
-
-                        <label for="rule-category"
-                            class="block text-xs font-medium text-slate-500 mb-1">
-                            Asignar Categoría:
-                        </label>
-
-                        <select id="rule-category"
-                            class="w-full px-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-brand-500">
-                        </select>
-
-                    </div>
-
-                    <div class="sm:col-span-2 flex items-end">
-
-                        <button onclick="addRuleFromInput()"
-                            class="w-full py-2 px-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs rounded-xl">
-                            <i class="fa-solid fa-plus mr-1"></i>
-                            Añadir
-                        </button>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-
-                <div class="px-5 py-3 border-b border-slate-200 dark:border-slate-800 font-bold text-sm">
-                    Reglas Activas (<span id="rules-count">0</span>)
-                </div>
-
-                <div class="overflow-x-auto">
-
-                    <table class="w-full text-left text-xs">
-
-                        <thead class="bg-slate-100/70 dark:bg-slate-800/60 text-slate-500 font-semibold uppercase">
-
-                            <tr>
-                                <th class="py-3 px-4">Patrón / Texto</th>
-                                <th class="py-3 px-4">Categoría Asignada</th>
-                                <th class="py-3 px-4 text-right">Acción</th>
-                            </tr>
-
-                        </thead>
-
-                        <tbody id="rules-table-body"
-                            class="divide-y divide-slate-100 dark:divide-slate-800">
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ==========================================
-             DATOS Y SINCRONIZACIÓN ANTIGUA
-             ========================================== -->
-
-        <section id="v-datos"
-            class="tab-content hidden space-y-6">
-
-            <!-- IMPORTADOR ANTIGUO -->
-
-            <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-
-                <div class="flex items-center space-x-3">
-
-                    <div class="p-3 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-xl">
-                        <i class="fa-solid fa-file-csv text-2xl"></i>
-                    </div>
-
-                    <div>
-
-                        <h2 class="text-base font-bold tracking-tight">
-                            Importador CSV - Laboral Kutxa
-                        </h2>
-
-                        <p class="text-xs text-slate-500">
-                            Sube tus extractos. Los movimientos ya importados se omiten automáticamente,
-                            así que puedes subir solo los meses nuevos.
-                        </p>
-
-                    </div>
-
-                </div>
-
-                <!-- SELECTOR DE CUENTA -->
-
-                <div class="space-y-2">
-
-                    <label for="import-account"
-                        class="block text-xs font-semibold text-slate-600 dark:text-slate-300">
-                        Cuenta bancaria de destino
-                    </label>
-
-                    <select id="import-account"
-                        class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm">
-                        <option value="">Cargando cuentas...</option>
-                    </select>
-
-                    <p class="text-xs text-slate-500 dark:text-slate-400">
-                        Los movimientos se guardarán únicamente en la cuenta seleccionada.
-                    </p>
-
-                </div>
-
-                <!-- ZONA DE ARCHIVO ANTIGUA -->
-
-                <div id="drop-zone"
-                    class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-brand-500 rounded-2xl p-8 text-center transition-colors cursor-pointer bg-slate-50/50 dark:bg-slate-800/20">
-
-                    <input type="file"
-                        id="csv-file-input"
-                        accept=".csv,text/csv"
-                        class="hidden"
-                        onchange="handleFileSelect(event)">
-
-                    <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400 mb-2"></i>
-
-                    <p class="text-sm font-semibold">
-                        Arrastra aquí tu archivo CSV o haz clic para seleccionar
-                    </p>
-
-                    <p class="text-xs text-slate-400 mt-1">
-                        Formato de extracto Laboral Kutxa (;)
-                    </p>
-
-                </div>
-
-                <div id="import-result"
-                    class="hidden p-4 rounded-xl text-xs font-medium">
-                </div>
-
-            </div>
-
-            <!-- CONFIGURACIÓN BIZUM -->
-
-            <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-
-                <h3 class="font-bold text-sm tracking-tight flex items-center space-x-2">
-                    <i class="fa-solid fa-people-arrows text-sky-500"></i>
-                    <span>Sugerencias de vinculación Bizum</span>
-                </h3>
-
-                <p class="text-xs text-slate-500">
-                    Si tras un gasto grande entran varios Bizums de importe igual a una parte exacta del gasto
-                    (1/2, 1/3, 1/4…), se te propone vincularlos.
-                </p>
-
-                <div class="flex flex-wrap items-center gap-3 text-xs">
-
-                    <label class="flex items-center gap-2">
-
-                        Gasto mínimo
-
-                        <input type="number"
-                            id="set-bizum-min"
-                            min="1"
-                            step="1"
-                            onchange="saveBizumSettings()"
-                            class="w-20 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border-none text-right">
-
-                        €
-
-                    </label>
-
-                    <label class="flex items-center gap-2">
-
-                        Ventana
-
-                        <input type="number"
-                            id="set-bizum-days"
-                            min="1"
-                            max="14"
-                            step="1"
-                            onchange="saveBizumSettings()"
-                            class="w-16 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border-none text-right">
-
-                        días
-
-                    </label>
-
-                    <button onclick="resetDismissed()"
-                        class="text-brand-600 hover:underline font-semibold">
-                        Recuperar sugerencias descartadas
-                    </button>
-
-                </div>
-
-            </div>
-
-            <!-- HISTORIAL -->
-
-            <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-
-                <h3 class="font-bold text-sm tracking-tight mb-3">
-                    Histórico de Importaciones
-                </h3>
-
-                <div class="overflow-x-auto">
-
-                    <table class="w-full text-left text-xs">
-
-                        <thead class="bg-slate-100/70 dark:bg-slate-800/60 text-slate-500 font-semibold">
-
-                            <tr>
-                                <th class="py-2 px-3">Fecha y Hora</th>
-                                <th class="py-2 px-3 text-right">Registros Nuevos</th>
-                                <th class="py-2 px-3 text-right">Duplicados Omitidos</th>
-                            </tr>
-
-                        </thead>
-
-                        <tbody id="import-history-body"
-                            class="divide-y divide-slate-100 dark:divide-slate-800">
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </div>
-
-            <!-- COPIA DE SEGURIDAD Y BASE DE DATOS -->
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-
-                    <h3 class="font-bold text-sm tracking-tight flex items-center space-x-2">
-                        <i class="fa-solid fa-floppy-disk text-brand-500"></i>
-                        <span>Copia de Seguridad (JSON)</span>
-                    </h3>
-
-                    <p class="text-xs text-slate-500">
-                        Incluye movimientos, etiquetas, vínculos Bizum,
-                        reglas, presupuestos y la cuenta de inversión.
-                    </p>
-
-                    <div class="flex flex-wrap gap-2 pt-2">
-
-                        <button onclick="exportBackupJSON()"
-                            class="px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white dark:bg-slate-700 dark:hover:bg-slate-600 rounded-xl text-xs font-semibold">
-
-                            <i class="fa-solid fa-download mr-1.5"></i>
-                            Descargar Backup (.json)
-
-                        </button>
-
-                        <label class="px-3 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl text-xs font-semibold cursor-pointer inline-block">
-
-                            <i class="fa-solid fa-upload mr-1.5"></i>
-                            Restaurar Backup
-
-                            <input type="file"
-                                accept=".json"
-                                class="hidden"
-                                onchange="importBackupJSON(event)">
-
-                        </label>
-
-                    </div>
-
-                </div>
-
-                <!-- BASE DE DATOS (SUPABASE) -->
-
-                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-
-                    <h3 class="font-bold text-sm tracking-tight flex items-center space-x-2">
-                        <i class="fa-solid fa-arrows-rotate text-brand-500"></i>
-                        <span>Base de datos en la nube</span>
-                    </h3>
-
-                    <p class="text-xs text-slate-500">
-                        Tus movimientos se guardan en tu base de datos (Supabase), ligados a tu usuario.
-                        Entra con el mismo correo en el iPhone y en el PC y verás lo mismo.
-                    </p>
-
-                    <div id="cloud-status-text"
-                        class="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                        Comprobando…
-                    </div>
-
-                    <div class="text-xs text-slate-500">
-                        Sesión: <span id="cloud-user" class="font-semibold"></span>
-                        <span id="cloud-remember" class="block mt-0.5"></span>
-                    </div>
-
-                    <div class="flex flex-wrap gap-2">
-                        <button id="cloud-sync-btn"
-                            onclick="cloudSyncNow()"
-                            class="px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold">
-                            <i class="fa-solid fa-arrows-rotate mr-1.5"></i>
-                            Recargar datos
-                        </button>
-                        <button onclick="logoutFinanzas()"
-                            class="px-3 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl text-xs font-semibold">
-                            Cerrar sesión
-                        </button>
-                    </div>
-
-                </div>
-
-            </div>
-
-            <!-- RESTABLECER APLICACIÓN -->
-
-            <div class="bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40 p-4 rounded-2xl flex items-center justify-between">
 
                 <div>
+                    <h3 class="group-header">Importar movimientos</h3>
+                    <div id="inv-drop" class="drop" role="button" tabindex="0">
+                        <input type="file" id="inv-file-input" accept=".csv,.txt,text/csv" class="hidden" onchange="handleInvFile(event)">
+                        <span class="icon-tile"><i class="ic ic-file-up"></i></span>
+                        <span class="bold">Elegir CSV de inversión</span>
+                        <span class="small muted">Detecta separador, fechas y decimales</span>
+                    </div>
+                    <div id="inv-result" class="hidden result mt-2"></div>
 
-                    <h4 class="text-xs font-bold text-rose-800 dark:text-rose-300">
-                        Restablecer la aplicación
-                    </h4>
+                    <div id="inv-map-panel" class="hidden card mt-2 stack-sm">
+                        <p class="small bold" style="margin:0">¿Qué columna es cada dato? (solo la primera vez)</p>
+                        <div id="inv-map-selects" class="grid-2 small"></div>
+                        <div style="overflow-x:auto"><table id="inv-map-preview" class="xsmall" style="width:100%"></table></div>
+                        <div class="flex gap-2">
+                            <button class="btn sm" onclick="confirmInvMapping()">Importar</button>
+                            <button class="btn sm gray" onclick="cancelInvMapping()">Cancelar</button>
+                        </div>
+                    </div>
 
-                    <p class="text-[11px] text-rose-600 dark:text-rose-400">
-                        Elimina todos los datos guardados (movimientos, reglas, inversión)
-                        en este dispositivo (los movimientos guardados en la base de datos no se borran).
-                    </p>
+                    <div class="group mt-3">
+                        <div class="row">
+                            <span class="row-main row-title">Signo</span>
+                            <select id="inv-sign" class="field sm" onchange="setInvSign(this.value)">
+                                <option value="1">Positivo = aportación</option>
+                                <option value="-1">Negativo = aportación</option>
+                            </select>
+                        </div>
+                        <button class="row action" onclick="forgetInvMap()">Olvidar columnas guardadas</button>
+                        <button class="row destructive" style="justify-content:flex-start" onclick="wipeInvData()">Borrar datos de inversión</button>
+                    </div>
+                </div>
+            </div>
 
+            <div>
+                <h3 class="group-header" id="inv-counter"></h3>
+                <div id="inv-table-body" class="group"></div>
+            </div>
+
+        </section>
+
+
+        <!-- ==========================================
+             REGLAS
+             ========================================== -->
+
+        <section id="v-reglas" class="tab-content hidden stack">
+
+            <div class="page-head">
+                <div>
+                    <h1 class="large-title">Reglas</h1>
+                    <p class="page-sub">Clasifican solos los movimientos al importar.</p>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="group-header">Nueva regla</h3>
+                <div class="group">
+                    <div class="row">
+                        <input type="text" id="rule-pattern" class="field grow" placeholder="Texto del concepto (ej. MERCADONA)">
+                    </div>
+                    <div class="row">
+                        <span class="row-main row-title">Categoría</span>
+                        <select id="rule-category" class="field sm"></select>
+                    </div>
+                    <button class="row action" onclick="addRuleFromInput()"><i class="ic ic-plus"></i>Añadir regla</button>
+                </div>
+                <p class="group-footer">No distingue mayúsculas ni tildes.</p>
+            </div>
+
+            <div>
+                <div class="search mb-search">
+                    <i class="ic ic-search"></i>
+                    <input type="search" id="rule-search" class="field" placeholder="Buscar regla" oninput="renderReglas()" autocomplete="off">
+                </div>
+                <h3 class="group-header mt-3"><span id="rules-count">0</span> reglas</h3>
+                <div id="rules-table-body" class="group"></div>
+            </div>
+
+        </section>
+
+
+        <!-- ==========================================
+             DATOS
+             ========================================== -->
+
+        <section id="v-datos" class="tab-content hidden stack">
+
+            <div class="page-head">
+                <h1 class="large-title">Datos</h1>
+            </div>
+
+            <div>
+                <h3 class="group-header">Importar extracto</h3>
+                <div class="group">
+                    <div class="row">
+                        <span class="row-main row-title">Cuenta</span>
+                        <select id="import-account" class="field sm" style="max-width:60%"><option value="">Cargando…</option></select>
+                    </div>
+                </div>
+                <div id="drop-zone" class="drop mt-2" role="button" tabindex="0">
+                    <input type="file" id="csv-file-input" accept=".csv,text/csv" class="hidden" onchange="handleFileSelect(event)">
+                    <span class="icon-tile"><i class="ic ic-file-up"></i></span>
+                    <span class="bold">Elegir CSV de Laboral Kutxa</span>
+                    <span class="small muted">Los movimientos repetidos se omiten solos</span>
+                </div>
+                <div id="import-result" class="hidden result mt-2"></div>
+            </div>
+
+            <div class="grid-lg-2 stack">
+                <div>
+                    <h3 class="group-header">Bizums compartidos</h3>
+                    <div class="group">
+                        <div class="row">
+                            <span class="row-main row-title">Gasto mínimo</span>
+                            <input type="number" id="set-bizum-min" min="1" step="1" inputmode="numeric" class="field plain num" style="width:80px" onchange="saveBizumSettings()">
+                            <span class="muted">€</span>
+                        </div>
+                        <div class="row">
+                            <span class="row-main row-title">Días para recibirlos</span>
+                            <input type="number" id="set-bizum-days" min="1" max="14" step="1" inputmode="numeric" class="field plain num" style="width:60px" onchange="saveBizumSettings()">
+                        </div>
+                        <button class="row action" onclick="resetDismissed()">Recuperar sugerencias descartadas</button>
+                    </div>
+                    <p class="group-footer">Si tras un gasto llegan Bizums por una parte exacta (½, ⅓, ¼…), se propone agruparlos.</p>
                 </div>
 
-                <button onclick="wipeAllData()"
-                    class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl">
-                    Borrar Todo
-                </button>
+                <div>
+                    <h3 class="group-header">Últimas importaciones</h3>
+                    <div id="import-history-body" class="group"></div>
+                </div>
+            </div>
 
+            <div class="grid-lg-2 stack">
+                <div>
+                    <h3 class="group-header">Cuenta</h3>
+                    <div class="group">
+                        <div class="row">
+                            <span class="icon-tile round" style="background:var(--gray)"><i class="ic ic-circle-user"></i></span>
+                            <span class="row-main">
+                                <span id="cloud-user" class="row-title" style="display:block"></span>
+                                <span id="cloud-remember" class="row-sub" style="display:block"></span>
+                            </span>
+                        </div>
+                        <div class="row">
+                            <span class="row-main row-title">Base de datos</span>
+                            <span id="cloud-status-text" class="row-sub right" style="max-width:60%">Comprobando…</span>
+                        </div>
+                        <button id="cloud-sync-btn" class="row action" onclick="cloudSyncNow()">Recargar datos</button>
+                        <button class="row destructive" onclick="logoutFinanzas()">Cerrar sesión</button>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="group-header">Copia de seguridad</h3>
+                    <div class="group">
+                        <button class="row action" onclick="exportBackupJSON()"><i class="ic ic-download"></i>Descargar copia (.json)</button>
+                        <label class="row action" style="cursor:pointer"><i class="ic ic-upload"></i>Restaurar copia
+                            <input type="file" accept=".json" class="hidden" onchange="importBackupJSON(event)">
+                        </label>
+                    </div>
+                    <p class="group-footer">Incluye movimientos, etiquetas, Bizums, reglas e inversión.</p>
+                </div>
+            </div>
+
+            <div>
+                <div class="group">
+                    <button class="row destructive" onclick="wipeAllData()">Borrar datos de este dispositivo</button>
+                </div>
+                <p class="group-footer">Lo guardado en la base de datos no se borra.</p>
             </div>
 
         </section>
 
     </main>
 
-    <!-- ==========================================
-         MENSAJES Y CONFIRMACIONES
-         ========================================== -->
-
-    <div id="toast-message"
-        class="fixed bottom-4 right-4 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 border border-slate-700 text-xs font-medium">
-
-        <i id="toast-icon"
-            class="fa-solid fa-circle-check text-emerald-400 text-base">
-        </i>
-
-        <span id="toast-text">Mensaje</span>
-
-    </div>
-
-    <div id="confirm-modal"
-        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/60">
-
-        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl p-5 max-w-sm w-full space-y-4">
-
-            <p id="confirm-text"
-                class="text-sm whitespace-pre-line">
-            </p>
-
-            <div class="flex justify-end gap-2">
-
-                <button id="confirm-no"
-                    class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 dark:bg-slate-800">
-                    Cancelar
-                </button>
-
-                <button id="confirm-yes"
-                    class="px-4 py-2 rounded-xl text-xs font-semibold bg-brand-600 text-white">
-                    Aceptar
-                </button>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div id="cloud-pill" class="hidden"></div>
+    <!-- Barra de pestañas (móvil) -->
+    <nav class="tabbar" aria-label="Secciones">
+        <button class="tab-btn active" data-target="v-dashboard"><i class="ic ic-chart-pie"></i>Resumen</button>
+        <button class="tab-btn" data-target="v-movs"><i class="ic ic-list"></i>Movimientos</button>
+        <button class="tab-btn" data-target="v-inversion"><i class="ic ic-trending-up"></i>Inversión</button>
+        <button class="tab-btn" data-target="v-reglas"><i class="ic ic-wand-sparkles"></i>Reglas</button>
+        <button class="tab-btn" data-target="v-datos"><i class="ic ic-cloud"></i>Datos<span id="tab-sync-badge" class="badge-dot hidden"></span></button>
+    </nav>
 
 </div>
 
+<!-- Mensaje flotante -->
+<div id="toast-message" role="status" aria-live="polite">
+    <i id="toast-icon" class="ic ic-circle-check"></i>
+    <span id="toast-text"></span>
+</div>
 
-<!-- ==========================================
-     SUPABASE
-     ========================================== -->
+<!-- Confirmación -->
+<div id="confirm-modal" class="hidden" role="alertdialog" aria-modal="true" aria-labelledby="confirm-text">
+    <div class="alert">
+        <p id="confirm-text"></p>
+        <div class="alert-actions">
+            <button id="confirm-no">Cancelar</button>
+            <button id="confirm-yes">Aceptar</button>
+        </div>
+    </div>
+</div>
 
 <script src="vendor/supabase-2.118.0.min.js"></script>
 <script src="vendor/chart-4.4.1.min.js"></script>
@@ -1405,34 +552,21 @@
 <script src="js/supabase.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/database.js"></script>
-
-
-<!-- ==========================================
-     JAVASCRIPT DE LA APLICACIÓN
-     ========================================== -->
-
 <script src="js/state.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/csv.js"></script>
-<script src="js/csv-universal.js"></script>
 <script src="js/bizum.js"></script>
 <script src="js/tags.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/movimientos.js"></script>
 <script src="js/inversion.js"></script>
-<script src="js/presupuestos.js"></script>
 <script src="js/reglas.js"></script>
 <script src="js/importacion.js"></script>
 <script src="js/backup.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/cloud.js"></script>
 <script src="js/app.js"></script>
-
-
-<!-- ==========================================
-     SERVICE WORKER
-     ========================================== -->
 
 <script>
 if ('serviceWorker' in navigator) {

@@ -3,7 +3,7 @@
    Caché de los archivos de la aplicación
    ========================================================================== */
 
-   const CACHE = 'finanzas-v8';
+   const CACHE = 'finanzas-v9';
 
    const FILES = [
        './',
@@ -13,7 +13,9 @@
    
        // CSS
        './css/tailwind.css',
-       './css/styles.css',
+       './css/icons.css',
+       './css/apple.css',
+       './assets/fonts/inter-latin-var.woff2',
 
        // Librerías (copiadas en el repositorio, versión fija)
        './vendor/supabase-2.118.0.min.js',
@@ -28,13 +30,11 @@
        './js/utils.js',
        './js/storage.js',
        './js/csv.js',
-       './js/csv-universal.js',
        './js/bizum.js',
        './js/tags.js',
        './js/dashboard.js',
        './js/movimientos.js',
        './js/inversion.js',
-       './js/presupuestos.js',
        './js/reglas.js',
        './js/importacion.js',
        './js/backup.js',

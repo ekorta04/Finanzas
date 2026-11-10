@@ -109,8 +109,8 @@ function setupAuthScreen() {
         message.textContent = text;
 
         message.className = isError
-            ? 'text-sm text-center text-red-600'
-            : 'text-sm text-center text-green-600';
+            ? 'center small red'
+            : 'center small pos';
     }
 
     switchBtn.addEventListener('click', () => {

@@ -2,15 +2,21 @@
     12. REGLAS
     ========================================================================== */
     function renderReglas() {
-        document.getElementById('rules-count').textContent = AppState.rules.length;
+        const q = norm((document.getElementById('rule-search') || {}).value || '');
+        const list = AppState.rules.map((rule, idx) => ({ rule, idx }))
+            .filter(({ rule }) => !q || norm(rule.p).includes(q) || norm(rule.c).includes(q));
+        document.getElementById('rules-count').textContent = q ? `${list.length} de ${AppState.rules.length}` : AppState.rules.length;
         const tb = document.getElementById('rules-table-body');
-        if (!AppState.rules.length) { tb.innerHTML = `<tr><td colspan="3" class="py-4 text-center text-slate-400">No hay reglas configuradas.</td></tr>`; return; }
-        tb.innerHTML = AppState.rules.map((rule, idx) => `
-            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                <td class="py-2.5 px-4 font-semibold">${esc(rule.p)}</td>
-                <td class="py-2.5 px-4"><span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-md font-medium">${esc(rule.c)}</span></td>
-                <td class="py-2.5 px-4 text-right"><button onclick="deleteRule(${idx})" class="text-rose-500 hover:text-rose-700 p-1"><i class="fa-solid fa-trash-can"></i></button></td>
-            </tr>`).join('');
+        if (!list.length) { tb.innerHTML = `<div class="row"><span class="muted small">${q ? 'Ninguna regla coincide.' : 'No hay reglas.'}</span></div>`; return; }
+        tb.innerHTML = list.map(({ rule, idx }) => `
+            <div class="row with-icon">
+                ${catIcon(rule.c, false)}
+                <div class="row-main">
+                    <div class="row-title truncate">${esc(rule.p)}</div>
+                    <div class="row-sub">${esc(rule.c)}</div>
+                </div>
+                <button onclick="deleteRule(${idx})" class="btn xs danger" aria-label="Eliminar regla ${esc(rule.p)}"><i class="ic ic-trash-2"></i></button>
+            </div>`).join('');
     }
     function addRuleFromInput() {
         const p = document.getElementById('rule-pattern').value.trim();

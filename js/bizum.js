@@ -50,23 +50,18 @@
         if (!BizumSugg.length) { el.classList.add('hidden'); el.innerHTML = ''; return; }
         el.classList.remove('hidden');
         el.innerHTML = `
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-people-arrows text-sky-600 dark:text-sky-400 text-lg"></i>
-                    <h4 class="font-semibold text-sky-900 dark:text-sky-200 text-sm">${BizumSugg.length} sugerencia(s) de vinculación Bizum</h4>
-                </div>
-            </div>
-            <div class="space-y-2 max-h-72 overflow-y-auto">
+            <h3 class="group-header">Gastos compartidos</h3>
+            <div class="group">
                 ${BizumSugg.map((s, idx) => `
-                    <div class="bg-white dark:bg-slate-900 rounded-xl border border-sky-100 dark:border-sky-900/60 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <div class="text-xs">
-                            <p class="font-semibold">¿Quieres vincular estos ${s.bz.length} Bizum(s) al gasto en <span class="text-brand-600 dark:text-brand-400">${esc(s.exp.c)}</span>?</p>
-                            <p class="text-slate-500 mt-0.5">Gasto ${formatDateEs(s.exp.d)}: <strong>${formatEur(s.exp.i)}</strong> · cada Bizum ≈ 1/${s.n} (${formatEur(s.share)})</p>
-                            <p class="text-slate-400 mt-0.5">${s.bz.map(b => `${formatDateEs(b.d)} +${formatEur(b.i)}`).join(' · ')}</p>
-                        </div>
-                        <div class="flex gap-2 shrink-0">
-                            <button onclick="applyBizumLink(${idx})" class="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-lg">Vincular</button>
-                            <button onclick="dismissBizum(${idx})" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold rounded-lg">Descartar</button>
+                    <div class="row with-icon" style="align-items:flex-start">
+                        <span class="icon-tile round" style="background:var(--teal)"><i class="ic ic-users"></i></span>
+                        <div class="row-main">
+                            <div class="row-title bold" style="font-size:15px">${esc(s.exp.c)} entre ${s.n}</div>
+                            <div class="row-sub" style="white-space:normal">Pagaste ${formatEur(-s.exp.i)} el ${shortDate(s.exp.d)} y te llegaron ${s.bz.length} Bizum${s.bz.length > 1 ? 's' : ''} de ${formatEur(s.share)}. ¿Los agrupo?</div>
+                            <div class="flex gap-2 mt-2">
+                                <button onclick="applyBizumLink(${idx})" class="btn xs">Agrupar</button>
+                                <button onclick="dismissBizum(${idx})" class="btn xs gray">Ahora no</button>
+                            </div>
                         </div>
                     </div>`).join('')}
             </div>`;
@@ -77,7 +72,7 @@
         s.exp.bz = s.bz.map(b => b.k);
         s.bz.forEach(b => { b.lk = s.exp.k; });
         saveState(); renderAllViews();
-        showToast(`${s.bz.length} Bizum(s) vinculados al gasto`);
+        showToast('Gasto compartido agrupado');
     }
     function dismissBizum(idx) {
         const s = BizumSugg[idx]; if (!s) return;

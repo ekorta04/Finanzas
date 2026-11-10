@@ -36,14 +36,15 @@ function renderDashboard() {
     document.getElementById('kpi-ingreso').textContent = formatEur(ingreso);
     const balEl = document.getElementById('kpi-balance');
     balEl.textContent = formatEur(balance);
-    balEl.className = `text-lg sm:text-xl font-bold tracking-tight ${balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`;
-    document.getElementById('kpi-ahorro').textContent = tasa.toFixed(1) + '%';
+    balEl.className = `stat-value num ${balance >= 0 ? 'pos' : 'red'}`;
+    balEl.textContent = (balance > 0 ? '+' : '') + formatEur(balance);
+    document.getElementById('kpi-ahorro').textContent = tasa.toFixed(1).replace('.', ',') + ' %';
     document.getElementById('kpi-diario').textContent = formatEur(gasto / days);
     document.getElementById('kpi-saldo').textContent = formatEur(saldo);
 
     const inv = invSummary();
     const pat = document.getElementById('kpi-patrimonio');
-    if (inv.valor != null) { pat.classList.remove('hidden'); pat.textContent = `+ Inversión ${formatEur(inv.valor)} = ${formatEur(saldo + inv.valor)}`; }
+    if (inv.valor != null) { pat.classList.remove('hidden'); pat.textContent = `Con inversión: ${formatEur(saldo + inv.valor)}`; }
     else pat.classList.add('hidden');
 
     renderChartMensual();
@@ -52,25 +53,55 @@ function renderDashboard() {
     renderInsights(cat, gasto, recovered);
 }
 
+// Estilo común de los gráficos (tipografía y colores del sistema)
+function chartTheme() {
+    const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+    Chart.defaults.font.size = 11;
+    Chart.defaults.color = dark ? 'rgba(235,235,245,.6)' : 'rgba(60,60,67,.6)';
+    return {
+        grid: dark ? 'rgba(84,84,88,.45)' : 'rgba(60,60,67,.1)',
+        card: cssVar('--card'),
+        tooltip: {
+            backgroundColor: dark ? 'rgba(44,44,46,.96)' : 'rgba(255,255,255,.98)',
+            titleColor: dark ? '#fff' : '#000', bodyColor: dark ? '#fff' : '#000',
+            borderColor: dark ? 'rgba(84,84,88,.6)' : 'rgba(60,60,67,.15)', borderWidth: .5,
+            padding: 10, cornerRadius: 10, boxPadding: 4, usePointStyle: true,
+            titleFont: { weight: '600' }
+        }
+    };
+}
+
 function renderChartMensual() {
     const ctx = document.getElementById('chart-mensual').getContext('2d');
     const months = getUniqueMonths().slice(0, 12).reverse();
     const g = [], inc = [];
-    months.forEach(m => { const t = netTotals(AppState.rows.filter(r => r.d.startsWith(m))); g.push(t.gasto); inc.push(t.ingreso); });
+    months.forEach(m => {
+        const t = netTotals(AppState.rows.filter(r => r.d.startsWith(m)));
+        g.push(t.gasto); inc.push(t.ingreso);
+    });
+    const th = chartTheme();
     if (chartMensualInstance) chartMensualInstance.destroy();
     chartMensualInstance = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: months.map(m => { const [y, mm] = m.split('-'); return `${mm}/${y.slice(2)}`; }),
+            labels: months.map(m => MONTHS_ES[Number(m.slice(5)) - 1].slice(0, 3)),
             datasets: [
-                { label: 'Ingresos', data: inc, backgroundColor: 'rgba(16,185,129,0.85)', borderRadius: 6 },
-                { label: 'Gastos', data: g, backgroundColor: 'rgba(244,63,94,0.85)', borderRadius: 6 }
+                { label: 'Ingresos', data: inc, backgroundColor: cssVar('--green'), borderRadius: 5, borderSkipped: false, maxBarThickness: 14, categoryPercentage: .6, barPercentage: .8 },
+                { label: 'Gastos', data: g, backgroundColor: cssVar('--red'), borderRadius: 5, borderSkipped: false, maxBarThickness: 14, categoryPercentage: .6, barPercentage: .8 }
             ]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } }, tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${formatEur(c.raw)}` } } },
-            scales: { x: { grid: { display: false } }, y: { ticks: { callback: v => v >= 1000 ? (v / 1000) + 'k €' : v + ' €' } } }
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top', align: 'end', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 7, boxHeight: 7, padding: 14 } },
+                tooltip: { ...th.tooltip, callbacks: { title: c => monthName(months[c[0].dataIndex]), label: c => ` ${c.dataset.label}: ${formatEur(c.raw)}` } }
+            },
+            scales: {
+                x: { grid: { display: false }, border: { display: false } },
+                y: { grid: { color: th.grid }, border: { display: false }, ticks: { maxTicksLimit: 5, callback: v => v >= 1000 ? (v / 1000).toLocaleString('es-ES') + ' k' : v } }
+            }
         }
     });
 }
@@ -80,54 +111,84 @@ function renderChartCategorias(catTotals) {
     const sorted = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
     const labels = sorted.map(c => c[0]), data = sorted.map(c => c[1]);
     const total = data.reduce((a, b) => a + b, 0);
-    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#6366f1', '#f97316', '#06b6d4', '#84cc16', '#64748b'];
+    const colors = labels.map(c => cssVar(catStyle(c)[1]));
+    const th = chartTheme();
     if (chartCategoriasInstance) chartCategoriasInstance.destroy();
     chartCategoriasInstance = new Chart(ctx, {
         type: 'doughnut',
-        data: { labels, datasets: [{ data, backgroundColor: colors.slice(0, labels.length), borderWidth: 2, hoverOffset: 6 }] },
+        data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: th.card, borderWidth: 3, borderRadius: 4, hoverOffset: 4 }] },
         options: {
-            responsive: true, maintainAspectRatio: false, cutout: '65%',
+            responsive: true, maintainAspectRatio: false, cutout: '72%',
             plugins: {
-                legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } },
-                tooltip: { callbacks: { label: c => ` ${c.label}: ${formatEur(c.raw)} (${total > 0 ? ((c.raw / total) * 100).toFixed(1) : 0}%)` } }
+                legend: { display: false },
+                tooltip: { ...th.tooltip, callbacks: { label: c => ` ${c.label}: ${formatEur(c.raw)} (${total > 0 ? ((c.raw / total) * 100).toFixed(0) : 0}%)` } }
             }
-        }
+        },
+        plugins: [{
+            id: 'centerText',
+            afterDraw(chart) {
+                const { ctx: c, chartArea: a } = chart;
+                const x = (a.left + a.right) / 2, y = (a.top + a.bottom) / 2;
+                c.save(); c.textAlign = 'center';
+                c.fillStyle = Chart.defaults.color; c.font = `600 12px ${Chart.defaults.font.family}`;
+                c.fillText('Gasto', x, y - 12);
+                c.fillStyle = cssVar('--label'); c.font = `700 20px ${Chart.defaults.font.family}`;
+                c.fillText(formatEur(total).replace(/,\d\d\s/, ' '), x, y + 12);
+                c.restore();
+            }
+        }]
     });
+
+    const legend = document.getElementById('cat-legend');
+    legend.innerHTML = sorted.length ? `<div class="group" style="box-shadow:none;background:transparent">${sorted.map(([c, v]) => `
+        <div class="row" style="padding:8px 4px;min-height:0;--sep-left:26px">
+            <span class="legend-dot" style="background:var(${catStyle(c)[1]})"></span>
+            <span class="row-main" style="font-size:14px">${esc(c)}</span>
+            <span class="small muted num">${total > 0 ? Math.round(v / total * 100) : 0}%</span>
+            <span class="small bold num" style="min-width:84px;text-align:right">${formatEur(v)}</span>
+        </div>`).join('')}</div>` : '<p class="small muted center">Sin gastos en este periodo.</p>';
 }
 
 function renderTopShops(expenseRows) {
-    const totals = {};
-    expenseRows.forEach(r => { const s = r.c.trim(); totals[s] = (totals[s] || 0) + Math.abs(r.i); });
-    const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const totals = {}, cats = {}, counts = {};
+    const map = byKeyMap();
+    expenseRows.forEach(r => {
+        const s = r.c.trim();
+        const rec = (r.bz || []).reduce((a, k) => a + ((map.get(k) || {}).i || 0), 0);
+        totals[s] = (totals[s] || 0) + Math.abs(r.i) - rec;
+        cats[s] = r.cat; counts[s] = (counts[s] || 0) + 1;
+    });
+    const sorted = Object.entries(totals).filter(e => e[1] > 0.005).sort((a, b) => b[1] - a[1]).slice(0, 5);
     const cont = document.getElementById('top-shops-list');
-    if (!sorted.length) { cont.innerHTML = '<p class="text-xs text-slate-400">Sin datos de gastos en este periodo.</p>'; return; }
+    if (!sorted.length) { cont.innerHTML = '<div class="row"><span class="muted small">Sin gastos en este periodo.</span></div>'; return; }
     const max = sorted[0][1];
     cont.innerHTML = sorted.map(([name, amt]) => `
-        <div>
-            <div class="flex justify-between text-xs font-semibold mb-1">
-                <span class="truncate max-w-[200px]" title="${esc(name)}">${esc(name)}</span>
-                <span class="text-rose-600 dark:text-rose-400 font-bold">${formatEur(amt)}</span>
+        <div class="row with-icon">
+            ${catIcon(cats[name])}
+            <div class="row-main">
+                <div class="flex justify-between gap-2">
+                    <span class="row-title truncate" style="font-size:15px" title="${esc(name)}">${esc(name)}</span>
+                    <span class="bold num" style="font-size:15px">${formatEur(amt)}</span>
+                </div>
+                <div class="bar-track"><div class="bar-fill" style="width:${Math.max(3, Math.round(amt / max * 100))}%;background:var(${catStyle(cats[name])[1]})"></div></div>
+                <div class="row-sub">${counts[name]} ${counts[name] === 1 ? 'pago' : 'pagos'}</div>
             </div>
-            <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden"><div class="bg-brand-500 h-2 rounded-full" style="width:${Math.round(amt / max * 100)}%"></div></div>
         </div>`).join('');
 }
 
 function renderInsights(cat, gasto, recovered) {
     const cont = document.getElementById('insights-container');
     const top = Object.entries(cat).sort((a, b) => b[1] - a[1])[0];
-    if (!top) { cont.innerHTML = '<p class="text-xs text-slate-400">Sin suficientes datos para generar insights.</p>'; return; }
-    const pct = gasto > 0 ? ((top[1] / gasto) * 100).toFixed(1) : 0;
-    let html = `
-        <div class="p-3 bg-brand-50 dark:bg-brand-900/20 rounded-xl border border-brand-100 dark:border-brand-900/60 flex items-start space-x-3">
-            <i class="fa-solid fa-chart-line text-brand-600 dark:text-brand-400 mt-0.5"></i>
-            <div><h4 class="text-xs font-bold">Categoría Principal</h4>
-            <p class="text-xs mt-0.5"><strong>${esc(top[0])}</strong> representa el <strong>${pct}%</strong> del gasto neto (${formatEur(top[1])}).</p></div>
+    if (!top) { cont.innerHTML = '<div class="row"><span class="muted small">Aún no hay datos suficientes.</span></div>'; return; }
+    const pct = gasto > 0 ? ((top[1] / gasto) * 100).toFixed(0) : 0;
+    const item = (icon, color, title, text) => `
+        <div class="row with-icon" style="align-items:flex-start">
+            <span class="icon-tile" style="background:var(${color})"><i class="ic ic-${icon}"></i></span>
+            <div class="row-main"><div class="row-title bold" style="font-size:15px">${title}</div><div class="row-sub" style="white-space:normal">${text}</div></div>
         </div>`;
-    if (recovered > 0) html += `
-        <div class="p-3 bg-sky-50 dark:bg-sky-900/20 rounded-xl border border-sky-100 dark:border-sky-900/60 flex items-start space-x-3">
-            <i class="fa-solid fa-people-arrows text-sky-600 dark:text-sky-400 mt-0.5"></i>
-            <div><h4 class="text-xs font-bold">Bizums recuperados</h4>
-            <p class="text-xs mt-0.5">Has recuperado <strong>${formatEur(recovered)}</strong> de gastos compartidos en este periodo.</p></div>
-        </div>`;
+    let html = item(catStyle(top[0])[0], catStyle(top[0])[1], esc(top[0]), `Es tu mayor gasto: <b>${pct}%</b> del total (${formatEur(top[1])}).`);
+    if (recovered > 0) html += item('users', '--teal', 'Bizums recuperados', `Te han devuelto <b>${formatEur(recovered)}</b> de gastos compartidos.`);
+    const subs = cat['Suscripciones'];
+    if (subs) html += item('repeat', '--purple', 'Suscripciones', `Llevas <b>${formatEur(subs)}</b> en suscripciones en este periodo.`);
     cont.innerHTML = html;
 }

@@ -3,23 +3,19 @@
     ========================================================================== */
 
 // Mostrar mensajes emergentes (Toast)
+let toastTimer = null;
 function showToast(msg, type = 'success') {
     const toast = document.getElementById('toast-message');
 
     document.getElementById('toast-text').textContent = msg;
 
-    document.getElementById('toast-icon').className =
-        type === 'error'
-            ? 'fa-solid fa-circle-xmark text-rose-400 text-base'
-            : 'fa-solid fa-circle-check text-emerald-400 text-base';
+    const icon = document.getElementById('toast-icon');
+    icon.className = type === 'error' ? 'ic ic-circle-x' : 'ic ic-circle-check';
+    icon.style.color = type === 'error' ? '#ff453a' : '#30d158';
 
-    toast.classList.remove('translate-y-20', 'opacity-0');
-    toast.classList.add('translate-y-0', 'opacity-100');
-
-    setTimeout(() => {
-        toast.classList.remove('translate-y-0', 'opacity-100');
-        toast.classList.add('translate-y-20', 'opacity-0');
-    }, 3000);
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
 }
 
 

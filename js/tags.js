@@ -60,7 +60,7 @@
         const tag = decodeURIComponent(encTag);
         clearMovFilters();
         document.getElementById('filter-tag').value = tag;
-        switchTab('v-movs'); renderMovimientos();
+        switchTab('v-movs'); showMovsView('list'); toggleFilters(true); renderMovimientos();
     }
     
     function tagStats() {
@@ -91,7 +91,11 @@
         const cont = document.getElementById('tags-container');
         const stats = tagStats();
         if (!stats.length) {
-            cont.innerHTML = `<div class="md:col-span-2 bg-white dark:bg-slate-900 p-8 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 text-center text-xs text-slate-400">Aún no hay etiquetas. Ve a Movimientos, escribe una en la columna "Etiquetas" o filtra por fechas y etiqueta en bloque (ej. #ViajeMexico).</div>`;
+            cont.innerHTML = `<div class="card center" style="padding:32px 20px">
+                <span class="icon-tile round" style="background:var(--indigo);margin:0 auto 10px;width:48px;height:48px"><i class="ic ic-tags"></i></span>
+                <div class="bold">Aún no hay etiquetas</div>
+                <div class="small muted mt-1">Abre un movimiento y añade una etiqueta, o filtra por fechas y etiqueta en bloque (ej. ViajeMexico).</div>
+            </div>`;
             return;
         }
         cont.innerHTML = stats.map(s => {
@@ -99,32 +103,30 @@
             const max = cats.length ? cats[0][1] : 1;
             const et = encodeURIComponent(s.name);
             return `
-            <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-                <div class="flex items-start justify-between">
+            <div class="card">
+                <div class="flex justify-between gap-3" style="align-items:flex-start">
+                    <div class="grow">
+                        <span class="tag-chip lg">#${esc(s.name)}</span>
+                        <div class="small muted mt-2">${s.n} movimientos · ${shortDate(s.min)} – ${shortDate(s.max)}</div>
+                    </div>
+                    <div class="right">
+                        <div class="xsmall muted bold" style="text-transform:uppercase">Coste real</div>
+                        <div class="num" style="font-size:24px;font-weight:700;letter-spacing:-.03em">${formatEur(s.neto)}</div>
+                    </div>
+                </div>
+                <div class="group mt-3" style="background:var(--fill-2);box-shadow:none">
+                    <div class="row" style="min-height:36px;padding:7px 12px"><span class="row-main small">Gastado</span><span class="small bold num">${formatEur(s.gasto)}</span></div>
+                    <div class="row" style="min-height:36px;padding:7px 12px;--sep-left:12px"><span class="row-main small">Bizums recuperados</span><span class="small bold num ${s.rec > 0 ? 'pos' : 'muted'}">${s.rec > 0 ? '−' : ''}${formatEur(s.rec)}</span></div>
+                    <div class="row" style="min-height:36px;padding:7px 12px;--sep-left:12px"><span class="row-main small">Otros ingresos</span><span class="small bold num ${s.ingreso > 0 ? 'pos' : 'muted'}">${s.ingreso > 0 ? '−' : ''}${formatEur(s.ingreso)}</span></div>
+                </div>
+                ${cats.length ? `<div class="mt-3 stack-sm">${cats.map(([c, v]) => `
                     <div>
-                        <span class="tag-chip text-sm">#${esc(s.name)}</span>
-                        <p class="text-[11px] text-slate-400 mt-1">${s.n} movimientos · ${formatDateEs(s.min)} – ${formatDateEs(s.max)}</p>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-[10px] uppercase text-slate-400 font-semibold">Coste neto</div>
-                        <div class="text-xl font-bold ${s.neto >= 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">${formatEur(s.neto)}</div>
-                    </div>
-                </div>
-                <div class="grid grid-cols-3 gap-2 text-center text-[11px]">
-                    <div class="bg-slate-50 dark:bg-slate-800/50 rounded-lg py-1.5"><div class="text-slate-400">Gasto bruto</div><div class="font-bold text-rose-600 dark:text-rose-400">${formatEur(s.gasto)}</div></div>
-                    <div class="bg-slate-50 dark:bg-slate-800/50 rounded-lg py-1.5"><div class="text-slate-400">Bizums recuperados</div><div class="font-bold text-sky-600 dark:text-sky-400">${formatEur(s.rec)}</div></div>
-                    <div class="bg-slate-50 dark:bg-slate-800/50 rounded-lg py-1.5"><div class="text-slate-400">Otros ingresos</div><div class="font-bold text-emerald-600 dark:text-emerald-400">${formatEur(s.ingreso)}</div></div>
-                </div>
-                <div class="space-y-1.5">
-                    ${cats.map(([c, v]) => `
-                        <div class="text-[11px]">
-                            <div class="flex justify-between"><span>${esc(c)}</span><span class="font-semibold">${formatEur(v)}</span></div>
-                            <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5"><div class="bg-indigo-500 h-1.5 rounded-full" style="width:${Math.round(v / max * 100)}%"></div></div>
-                        </div>`).join('')}
-                </div>
-                <div class="flex gap-3 text-xs pt-1">
-                    <button onclick="viewTag('${et}')" class="text-brand-600 hover:underline font-semibold">Ver movimientos</button>
-                    <button onclick="deleteTagEverywhere('${et}')" class="text-rose-600 hover:underline font-semibold">Eliminar etiqueta</button>
+                        <div class="flex justify-between small"><span class="flex items-center gap-2"><span class="legend-dot" style="background:var(${catStyle(c)[1]})"></span>${esc(c)}</span><span class="bold num">${formatEur(v)}</span></div>
+                        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(3, Math.round(v / max * 100))}%;background:var(${catStyle(c)[1]})"></div></div>
+                    </div>`).join('')}</div>` : ''}
+                <div class="flex justify-between mt-3">
+                    <button onclick="viewTag('${et}')" class="btn sm tinted">Ver movimientos</button>
+                    <button onclick="deleteTagEverywhere('${et}')" class="btn sm plain" style="color:var(--red)">Eliminar</button>
                 </div>
             </div>`;
         }).join('');

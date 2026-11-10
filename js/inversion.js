@@ -26,31 +26,32 @@
         document.getElementById('inv-kpi-valor-label').textContent = sum.label;
         const vEl = document.getElementById('inv-kpi-valor'), rEl = document.getElementById('inv-kpi-rent'), pEl = document.getElementById('inv-kpi-rent-pct');
         if (sum.valor != null) {
-            vEl.textContent = formatEur(sum.valor); vEl.className = 'text-lg font-bold text-brand-600 dark:text-brand-400';
+            vEl.textContent = formatEur(sum.valor);
             const rent = sum.valor - sum.neto;
             rEl.textContent = (rent >= 0 ? '+' : '') + formatEur(rent);
-            rEl.className = `text-lg font-bold ${rent >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`;
-            pEl.textContent = sum.neto > 0 ? `${rent >= 0 ? '+' : ''}${(rent / sum.neto * 100).toFixed(2)}% sobre lo aportado` : '';
-        } else { vEl.textContent = '—'; vEl.className = 'text-lg font-bold'; rEl.textContent = '—'; rEl.className = 'text-lg font-bold'; pEl.textContent = 'Añade el valor actual de la cartera'; }
+            rEl.className = `bold ${rent >= 0 ? 'pos' : 'red'}`;
+            pEl.textContent = sum.neto > 0 ? ` (${rent >= 0 ? '+' : ''}${(rent / sum.neto * 100).toFixed(2).replace('.', ',')}%) de rentabilidad` : ' de rentabilidad';
+        } else { vEl.textContent = '—'; rEl.textContent = ''; rEl.className = ''; pEl.textContent = 'Añade el valor actual de la cartera para ver la rentabilidad'; }
     
         document.getElementById('inv-sign').value = String(AppState.invSign || 1);
     
         // Lista de valores
         const vl = document.getElementById('inv-values-list');
         const vals = [...AppState.invValues].sort((a, b) => b.d.localeCompare(a.d)).slice(0, 5);
-        vl.innerHTML = vals.length ? vals.map(v => `<div class="flex justify-between items-center bg-slate-50 dark:bg-slate-800/40 rounded-lg px-2 py-1"><span>${formatDateEs(v.d)}</span><span class="font-bold">${formatEur(v.v)}</span><button onclick="deleteInvValue('${v.d}')" class="text-rose-500 px-1"><i class="fa-solid fa-trash-can"></i></button></div>`).join('') : '<p class="text-slate-400">Sin valores guardados.</p>';
+        vl.innerHTML = vals.length ? vals.map(v => `<div class="row"><span class="row-main row-title num" style="font-size:15px">${formatDateEs(v.d)}</span><span class="bold num">${formatEur(v.v)}</span><button onclick="deleteInvValue('${v.d}')" class="btn xs danger" aria-label="Borrar valor"><i class="ic ic-trash-2"></i></button></div>`).join('') : '';
+        vl.classList.toggle('hidden', !vals.length);
     
         // Tabla
-        document.getElementById('inv-counter').textContent = `${AppState.inv.length} movimientos de inversión` + (AppState.inv.length > 200 ? ' (mostrando los 200 más recientes)' : '');
+        document.getElementById('inv-counter').textContent = AppState.inv.length ? `Movimientos (${AppState.inv.length})` + (AppState.inv.length > 200 ? ' · últimos 200' : '') : 'Movimientos';
         const tb = document.getElementById('inv-table-body');
         tb.innerHTML = AppState.inv.length ? AppState.inv.slice(0, 200).map(r => {
             const f = invFlow(r);
-            return `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                <td class="py-2 px-4 font-mono text-slate-500 whitespace-nowrap">${formatDateEs(r.d)}</td>
-                <td class="py-2 px-4 font-medium">${esc(r.c)}</td>
-                <td class="py-2 px-4 text-right font-bold font-mono ${f >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">${formatEur(r.i)}</td>
-                <td class="py-2 px-4 text-right font-mono text-slate-400 hidden sm:table-cell">${r.s != null ? formatEur(r.s) : ''}</td></tr>`;
-        }).join('') : `<tr><td colspan="4" class="py-6 text-center text-slate-400">Importa el CSV de tu cuenta de inversión para empezar.</td></tr>`;
+            return `<div class="row with-icon">
+                <span class="icon-tile round" style="background:var(${f >= 0 ? '--green' : '--orange'})"><i class="ic ic-${f >= 0 ? 'arrow-down-left' : 'arrow-up-right'}"></i></span>
+                <div class="row-main"><div class="row-title truncate">${esc(r.c)}</div><div class="row-sub num">${formatDateEs(r.d)}${r.s != null ? ' · Saldo ' + formatEur(r.s) : ''}</div></div>
+                <span class="bold num ${f >= 0 ? 'pos' : ''}">${f >= 0 ? '+' : ''}${formatEur(r.i)}</span>
+            </div>`;
+        }).join('') : `<div class="row"><span class="muted small">Importa el CSV de tu cuenta de inversión para empezar.</span></div>`;
     
         // Gráfico (solo si la pestaña está visible)
         if (document.getElementById('v-inversion').classList.contains('hidden')) return;
@@ -65,16 +66,29 @@
             valSeries.push(inM.length ? inM[inM.length - 1].v : null);
         });
         if (chartInvInstance) chartInvInstance.destroy();
+        const th = chartTheme();
+        const blue = cssVar('--blue'), green = cssVar('--green');
         chartInvInstance = new Chart(document.getElementById('chart-inv').getContext('2d'), {
             type: 'line',
             data: {
-                labels: months.map(m => { const [y, mm] = m.split('-'); return `${mm}/${y.slice(2)}`; }),
+                labels: months.map(m => `${MONTHS_ES[Number(m.slice(5)) - 1].slice(0, 3)} ${m.slice(2, 4)}`),
                 datasets: [
-                    { label: 'Aportado neto acumulado', data: cum, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.12)', fill: true, tension: 0.25 },
-                    { label: 'Valor de la cartera', data: valSeries, borderColor: '#10b981', backgroundColor: '#10b981', spanGaps: true, tension: 0.25, pointRadius: 4 }
+                    { label: 'Aportado', data: cum, borderColor: blue, backgroundColor: blue + '22', fill: true, tension: 0.35, borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 4 },
+                    { label: 'Valor', data: valSeries, borderColor: green, backgroundColor: green, spanGaps: true, tension: 0.35, borderWidth: 2.5, pointRadius: 3.5 }
                 ]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${formatEur(c.raw)}` } } }, scales: { y: { ticks: { callback: v => v + ' €' } } } }
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { position: 'top', align: 'end', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 7, boxHeight: 7, padding: 14 } },
+                    tooltip: { ...th.tooltip, callbacks: { label: c => ` ${c.dataset.label}: ${formatEur(c.raw)}` } }
+                },
+                scales: {
+                    x: { grid: { display: false }, border: { display: false } },
+                    y: { grid: { color: th.grid }, border: { display: false }, ticks: { maxTicksLimit: 5, callback: v => v >= 1000 ? (v / 1000).toLocaleString('es-ES') + ' k' : v } }
+                }
+            }
         });
     }
     
@@ -117,9 +131,9 @@
     function setupInvDropZone() {
         const dz = document.getElementById('inv-drop'), fi = document.getElementById('inv-file-input');
         dz.addEventListener('click', () => fi.click());
-        dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('border-brand-500'); });
-        dz.addEventListener('dragleave', () => dz.classList.remove('border-brand-500'));
-        dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('border-brand-500'); if (e.dataTransfer.files.length) processInvFile(e.dataTransfer.files[0]); });
+        dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+        dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+        dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); if (e.dataTransfer.files.length) processInvFile(e.dataTransfer.files[0]); });
     }
     function handleInvFile(e) { const f = e.target.files[0]; if (f) processInvFile(f); e.target.value = ''; }
     
@@ -186,6 +200,6 @@
     
     function showInvResult(msg, type) {
         const el = document.getElementById('inv-result');
-        el.className = 'p-3 rounded-xl text-xs font-medium border ' + (type === 'success' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200' : 'bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border-rose-200');
+        el.className = 'result mt-2 ' + (type === 'success' ? 'ok' : 'err');
         el.innerHTML = msg;
     }
