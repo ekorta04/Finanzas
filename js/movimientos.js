@@ -11,7 +11,7 @@
         const to = document.getElementById('filter-date-to').value;
         return AppState.rows.filter(r => {
             if (search && !norm(r.c).includes(search)) return false;
-            if (cat && r.cat !== cat) return false;
+            if (cat && r.cat !== cat && !(CAT_TREE.some(m => m.n === cat) && catGroup(r.cat) === cat)) return false;
             if (tag && !(r.t || []).some(x => x.toLowerCase() === tag.toLowerCase())) return false;
             if (type === 'expense' && r.i >= 0) return false;
             if (type === 'income' && r.i <= 0) return false;
@@ -77,7 +77,7 @@
         }
 
         const show = grouped.slice(0, movsLimit);
-        const opts = CATEGORIES.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('') +
+        const opts = catOptionsHtml() +
             `<option value="${NEW_CAT_VALUE}">＋ Nueva categoría…</option>`;
 
         // Agrupar por mes, como en Wallet
@@ -122,7 +122,7 @@
                 </summary>
                 <div class="mov-edit">
                     ${split}
-                    ${r.i < 0 && !isBizum(r) && r.cat !== 'Inversión' ? `<button class="link small" style="margin:2px 0 8px" onclick="openBizumPicker('${ek}')">${g ? 'Editar Bizums del grupo' : 'Agrupar Bizums a mano…'}</button>` : ''}
+                    ${r.i < 0 && !isBizum(r) && !isInvCat(r.cat) ? `<button class="link small" style="margin:2px 0 8px" onclick="openBizumPicker('${ek}')">${g ? 'Editar Bizums del grupo' : 'Agrupar Bizums a mano…'}</button>` : ''}
                     <label>Categoría
                         <select class="field" onchange="updateRowCategory('${ek}', this.value)">${opts.replace(`value="${esc(r.cat)}"`, m => m + ' selected')}</select>
                     </label>
@@ -135,7 +135,7 @@
             </details>`;
         };
 
-        const monthTotal = rows => rows.reduce((a, r) => { const g = bizumGroup(r, map); const v = g ? g.net : r.i; return v < 0 && r.cat !== 'Inversión' ? a - v : a; }, 0);
+        const monthTotal = rows => rows.reduce((a, r) => { const g = bizumGroup(r, map); const v = g ? g.net : r.i; return v < 0 && !isInvCat(r.cat) ? a - v : a; }, 0);
 
         cont.innerHTML = months.map(({ m, rows }) => `
             <div class="mt-3">

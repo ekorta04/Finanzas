@@ -74,7 +74,7 @@
                 if (r.d < s.min) s.min = r.d;
                 if (r.d > s.max) s.max = r.d;
                 if (r.i < 0) {
-                    s.gasto += -r.i; s.cat[r.cat] = (s.cat[r.cat] || 0) - r.i;
+                    s.gasto += -r.i; s.cat[catGroup(r.cat)] = (s.cat[catGroup(r.cat)] || 0) - r.i;
                     (r.bz || []).forEach(bk => {
                         const b = map.get(bk);
                         if (b && !(b.t || []).some(x => x.toLowerCase() === lk)) s.rec += b.i;

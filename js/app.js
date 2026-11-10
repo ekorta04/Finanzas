@@ -95,13 +95,7 @@ function populateCategorySelects() {
             ? '<option value="">Todas</option>'
             : '';
 
-        CATEGORIES.forEach(cat => {
-            if (id === 'rule-category' && cat === 'Sin clasificar') {
-                return;
-            }
-
-            el.innerHTML += `<option value="${cat}">${cat}</option>`;
-        });
+        el.innerHTML += catOptionsHtml(id === 'rule-category' ? ['Sin clasificar'] : []);
 
         if (cur) {
             el.value = cur;

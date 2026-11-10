@@ -6,9 +6,9 @@ function netTotals(rows) {
     const map = byKeyMap();
     let gasto = 0, ingreso = 0, recovered = 0; const cat = {};
     rows.forEach(r => {
-        if (r.cat === 'Inversión') return;
-        if (r.i < 0) { gasto += -r.i; cat[r.cat] = (cat[r.cat] || 0) - r.i; }
-        else if (r.lk && map.has(r.lk)) { const e = map.get(r.lk); gasto -= r.i; recovered += r.i; cat[e.cat] = (cat[e.cat] || 0) - r.i; }
+        if (isInvCat(r.cat)) return;
+        if (r.i < 0) { gasto += -r.i; cat[catGroup(r.cat)] = (cat[catGroup(r.cat)] || 0) - r.i; }
+        else if (r.lk && map.has(r.lk)) { const e = map.get(r.lk); gasto -= r.i; recovered += r.i; cat[catGroup(e.cat)] = (cat[catGroup(e.cat)] || 0) - r.i; }
         else ingreso += r.i;
     });
     Object.keys(cat).forEach(k => { if (cat[k] < 0.005) delete cat[k]; });
@@ -157,7 +157,7 @@ function renderDashboard() {
     renderChartSaldo(period);
     renderChartMensual();
     renderChartCategorias(cat);
-    renderTopShops(rows.filter(r => r.i < 0 && r.cat !== 'Inversión'));
+    renderTopShops(rows.filter(r => r.i < 0 && !isInvCat(r.cat)));
     renderInsights(cat, gasto, recovered);
 }
 
@@ -296,7 +296,5 @@ function renderInsights(cat, gasto, recovered) {
         </div>`;
     let html = item(catStyle(top[0])[0], catStyle(top[0])[1], esc(top[0]), `Es tu mayor gasto: <b>${pct}%</b> del total (${formatEur(top[1])}).`);
     if (recovered > 0) html += item('users', '--teal', 'Bizums recuperados', `Te han devuelto <b>${formatEur(recovered)}</b> de gastos compartidos.`);
-    const subs = cat['Suscripciones'];
-    if (subs) html += item('repeat', '--purple', 'Suscripciones', `Llevas <b>${formatEur(subs)}</b> en suscripciones en este periodo.`);
     cont.innerHTML = html;
 }

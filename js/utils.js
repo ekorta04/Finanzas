@@ -39,22 +39,28 @@
 
     // Icono y color de cada categoría (colores del sistema iOS)
     const CATEGORY_STYLE = {
-        'Restauración': ['utensils', '--orange'],
-        'Supermercado': ['shopping-cart', '--green'],
-        'Compras online': ['package', '--indigo'],
-        'Ocio': ['ticket', '--pink'],
-        'Transporte': ['car', '--blue'],
-        'Hogar': ['house', '--brown'],
-        'Salud': ['heart-pulse', '--red'],
-        'Suscripciones': ['repeat', '--purple'],
-        'Nómina': ['briefcase', '--mint'],
         'Bizum y transferencias': ['arrow-left-right', '--teal'],
         'Inversión': ['trending-up', '--indigo'],
-        'Banco': ['landmark', '--gray'],
         'Otros': ['circle-ellipsis', '--gray'],
         'Sin clasificar': ['circle-help', '--gray']
     };
     const customCatStyle = c => { const x = (AppState.customCats || []).find(k => k.n === c); return x ? [x.ic, x.col] : null; };
-    const catStyle = c => CATEGORY_STYLE[c] || customCatStyle(c) || ['circle-ellipsis', '--gray'];
+    const treeCatStyle = c => {
+        const main = CAT_TREE.find(m => m.n === catGroup(c));
+        if (!main) return null;
+        const sub = main.subs.find(x => main.n + CAT_SEP + x[0] === c);
+        return [sub ? sub[1] : main.ic, main.col];
+    };
+    const catStyle = c => treeCatStyle(c) || CATEGORY_STYLE[c] || customCatStyle(c) || ['circle-ellipsis', '--gray'];
+    // Texto corto de una categoría: la subcategoría, o la principal
+    const catLabel = c => { const i = String(c).indexOf(CAT_SEP); return i < 0 ? c : c.slice(i + CAT_SEP.length); };
+    // <option> agrupados por categoría principal (para los selectores)
+    const catOptionsHtml = (exclude = []) => {
+        const o = (v, t) => exclude.includes(v) ? '' : `<option value="${esc(v)}">${esc(t)}</option>`;
+        const groups = CAT_TREE.map(m => `<optgroup label="${esc(m.n)}">${o(m.n, m.n + ' (general)')}${m.subs.map(s => o(m.n + CAT_SEP + s[0], s[0])).join('')}</optgroup>`);
+        const others = CATEGORIES.filter(c => !BASE_CATEGORIES.includes(c) || SPECIAL_CATS.includes(c) || c === 'Otros' || c === 'Sin clasificar');
+        groups.push(`<optgroup label="Otras">${others.map(c => o(c, c)).join('')}</optgroup>`);
+        return groups.join('');
+    };
     const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#8e8e93';
     const catIcon = (c, round = true) => { const [ic, col] = catStyle(c); return `<span class="icon-tile${round ? ' round' : ''}" style="background:var(${col})"><i class="ic ic-${ic}"></i></span>`; };

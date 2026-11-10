@@ -503,6 +503,8 @@ async function loadUserDashboard(options = {}) {
         await cloudFlush();
     }
 
+    migrateRowCats(AppState.rows);
+
     // Guardar en el dispositivo sin volver a subir nada
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState));
