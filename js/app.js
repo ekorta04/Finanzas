@@ -7,6 +7,7 @@
     loadState();
 
     populateCategorySelects();
+    loadCompareMode();
     setupTabNavigation();
     setupDropZone();
     setupInvDropZone();
@@ -113,26 +114,22 @@ function getUniqueMonths() {
 
 function populateMonthOptions() {
     const months = getUniqueMonths();
+    const thisYear = todayIso().slice(0, 4);
+    const years = [...new Set(months.map(m => m.slice(0, 4)))].filter(y => y < thisYear);   // años completos con datos
 
     ['dash-month', 'filter-month'].forEach(id => {
         const el = document.getElementById(id);
         const cur = el.value;
+        const monthOpts = months.map(m => `<option value="${m}">${monthName(m)}</option>`).join('');
 
         el.innerHTML = id === 'dash-month'
-            ? '<option value="30d">Últimos 30 días</option><option value="">Todo</option>'
-            : '<option value="">Todos</option>';
+            ? `<optgroup label="Rápidos"><option value="30d">Últimos 30 días</option><option value="90d">Últimos 90 días</option><option value="ytd">Este año</option><option value="">Todo</option></optgroup>`
+              + (months.length ? `<optgroup label="Meses">${monthOpts}</optgroup>` : '')
+              + (years.length ? `<optgroup label="Años">${years.map(y => `<option value="y:${y}">${y}</option>`).join('')}</optgroup>` : '')
+            : '<option value="">Todos</option>' + monthOpts;
 
-        months.forEach(m => {
-            const [y, mm] = m.split('-');
-
-            el.innerHTML +=
-                `<option value="${m}">${monthName(m)}</option>`;
-        });
-
-        // Se conserva la elección (los 30 días, "Todo" o un mes concreto)
-        if (months.includes(cur) || (id === 'dash-month' && (cur === '30d' || cur === ''))) {
-            el.value = cur;
-        }
+        // Se conserva la elección si sigue existiendo
+        if ([...el.options].some(o => o.value === cur)) el.value = cur;
     });
 }
 

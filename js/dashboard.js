@@ -21,18 +21,113 @@ function todayIso() {
     return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
 }
 
-// Periodo elegido en el Resumen: '30d' (últimos 30 días), '' (todo) o 'AAAA-MM'
+// Periodo elegido en el Resumen: '30d' / '90d' (últimos días), 'ytd' (este año hasta hoy),
+// 'y:AAAA' (un año), 'AAAA-MM' (un mes) o '' (todo). Un periodo en curso termina hoy,
+// así que "días" son los días transcurridos y no los del mes completo.
 function dashPeriod(value) {
-    if (value === '30d') {
-        const to = todayIso();
-        return { from: addDays(to, -29), to, days: 30 };
-    }
-    if (value) {
+    const today = todayIso();
+    const cap = d => (d > today ? today : d);
+    let p;
+    if (value === '30d' || value === '90d') {
+        const n = value === '30d' ? 30 : 90;
+        p = { kind: 'days', n, from: addDays(today, -(n - 1)), to: today };
+    } else if (value === 'ytd') {
+        p = { kind: 'ytd', from: `${today.slice(0, 4)}-01-01`, to: today };
+    } else if (/^y:\d{4}$/.test(value || '')) {
+        const y = value.slice(2);
+        p = { kind: 'year', from: `${y}-01-01`, to: cap(`${y}-12-31`), full: `${y}-12-31` };
+    } else if (/^\d{4}-\d{2}$/.test(value || '')) {
         const [y, m] = value.split('-').map(Number);
-        const last = new Date(y, m, 0).getDate();
-        return { from: `${value}-01`, to: `${value}-${String(last).padStart(2, '0')}`, days: last };
+        const full = `${value}-${String(daysInMonth(y, m)).padStart(2, '0')}`;
+        p = { kind: 'month', ym: value, from: `${value}-01`, to: cap(full), full };
+    } else {
+        return { kind: 'all', from: null, to: null, days: null };
     }
-    return { from: null, to: null, days: null };
+    p.days = daysBetween(p.from, p.to) + 1;
+    return p;
+}
+
+// Periodo con el que se compara: 'prev' = el inmediatamente anterior; 'yoy' = el mismo del año anterior.
+// "Este año" solo tiene sentido contra el año anterior. Un mes en curso se compara con los mismos
+// días del otro mes, para no enfrentar 10 días contra 31.
+function comparePeriod(p, mode) {
+    if (!mode || !p || p.kind === 'all') return null;
+    const yoy = mode === 'yoy' || p.kind === 'ytd' || p.kind === 'year';
+    let from, to, label = null;
+    if (p.kind === 'days') {
+        if (yoy) { from = shiftYear(p.from, -1); to = shiftYear(p.to, -1); }
+        else { to = addDays(p.from, -1); from = addDays(to, -(p.n - 1)); }
+    } else if (p.kind === 'ytd' || p.kind === 'year') {
+        from = shiftYear(p.from, -1); to = shiftYear(p.to, -1);
+        if (p.kind === 'year' && p.to === p.full) label = String(Number(p.from.slice(0, 4)) - 1);
+    } else {   // mes
+        const n = yoy ? -12 : -1;
+        from = addMonthsIso(p.from, n, 1);
+        const lastOfThat = addMonthsIso(p.from, n, 31);
+        to = p.to === p.full ? lastOfThat : addMonthsIso(p.to, n);   // mes completo, o los mismos días
+        if (to > lastOfThat) to = lastOfThat;
+        if (to === lastOfThat) label = monthName(from.slice(0, 7));
+    }
+    return { from, to, days: daysBetween(from, to) + 1, label: label || `${formatDateEs(from)} – ${formatDateEs(to)}` };
+}
+
+// Fecha del último movimiento importado
+function lastDataDate() {
+    let max = null;
+    AppState.rows.forEach(r => { if (max === null || r.d > max) max = r.d; });
+    return max;
+}
+
+// Si los datos llegan menos lejos que el periodo (CSV importado hace días), se recorta la cola del periodo
+// comparado en la misma medida: así se comparan los mismos días y no sale un ahorro falso.
+function trimCompare(cmp, gap) {
+    if (!cmp || gap <= 0) return cmp;
+    const to = addDays(cmp.to, -gap);
+    if (to < cmp.from) return null;
+    return { from: cmp.from, to, days: daysBetween(cmp.from, to) + 1, label: `${formatDateEs(cmp.from)} – ${formatDateEs(to)}` };
+}
+
+// ¿Hay movimientos que cubran el periodo comparado? 'full' | 'partial' | 'none'
+function compareCoverage(cmp) {
+    if (!cmp || !AppState.rows.length) return 'none';
+    let min = AppState.rows[0].d, max = min;
+    AppState.rows.forEach(r => { if (r.d < min) min = r.d; if (r.d > max) max = r.d; });
+    if (cmp.to < min || cmp.from > max) return 'none';
+    return cmp.from >= min && cmp.to <= max ? 'full' : 'partial';
+}
+
+// Variación entre dos cifras. goodUp: true si subir es bueno (ingresos, balance), false si es malo (gastos).
+// noPct: solo en euros, para cifras que pueden cambiar de signo (el balance), donde un porcentaje no significa nada.
+function deltaInfo(cur, prev, goodUp, noPct) {
+    const diff = cur - prev;
+    if (Math.abs(diff) < 0.005) return { cls: 'flat', text: 'Sin cambios' };
+    const up = diff > 0;
+    const sign = up ? '+' : '−';
+    const eur = `${sign}${formatEur(Math.abs(diff))}`;
+    const cls = up === goodUp ? 'good' : 'bad';
+    if (noPct) return { cls, text: `${up ? '↑' : '↓'} ${eur}` };
+    const pct = Math.abs(prev) < 0.005 ? null : (Math.abs(diff) / Math.abs(prev)) * 100;
+    const pctTxt = pct == null ? 'nuevo' : `${sign}${pct.toFixed(pct < 10 ? 1 : 0).replace('.', ',')} %`;
+    return { cls, text: `${up ? '↑' : '↓'} ${pctTxt} · ${eur}` };
+}
+function setDelta(id, info) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = 'delta' + (info ? ' ' + info.cls : '');
+    el.textContent = info ? info.text : '';
+}
+
+// Guardar la elección de comparación en este dispositivo
+const CMP_KEY = 'finanzas_cmp';
+function loadCompareMode() {
+    try {
+        const v = localStorage.getItem(CMP_KEY), el = document.getElementById('dash-compare');
+        if (v !== null && [...el.options].some(o => o.value === v)) el.value = v;
+    } catch (e) { /* sin almacenamiento */ }
+}
+function onCompareChange() {
+    try { localStorage.setItem(CMP_KEY, document.getElementById('dash-compare').value); } catch (e) { /* sin almacenamiento */ }
+    renderDashboard();
 }
 
 // Saldo de cierre de cada día del periodo. Los días sin movimientos
@@ -62,7 +157,7 @@ function balanceSeries(period) {
     return { labels, data };
 }
 
-function renderChartSaldo(period) {
+function renderChartSaldo(period, cmp) {
     const canvas = document.getElementById('chart-saldo');
     if (!canvas) return;
     const box = canvas.parentElement;
@@ -81,15 +176,24 @@ function renderChartSaldo(period) {
     const th = chartTheme();
     const blue = cssVar('--blue');
     const short = labels.length <= 62;
+    const datasets = [{
+        label: 'Saldo', data, borderColor: blue, backgroundColor: blue + '22', fill: true,
+        tension: 0.3, borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 4
+    }];
+    // Línea del periodo comparado, alineada día a día con el actual
+    if (cmp) {
+        const prev = balanceSeries(cmp).data;
+        if (prev.length > 1) {
+            datasets.push({
+                label: 'Periodo anterior', data: labels.map((_, i) => (i < prev.length ? prev[i] : null)),
+                borderColor: cssVar('--gray'), borderDash: [5, 4], borderWidth: 1.5, fill: false,
+                tension: 0.3, pointRadius: 0, pointHoverRadius: 3, spanGaps: false
+            });
+        }
+    }
     chartSaldoInstance = new Chart(canvas.getContext('2d'), {
         type: 'line',
-        data: {
-            labels,
-            datasets: [{
-                label: 'Saldo', data, borderColor: blue, backgroundColor: blue + '22', fill: true,
-                tension: 0.3, borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 4
-            }]
-        },
+        data: { labels, datasets },
         options: {
             responsive: true, maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
@@ -97,7 +201,7 @@ function renderChartSaldo(period) {
                 legend: { display: false },
                 tooltip: { ...th.tooltip, callbacks: {
                     title: c => formatDateEs(labels[c[0].dataIndex]),
-                    label: c => ` Saldo: ${formatEur(c.raw)}`
+                    label: c => ` ${c.dataset.label === 'Saldo' ? 'Saldo' : 'Periodo anterior'}: ${formatEur(c.raw)}`
                 } }
             },
             scales: {
@@ -154,11 +258,39 @@ function renderDashboard() {
     if (inv.valor != null) { pat.classList.remove('hidden'); pat.textContent = `Con inversión: ${formatEur(saldo + inv.valor)}`; }
     else pat.classList.add('hidden');
 
-    renderChartSaldo(period);
+    // Comparación con otro periodo
+    const lastData = lastDataDate();
+    const gap = lastData && period.to && lastData < period.to ? daysBetween(lastData, period.to) : 0;
+    const cmpMode = document.getElementById('dash-compare').value;
+    const cmpFull = comparePeriod(period, cmpMode);
+    const cmp = trimCompare(cmpFull, gap);
+    const cov = compareCoverage(cmp);
+    const note = document.getElementById('dash-cmp-note');
+    let cmpTot = null;
+    if (cmp && cov === 'full') {
+        cmpTot = netTotals(AppState.rows.filter(r => r.d >= cmp.from && r.d <= cmp.to));
+        const cBalance = cmpTot.ingreso - cmpTot.gasto;
+        const cTasa = cmpTot.ingreso > 0 ? Math.max(0, (cBalance / cmpTot.ingreso) * 100) : 0;
+        setDelta('d-gasto', deltaInfo(gasto, cmpTot.gasto, false));
+        setDelta('d-ingreso', deltaInfo(ingreso, cmpTot.ingreso, true));
+        setDelta('d-balance', deltaInfo(balance, cBalance, true, true));
+        const pp = tasa - cTasa;
+        setDelta('d-ahorro', Math.abs(pp) < 0.05 ? { cls: 'flat', text: 'Sin cambios' }
+            : { cls: pp > 0 ? 'good' : 'bad', text: `${pp > 0 ? '↑ +' : '↓ −'}${Math.abs(pp).toFixed(1).replace('.', ',')} pts` });
+        note.textContent = `Comparado con ${cmp.label}` + (gap > 0 ? ` · tus movimientos llegan hasta el ${formatDateEs(lastData)}` : '');
+    } else {
+        ['d-gasto', 'd-ingreso', 'd-balance', 'd-ahorro'].forEach(id => setDelta(id, null));
+        if (!cmp) note.textContent = !cmpMode ? '' : period.kind === 'all' ? 'Elige un periodo concreto para comparar' : 'Aún no hay movimientos recientes para comparar';
+        else if (cov === 'none') note.textContent = `Sin movimientos de ${cmp.label} para comparar`;
+        else note.textContent = `Faltan datos de ${cmp.label}: la comparación no sería fiable`;
+    }
+
+    renderChartSaldo(period, cmpTot ? cmp : null);
     renderChartMensual();
-    renderChartCategorias(cat);
+    renderChartCategorias(cat, cmpTot ? cmpTot.cat : null);
     renderTopShops(rows.filter(r => r.i < 0 && !isInvCat(r.cat)));
-    renderInsights(cat, gasto, recovered);
+    renderInsights(cat, gasto, recovered, cmpTot ? { cat: cmpTot.cat, label: cmp.label } : null);
+    if (typeof renderForecast === 'function') renderForecast();
 }
 
 // Estilo común de los gráficos (tipografía y colores del sistema)
@@ -214,7 +346,7 @@ function renderChartMensual() {
     });
 }
 
-function renderChartCategorias(catTotals) {
+function renderChartCategorias(catTotals, prevCat) {
     const ctx = document.getElementById('chart-categorias').getContext('2d');
     const sorted = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
     const labels = sorted.map(c => c[0]), data = sorted.map(c => c[1]);
@@ -248,10 +380,15 @@ function renderChartCategorias(catTotals) {
     });
 
     const legend = document.getElementById('cat-legend');
+    const catDelta = c => {
+        if (!prevCat) return '';
+        const d = deltaInfo(catTotals[c], prevCat[c] || 0, false);
+        return `<span class="cat-delta ${d.cls}">${d.text.replace(/ · .*$/, '')}</span>`;
+    };
     legend.innerHTML = sorted.length ? `<div class="group" style="box-shadow:none;background:transparent">${sorted.map(([c, v]) => `
         <div class="row" style="padding:8px 4px;min-height:0;--sep-left:26px">
             <span class="legend-dot" style="background:var(${catStyle(c)[1]})"></span>
-            <span class="row-main" style="font-size:14px">${esc(c)}</span>
+            <span class="row-main" style="font-size:14px">${esc(c)}${catDelta(c)}</span>
             <span class="small muted num">${total > 0 ? Math.round(v / total * 100) : 0}%</span>
             <span class="small bold num" style="min-width:84px;text-align:right">${formatEur(v)}</span>
         </div>`).join('')}</div>` : '<p class="small muted center">Sin gastos en este periodo.</p>';
@@ -284,7 +421,7 @@ function renderTopShops(expenseRows) {
         </div>`).join('');
 }
 
-function renderInsights(cat, gasto, recovered) {
+function renderInsights(cat, gasto, recovered, cmp) {
     const cont = document.getElementById('insights-container');
     const top = Object.entries(cat).sort((a, b) => b[1] - a[1])[0];
     if (!top) { cont.innerHTML = '<div class="row"><span class="muted small">Aún no hay datos suficientes.</span></div>'; return; }
@@ -295,6 +432,19 @@ function renderInsights(cat, gasto, recovered) {
             <div class="row-main"><div class="row-title bold" style="font-size:15px">${title}</div><div class="row-sub" style="white-space:normal">${text}</div></div>
         </div>`;
     let html = item(catStyle(top[0])[0], catStyle(top[0])[1], esc(top[0]), `Es tu mayor gasto: <b>${pct}%</b> del total (${formatEur(top[1])}).`);
+    if (cmp) {   // categoría con mayor cambio respecto al periodo comparado
+        const names = new Set([...Object.keys(cat), ...Object.keys(cmp.cat)]);
+        let best = null;
+        names.forEach(n => {
+            const cur = cat[n] || 0, prev = cmp.cat[n] || 0, diff = cur - prev;
+            if (Math.abs(diff) >= 20 && Math.abs(diff) >= prev * 0.1 && (!best || Math.abs(diff) > Math.abs(best.diff))) best = { n, diff, prev };
+        });
+        if (best) {
+            const up = best.diff > 0, pct = best.prev > 0 ? ` (${up ? '+' : '−'}${Math.round(Math.abs(best.diff) / best.prev * 100)} %)` : '';
+            html += item(up ? 'trending-up' : 'arrow-down', up ? '--orange' : '--green', esc(best.n),
+                `${up ? 'Ha subido' : 'Ha bajado'} <b>${formatEur(Math.abs(best.diff))}</b>${pct} respecto a ${esc(cmp.label)}.`);
+        }
+    }
     if (recovered > 0) html += item('users', '--teal', 'Bizums recuperados', `Te han devuelto <b>${formatEur(recovered)}</b> de gastos compartidos.`);
     cont.innerHTML = html;
 }

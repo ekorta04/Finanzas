@@ -12,6 +12,16 @@
     const isBizum = r => norm(r.c).includes('BIZUM');
     const addDays = (iso, n) => { const dt = new Date(iso + 'T12:00:00Z'); dt.setUTCDate(dt.getUTCDate() + n); return dt.toISOString().slice(0, 10); };
     const byKeyMap = () => new Map(AppState.rows.map(r => [r.k, r]));
+    const daysBetween = (a, b) => Math.round((new Date(b + 'T12:00:00Z') - new Date(a + 'T12:00:00Z')) / 86400000);
+    const daysInMonth = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate();   // m = 1..12
+    // Suma n meses a una fecha ISO. Con "dom" fija el día del mes (recortado al último día del mes).
+    const addMonthsIso = (iso, n, dom) => {
+        let y = Number(iso.slice(0, 4)), m = Number(iso.slice(5, 7)) - 1 + n;
+        y += Math.floor(m / 12); m = ((m % 12) + 12) % 12;
+        const d = Math.min(dom || Number(iso.slice(8, 10)), daysInMonth(y, m + 1));
+        return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    };
+    const shiftYear = (iso, n) => addMonthsIso(iso, 12 * n);   // el 29 de febrero pasa al 28
     
     // Parseo flexible para la cuenta de inversión
     function parseFlexDate(s) {

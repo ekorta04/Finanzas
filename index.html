@@ -129,6 +129,15 @@
                 </select>
             </div>
 
+            <div class="cmp-row">
+                <select id="dash-compare" onchange="onCompareChange()" class="field sm" aria-label="Comparar con">
+                    <option value="prev">Comparar con el periodo anterior</option>
+                    <option value="yoy">Comparar con el año anterior</option>
+                    <option value="">Sin comparar</option>
+                </select>
+                <span id="dash-cmp-note" class="cmp-note"></span>
+            </div>
+
             <!-- Avisos -->
             <div id="unclassified-alert" class="hidden group banner">
                 <button class="row with-icon tap" onclick="switchTab('v-movs'); filterUnclassified();">
@@ -156,20 +165,51 @@
                 <div class="card stat">
                     <div class="stat-top"><span class="dot" style="background:var(--red)"><i class="ic ic-arrow-down"></i></span>Gastos</div>
                     <div id="kpi-gasto" class="stat-value num">0,00 €</div>
+                    <div id="d-gasto" class="delta"></div>
                 </div>
                 <div class="card stat">
                     <div class="stat-top"><span class="dot" style="background:var(--green)"><i class="ic ic-arrow-up"></i></span>Ingresos</div>
                     <div id="kpi-ingreso" class="stat-value num">0,00 €</div>
+                    <div id="d-ingreso" class="delta"></div>
                 </div>
                 <div class="card stat">
                     <div class="stat-top"><span class="dot" style="background:var(--blue)"><i class="ic ic-scale"></i></span>Balance</div>
                     <div id="kpi-balance" class="stat-value num">0,00 €</div>
+                    <div id="d-balance" class="delta"></div>
                 </div>
                 <div class="card stat">
                     <div class="stat-top"><span class="dot" style="background:var(--indigo)"><i class="ic ic-percent"></i></span>Ahorro</div>
                     <div id="kpi-ahorro" class="stat-value num">0,0%</div>
+                    <div id="d-ahorro" class="delta"></div>
                     <div class="row-sub num">Gasto medio <span id="kpi-diario">0,00 €</span>/día</div>
                 </div>
+            </div>
+
+            <!-- Proyección de saldo -->
+            <div id="fc-card" class="card">
+                <div class="card-head">
+                    <h2 class="card-title">Proyección de saldo</h2>
+                    <div class="seg" role="group" aria-label="Horizonte">
+                        <button id="fc-m3" type="button" class="on" onclick="setForecastMonths(3)">3 meses</button>
+                        <button id="fc-m6" type="button" onclick="setForecastMonths(6)">6 meses</button>
+                    </div>
+                </div>
+                <div id="fc-body">
+                    <div id="fc-summary"></div>
+                    <div class="chart-box"><canvas id="chart-forecast"></canvas></div>
+                    <div id="fc-note" class="fc-note"></div>
+                    <div id="fc-flows" class="group mt-3"></div>
+                    <div class="group mt-3">
+                        <label for="fc-inv" class="row" style="cursor:pointer">
+                            <span class="row-main"><span class="row-title" style="display:block">Seguir aportando a inversión</span><span class="row-sub" style="display:block">Apágalo para ver el saldo sin nuevos traspasos</span></span>
+                            <span class="switch"><input id="fc-inv" type="checkbox" checked onchange="setForecastInv(this.checked)"><span></span></span>
+                        </label>
+                    </div>
+                    <h3 class="group-header">Recurrentes detectados</h3>
+                    <div id="fc-list" class="group"></div>
+                    <p class="fc-note">Toca un recurrente para excluirlo de la previsión si no lo reconoces o lo has cancelado.</p>
+                </div>
+                <p id="fc-empty" class="small muted center hidden"></p>
             </div>
 
             <div class="grid-lg-3-2 stack">
@@ -630,6 +670,7 @@
 <script src="js/bizum.js"></script>
 <script src="js/tags.js"></script>
 <script src="js/dashboard.js"></script>
+<script src="js/forecast.js"></script>
 <script src="js/movimientos.js"></script>
 <script src="js/inversion.js"></script>
 <script src="js/xray.js"></script>
