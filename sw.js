@@ -3,7 +3,7 @@
    Caché de los archivos de la aplicación
    ========================================================================== */
 
-   const CACHE = 'finanzas-v15';
+   const CACHE = 'finanzas-v16';
 
    const FILES = [
        './',

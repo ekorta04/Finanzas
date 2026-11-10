@@ -7,7 +7,8 @@ const BASE_CATEGORIES = ['Restauración','Supermercado','Compras online','Ocio',
 const CATEGORIES = BASE_CATEGORIES.slice();
 
 // Iconos y colores que se pueden elegir al crear una categoría propia
-const CAT_ICONS = ['wallet','piggy-bank','coins','receipt','store','shopping-cart','car','house','heart-pulse','zap','sparkles','users','ticket','briefcase','lightbulb','tag','utensils','package'];
+const CAT_ICONS = ['wallet','piggy-bank','coins','receipt','store','shopping-cart','car','house','heart-pulse','zap','sparkles','users','ticket','briefcase','lightbulb','tag','utensils','package',
+    'shopping-bag','gift','shirt','baby','dog','cat','paw-print','bone','leaf','trees','flower-2','sprout','sun','moon','snowflake','umbrella','coffee','beer','wine','pizza','sandwich','apple','cake-slice','ice-cream-cone','cookie','salad','soup','cup-soda','croissant','fish','bus','train-front','plane','bike','fuel','parking-meter','ship','truck','map-pin','tent','bed-double','dumbbell','trophy','gamepad-2','music','film','popcorn','tv','guitar','camera','palette','book-open','graduation-cap','library','pencil','smartphone','laptop','wifi','headphones','monitor','printer','stethoscope','pill','syringe','glasses','scissors','wrench','hammer','paintbrush','sofa','washing-machine','bath','key-round','lock','phone','mail','globe','shield','credit-card','hand-coins','handshake','heart','building-2','church','star','flame','droplet','recycle','cigarette','newspaper','clapperboard','dices','party-popper','calculator','badge-euro','euro'];
 const CAT_COLORS = ['--blue','--green','--red','--orange','--yellow','--indigo','--purple','--pink','--teal','--brown','--mint','--gray'];
 
 // Las categorías propias se colocan antes de "Otros" y "Sin clasificar".
