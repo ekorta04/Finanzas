@@ -162,12 +162,12 @@
             </div>
 
             <div class="grid-2 grid-4">
-                <div class="card stat">
+                <div class="card stat tap" role="button" tabindex="0" onclick="drillToMovs({type:'expense'})" onkeydown="if(event.key==='Enter')drillToMovs({type:'expense'})" aria-label="Ver gastos en Movimientos">
                     <div class="stat-top"><span class="dot" style="background:var(--red)"><i class="ic ic-arrow-down"></i></span>Gastos</div>
                     <div id="kpi-gasto" class="stat-value num">0,00 €</div>
                     <div id="d-gasto" class="delta"></div>
                 </div>
-                <div class="card stat">
+                <div class="card stat tap" role="button" tabindex="0" onclick="drillToMovs({type:'income'})" onkeydown="if(event.key==='Enter')drillToMovs({type:'income'})" aria-label="Ver ingresos en Movimientos">
                     <div class="stat-top"><span class="dot" style="background:var(--green)"><i class="ic ic-arrow-up"></i></span>Ingresos</div>
                     <div id="kpi-ingreso" class="stat-value num">0,00 €</div>
                     <div id="d-ingreso" class="delta"></div>
@@ -271,6 +271,8 @@
                         <i class="ic ic-sliders-horizontal"></i><span id="filters-count">Filtros</span>
                     </button>
                 </div>
+
+                <div id="movs-chips" class="hidden" style="display:flex;flex-wrap:wrap;gap:6px"></div>
 
                 <div id="filters-panel" class="hidden stack-sm fade-in">
                     <div class="group">

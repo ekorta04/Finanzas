@@ -1,6 +1,43 @@
 /* ==========================================================================
     9. MOVIMIENTOS
     ========================================================================== */
+    // Reglas que el Resumen aplica al contar (no hay un desplegable para ellas): se muestran como chip y se quitan con su ✕
+    const MovsExtra = { noInv: false };
+
+    // Desde el Resumen: abre Movimientos con tipo, categoría y periodo ya aplicados
+    function drillToMovs({ type, cat }) {
+        const p = dashPeriod(document.getElementById('dash-month').value);
+        movsLimit = 150;
+        ['filter-search', 'filter-tag', 'filter-month'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('filter-type').value = type || 'all';
+        const sel = document.getElementById('filter-cat');
+        sel.value = '';
+        if (cat) {
+            if (![...sel.options].some(o => o.value === cat)) sel.add(new Option(cat, cat));
+            sel.value = cat;
+        }
+        document.getElementById('filter-date-from').value = p.from || '';
+        document.getElementById('filter-date-to').value = p.to || '';
+        MovsExtra.noInv = true;
+        switchTab('v-movs');
+        showMovsView('list');
+        toggleFilters(false);
+        renderMovimientos();
+    }
+    function drillFromEl(el) { drillToMovs({ type: 'expense', cat: el.dataset.cat }); }
+
+    function removeMovFilter(key) {
+        movsLimit = 150;
+        const clear = id => { document.getElementById(id).value = ''; };
+        if (key === 'type') document.getElementById('filter-type').value = 'all';
+        else if (key === 'cat') clear('filter-cat');
+        else if (key === 'tag') clear('filter-tag');
+        else if (key === 'month') clear('filter-month');
+        else if (key === 'dates') { clear('filter-date-from'); clear('filter-date-to'); }
+        else if (key === 'inv') MovsExtra.noInv = false;
+        renderMovimientos();
+    }
+
     function getFilteredRows() {
         const search = norm(document.getElementById('filter-search').value);
         const cat = document.getElementById('filter-cat').value;
@@ -9,7 +46,10 @@
         const month = document.getElementById('filter-month').value;
         const from = document.getElementById('filter-date-from').value;
         const to = document.getElementById('filter-date-to').value;
+        const map = MovsExtra.noInv && type === 'income' ? byKeyMap() : null;
         return AppState.rows.filter(r => {
+            if (MovsExtra.noInv && isInvCat(r.cat)) return false;
+            if (map && r.lk && map.has(r.lk)) return false;   // un Bizum devuelto no es un ingreso: resta del gasto
             if (search && !norm(r.c).includes(search)) return false;
             if (cat && r.cat !== cat && !(CAT_TREE.some(m => m.n === cat) && catGroup(r.cat) === cat)) return false;
             if (tag && !(r.t || []).some(x => x.toLowerCase() === tag.toLowerCase())) return false;
@@ -43,6 +83,7 @@
         let n = 0;
         ['filter-cat', 'filter-tag', 'filter-month', 'filter-date-from', 'filter-date-to'].forEach(id => { if (document.getElementById(id).value) n++; });
         if (document.getElementById('filter-type').value !== 'all') n++;
+        if (MovsExtra.noInv) n++;
         return n;
     }
 
@@ -64,10 +105,30 @@
         document.getElementById('filters-btn').classList.toggle('tinted', nf > 0);
         document.getElementById('filters-btn').classList.toggle('gray', nf === 0);
 
+        // Chips con los filtros activos, para verlos de un vistazo
+        const g = id => document.getElementById(id).value;
+        const chips = [];
+        if (g('filter-type') !== 'all') chips.push(['type', g('filter-type') === 'expense' ? 'Gastos' : 'Ingresos']);
+        if (g('filter-cat')) chips.push(['cat', g('filter-cat')]);
+        if (g('filter-tag')) chips.push(['tag', '#' + g('filter-tag')]);
+        if (g('filter-month')) chips.push(['month', monthName(g('filter-month'))]);
+        if (g('filter-date-from') || g('filter-date-to')) {
+            const f = g('filter-date-from'), t = g('filter-date-to');
+            chips.push(['dates', f && t ? `${formatDateEs(f)} – ${formatDateEs(t)}` : f ? `Desde ${formatDateEs(f)}` : `Hasta ${formatDateEs(t)}`]);
+        }
+        if (MovsExtra.noInv) chips.push(['inv', 'Sin inversión']);
+        const chipBar = document.getElementById('movs-chips');
+        chipBar.classList.toggle('hidden', !chips.length);
+        chipBar.innerHTML = chips.map(([k, label]) =>
+            `<span class="tag-chip lg">${esc(label)}<button type="button" onclick="removeMovFilter('${k}')" aria-label="Quitar filtro ${esc(label)}">✕</button></span>`).join('');
+
         const total = groupLinkedRows(AppState.rows, map).length;
-        document.getElementById('movs-counter').textContent = grouped.length === total
-            ? `${total} movimientos`
-            : `${grouped.length} de ${total} movimientos`;
+        let counter = grouped.length === total ? `${total} movimientos` : `${grouped.length} de ${total} movimientos`;
+        if (nf) {   // suma de lo mostrado (con los Bizums ya restados): permite cotejarla con el Resumen
+            const sum = grouped.reduce((a, r) => { const bg = bizumGroup(r, map); return a + (bg ? bg.net : r.i); }, 0);
+            counter += ` · Total ${sum < -0.004 ? '−' : sum > 0.004 ? '+' : ''}${formatEur(Math.abs(sum))}`;
+        }
+        document.getElementById('movs-counter').textContent = counter;
         document.getElementById('bulk-tag-btn').textContent = `Aplicar a ${filtered.length}`;
 
         const cont = document.getElementById('movs-cards');
@@ -347,6 +408,7 @@ async function suggestRuleFor(row, newCategory, accountId) {
         movsLimit = 150;
         ['filter-search', 'filter-cat', 'filter-tag', 'filter-month', 'filter-date-from', 'filter-date-to'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('filter-type').value = 'all';
+        MovsExtra.noInv = false;
         renderMovimientos();
     }
     function filterUnclassified() { showMovsView('list'); clearMovFilters(); document.getElementById('filter-cat').value = 'Sin clasificar'; renderMovimientos(); }

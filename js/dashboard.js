@@ -359,6 +359,8 @@ function renderChartCategorias(catTotals, prevCat) {
         data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: th.card, borderWidth: 3, borderRadius: 4, hoverOffset: 4 }] },
         options: {
             responsive: true, maintainAspectRatio: false, cutout: '72%',
+            onClick: (e, els) => { if (els.length) drillToMovs({ type: 'expense', cat: labels[els[0].index] }); },
+            onHover: (e, els) => { if (e.native && e.native.target) e.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
             plugins: {
                 legend: { display: false },
                 tooltip: { ...th.tooltip, callbacks: { label: c => ` ${c.label}: ${formatEur(c.raw)} (${total > 0 ? ((c.raw / total) * 100).toFixed(0) : 0}%)` } }
@@ -386,12 +388,12 @@ function renderChartCategorias(catTotals, prevCat) {
         return `<span class="cat-delta ${d.cls}">${d.text.replace(/ · .*$/, '')}</span>`;
     };
     legend.innerHTML = sorted.length ? `<div class="group" style="box-shadow:none;background:transparent">${sorted.map(([c, v]) => `
-        <div class="row" style="padding:8px 4px;min-height:0;--sep-left:26px">
+        <button type="button" class="row tap" data-cat="${esc(c)}" onclick="drillFromEl(this)" style="padding:8px 4px;min-height:0;--sep-left:26px;text-align:left;width:100%">
             <span class="legend-dot" style="background:var(${catStyle(c)[1]})"></span>
             <span class="row-main" style="font-size:14px">${esc(c)}${catDelta(c)}</span>
             <span class="small muted num">${total > 0 ? Math.round(v / total * 100) : 0}%</span>
             <span class="small bold num" style="min-width:84px;text-align:right">${formatEur(v)}</span>
-        </div>`).join('')}</div>` : '<p class="small muted center">Sin gastos en este periodo.</p>';
+        </button>`).join('')}</div>` : '<p class="small muted center">Sin gastos en este periodo.</p>';
 }
 
 function renderTopShops(expenseRows) {
