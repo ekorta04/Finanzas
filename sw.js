@@ -3,7 +3,7 @@
    Caché de los archivos de la aplicación
    ========================================================================== */
 
-   const CACHE = 'finanzas-v20';
+   const CACHE = 'finanzas-v21';
 
    const FILES = [
        './',
@@ -54,7 +54,7 @@
    self.addEventListener('install', e => {
        e.waitUntil(
            caches.open(CACHE)
-               .then(cache => cache.addAll(FILES))
+               .then(cache => cache.addAll(FILES.map(f => new Request(f, { cache: 'reload' }))))   // sin pasar por la caché HTTP: así todos los archivos son de la misma versión
                .then(() => self.skipWaiting())
        );
    });
@@ -86,7 +86,7 @@
        e.respondWith(
            caches.open(CACHE).then(cache =>
                cache.match(e.request, { ignoreSearch: true }).then(cached => {
-                   const network = fetch(e.request)
+                   const network = fetch(e.request.url, { cache: 'no-cache' })
                        .then(response => {
                            if (response.ok) cache.put(e.request, response.clone());
                            return response;

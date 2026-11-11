@@ -117,7 +117,14 @@
             chips.push(['dates', f && t ? `${formatDateEs(f)} – ${formatDateEs(t)}` : f ? `Desde ${formatDateEs(f)}` : `Hasta ${formatDateEs(t)}`]);
         }
         if (MovsExtra.noInv) chips.push(['inv', 'Sin inversión']);
-        const chipBar = document.getElementById('movs-chips');
+        let chipBar = document.getElementById('movs-chips');
+        if (!chipBar) {   // por si la página en caché es de una versión anterior sin este elemento
+            chipBar = document.createElement('div');
+            chipBar.id = 'movs-chips';
+            chipBar.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px';
+            const panel = document.getElementById('filters-panel');
+            if (panel && panel.parentNode) panel.parentNode.insertBefore(chipBar, panel);
+        }
         chipBar.classList.toggle('hidden', !chips.length);
         chipBar.innerHTML = chips.map(([k, label]) =>
             `<span class="tag-chip lg">${esc(label)}<button type="button" onclick="removeMovFilter('${k}')" aria-label="Quitar filtro ${esc(label)}">✕</button></span>`).join('');
