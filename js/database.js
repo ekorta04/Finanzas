@@ -266,7 +266,8 @@ async function getAllAccountTransactions(accountId) {
             .select(
                 'id, account_id, user_id, source_key, ' +
                 'operation_date, value_date, description, ' +
-                'amount, balance, category, manual_category'
+                'amount, balance, category, manual_category, ' +
+                'import_id, created_at'
             )
             .eq('account_id', accountId)
             .order('operation_date', { ascending: false })
@@ -287,6 +288,20 @@ async function getAllAccountTransactions(accountId) {
     }
 
     return allTransactions;
+}
+
+
+// Quitar movimientos (por id) de una cuenta
+async function deleteTransactionsByIds(accountId, ids) {
+    if (!accountId || !ids.length) return;
+    for (let i = 0; i < ids.length; i += 100) {
+        const { error } = await supabaseClient
+            .from('transactions')
+            .delete()
+            .eq('account_id', accountId)
+            .in('id', ids.slice(i, i + 100));
+        if (error) throw error;
+    }
 }
 
 

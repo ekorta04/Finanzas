@@ -3,7 +3,7 @@
    Caché de los archivos de la aplicación
    ========================================================================== */
 
-   const CACHE = 'finanzas-v21';
+   const CACHE = 'finanzas-v22';
 
    const FILES = [
        './',
@@ -26,6 +26,7 @@
        './js/supabase.js',
        './js/auth.js',
        './js/database.js',
+       './js/duplicados.js',
        './js/state.js',
        './js/utils.js',
        './js/storage.js',

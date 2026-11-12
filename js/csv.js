@@ -1,6 +1,23 @@
 /* ==========================================================================
     4. CSV LABORAL KUTXA
     ========================================================================== */
+    // Separa por ';' respetando los campos entre comillas (Excel los usa cuando el texto lleva ';' o comillas)
+    function splitCsvLine(line) {
+        const out = []; let cur = '', q = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (q) {
+                if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+                else if (ch === '"') q = false;
+                else cur += ch;
+            } else if (ch === '"' && cur.trim() === '') { q = true; cur = ''; }
+            else if (ch === ';') { out.push(cur.trim()); cur = ''; }
+            else cur += ch;
+        }
+        out.push(cur.trim());
+        return out;
+    }
+
     function parseLaboralKutxaCSV(text) {
         text = text.replace(/^\uFEFF/, '');
         const lines = text.split(/\r?\n/);
@@ -8,7 +25,7 @@
         for (let n = 1; n < lines.length; n++) {
             const line = lines[n].trim();
             if (!line) continue;
-            const cols = line.split(';');
+            const cols = splitCsvLine(line);
             if (cols.length < 6 || !cols[1].trim()) continue;
             const fechaOp = parseIsoDate(cols[1]);
             const fechaVal = parseIsoDate(cols[2]) || fechaOp;

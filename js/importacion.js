@@ -30,10 +30,17 @@
             window.activeSupabaseAccountId = account.id;
 
             const rowsWithKeys = parsedRows.map(r => ({ ...r, k: generateRowKey(r) }));
-            const result = await importBankCSV(account.id, file.name, rowsWithKeys, badRows);
+
+            // Se compara con lo guardado por fecha + importe + concepto, no solo por la clave:
+            // así un movimiento que llega con otro saldo o texto no se guarda dos veces.
+            const existing = await getAllAccountTransactions(account.id);
+            const { exact, similar, fresh } = splitRepeatedRows(existing, rowsWithKeys);
+            const result = fresh.length
+                ? await importBankCSV(account.id, file.name, fresh, badRows)
+                : { imported_rows: 0, duplicate_rows: 0, error_rows: badRows };
 
             const added = (result && result.imported_rows) || 0;
-            const dup = (result && result.duplicate_rows) || 0;
+            const dup = ((result && result.duplicate_rows) || 0) + exact.length + similar.length;
             const errs = ((result && result.error_rows) || 0);
 
             await loadUserDashboard({ keepTab: true });
@@ -43,7 +50,7 @@
             renderImportHistory();
 
             const sug = BizumSugg.length;
-            showImportResult(`<b>${added} ${added === 1 ? 'movimiento nuevo' : 'movimientos nuevos'}</b> en ${esc(account.name)}` + (dup ? ` · ${dup} repetidos omitidos` : '') + (errs ? ` · ${errs} filas ilegibles` : '') + (sug ? `<br>Hay ${sug} ${sug === 1 ? 'gasto compartido' : 'gastos compartidos'} para agrupar en Resumen.` : ''), 'success');
+            showImportResult(`<b>${added} ${added === 1 ? 'movimiento nuevo' : 'movimientos nuevos'}</b> en ${esc(account.name)}` + (dup ? ` · ${dup} repetidos omitidos` + (similar.length ? ` (${similar.length} con otro saldo o texto)` : '') : '') + (errs ? ` · ${errs} filas ilegibles` : '') + (sug ? `<br>Hay ${sug} ${sug === 1 ? 'gasto compartido' : 'gastos compartidos'} para agrupar en Resumen.` : ''), 'success');
             showToast(added ? `${added} movimientos importados` : 'No había movimientos nuevos');
         } catch (err) {
             console.error(err);
