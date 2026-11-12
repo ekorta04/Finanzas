@@ -26,6 +26,7 @@
 function renderAllViews() {
     populateCategorySelects();
     updateUnclassifiedAlert();
+    updateStaleAlert();
     renderBizumSuggestions();
     populateMonthOptions();
     populateTagControls();
@@ -133,6 +134,29 @@ function populateMonthOptions() {
         // Se conserva la elección si sigue existiendo
         if ([...el.options].some(o => o.value === cur)) el.value = cur;
     });
+}
+
+// Recordatorio: si los movimientos llegan hasta hace más de una semana, toca importar otro CSV
+const STALE_DAYS = 7;
+const STALE_SNOOZE_KEY = 'finanzas_stale_snooze';
+
+function updateStaleAlert() {
+    const el = document.getElementById('stale-alert');
+    if (!el) return;
+    const last = AppState.rows.length ? lastDataDate() : null;
+    const days = last ? daysBetween(last, todayIso()) : 0;
+    let snoozed = false;
+    try { snoozed = localStorage.getItem(STALE_SNOOZE_KEY) === todayIso(); } catch (e) { /* sin almacenamiento */ }
+    if (!last || days < STALE_DAYS || snoozed) { el.classList.add('hidden'); return; }
+    document.getElementById('stale-text').textContent =
+        `Tus movimientos llegan hasta el ${formatDateEs(last)} (hace ${days} días).`;
+    el.classList.remove('hidden');
+}
+
+// "Ahora no": no se vuelve a avisar hasta mañana
+function snoozeStaleAlert() {
+    try { localStorage.setItem(STALE_SNOOZE_KEY, todayIso()); } catch (e) { /* sin almacenamiento */ }
+    updateStaleAlert();
 }
 
 function updateUnclassifiedAlert() {

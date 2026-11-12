@@ -123,6 +123,11 @@
         </div>
     </div>
 
+    <!-- Aviso al arrastrar un archivo sobre la app -->
+    <div id="drop-overlay" class="drop-overlay hidden" aria-hidden="true">
+        <div class="drop-overlay-box"><i class="ic ic-file-up"></i><span>Suelta el CSV para importarlo</span></div>
+    </div>
+
     <main class="app-main">
 
         <!-- ==========================================
@@ -171,6 +176,20 @@
                     </span>
                     <i class="ic ic-chevron-right row-chevron"></i>
                 </button>
+            </div>
+
+            <div id="stale-alert" class="hidden group banner">
+                <div class="row with-icon">
+                    <span class="icon-tile" style="background:var(--blue)"><i class="ic ic-file-up"></i></span>
+                    <span class="row-main">
+                        <span class="row-title" style="display:block">Toca importar movimientos</span>
+                        <span id="stale-text" class="row-sub" style="display:block"></span>
+                    </span>
+                    <span class="stale-btns">
+                        <button type="button" class="btn xs gray" onclick="snoozeStaleAlert()">Ahora no</button>
+                        <button type="button" class="btn xs" onclick="switchTab('v-datos')">Importar</button>
+                    </span>
+                </div>
             </div>
 
             <div id="bizum-alert" class="hidden"></div>
@@ -566,6 +585,7 @@
                     <span class="small muted">Los movimientos repetidos se omiten solos</span>
                 </div>
                 <div id="import-result" class="hidden result mt-2"></div>
+                <div id="import-preview" class="hidden mt-2"></div>
             </div>
 
             <div>
@@ -734,6 +754,7 @@
 <script src="js/utils.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/csv.js"></script>
+<script src="js/import-check.js"></script>
 <script src="js/bizum.js"></script>
 <script src="js/tags.js"></script>
 <script src="js/dashboard.js"></script>
