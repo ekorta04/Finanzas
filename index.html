@@ -234,6 +234,23 @@
 
             </div>
 
+            <!-- Patrimonio -->
+            <div class="dw dw-12" data-w="patrimonio">
+            <div id="pat-card" class="card">
+                <div class="card-head">
+                    <h2 class="card-title">Patrimonio</h2>
+                    <div class="mnav">
+                        <button id="pat-r12" type="button" class="active" onclick="setPatrimonioRange(false)">12 m</button>
+                        <button id="pat-rall" type="button" onclick="setPatrimonioRange(true)">Todo</button>
+                    </div>
+                </div>
+                <div id="pat-body">
+                    <div id="pat-head"></div>
+                    <div id="pat-chart-box" class="chart-box"><canvas id="chart-patrimonio"></canvas></div>
+                </div>
+            </div>
+            </div>
+
             <!-- Cierre de mes -->
             <div class="dw dw-12" data-w="cierre">
             <div id="cierre-card" class="card">
@@ -761,6 +778,7 @@
 <script src="js/layout.js"></script>
 <script src="js/forecast.js"></script>
 <script src="js/cierre.js"></script>
+<script src="js/patrimonio.js"></script>
 <script src="js/movimientos.js"></script>
 <script src="js/inversion.js"></script>
 <script src="js/xray.js"></script>

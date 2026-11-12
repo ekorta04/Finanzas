@@ -3,7 +3,7 @@
    Caché de los archivos de la aplicación
    ========================================================================== */
 
-   const CACHE = 'finanzas-v28';
+   const CACHE = 'finanzas-v29';
 
    const FILES = [
        './',
@@ -37,7 +37,7 @@
        './js/tags.js',
        './js/dashboard.js',
        './js/layout.js',
-       './js/cierre.js',
+       './js/cierre.js', './js/patrimonio.js',
        './js/forecast.js',
        './js/movimientos.js',
        './js/inversion.js',

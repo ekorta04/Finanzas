@@ -731,3 +731,10 @@ body.priv-on span.priv, body.priv-on b.priv { display: inline-block; }
     background: var(--card); border: 2px dashed var(--blue);
 }
 .drop-overlay-box .ic { font-size: 36px; }
+
+/* Patrimonio */
+#pat-card .mnav button { width: auto; min-width: 46px; padding: 0 12px; border-radius: 15px; font-size: 13px; font-weight: 600; }
+#pat-card .mnav button.active { background: var(--blue); color: #fff; }
+.pat-total { font-size: 30px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+#pat-head { margin-bottom: 10px; }
+#pat-card .chart-box { height: 200px; }

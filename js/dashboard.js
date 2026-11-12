@@ -294,6 +294,7 @@ function renderDashboard() {
     renderInsights(cat, gasto, recovered, cmpTot ? { cat: cmpTot.cat, label: cmp.label } : null);
     if (typeof renderForecast === 'function') renderForecast();
     if (typeof renderCierre === 'function') renderCierre();
+    if (typeof renderPatrimonio === 'function') renderPatrimonio();
 }
 
 // Estilo común de los gráficos (tipografía y colores del sistema)
