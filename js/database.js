@@ -405,6 +405,8 @@ function initMainUIOnce() {
 
     populateCategorySelects();
     setupTabNavigation();
+    loadCompareMode();
+    initDashLayout();   // ordenar bloques del Resumen y modo privado
     setupDropZone();
     setupInvDropZone();
     setupXRayDropZone();

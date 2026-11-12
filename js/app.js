@@ -3,25 +3,7 @@
    5. INICIO Y NAVEGACIÓN
    ========================================================================== */
 
-   function initApp() {
-    loadState();
-
-    populateCategorySelects();
-    loadCompareMode();
-    setupTabNavigation();
-    initDashLayout();
-    setupDropZone();
-    setupInvDropZone();
-    setupXRayDropZone();
-
-    document.getElementById('inv-val-date').value =
-        new Date().toISOString().slice(0, 10);
-
-    renderAllViews();
-    switchTab('v-dashboard');
-
-    // Los datos se cargan desde Supabase al iniciar sesión (ver loadUserDashboard)
-}
+// El arranque real está en initMainUIOnce (database.js), que se ejecuta al entrar con la sesión.
 
 function renderAllViews() {
     populateCategorySelects();

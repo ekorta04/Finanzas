@@ -163,17 +163,20 @@ function naturalRect(el) {
     return { left: r.left - tx, right: r.right - tx, top: r.top - ty, bottom: r.bottom - ty };
 }
 
-// Subir o bajar un puesto el bloque arrastrado: se mueve el vecino, no el bloque que llevas en el dedo
-function swapToward(target) {
+// Intercambiar el bloque arrastrado con su vecino (dir = 1 siguiente, -1 anterior).
+// Siempre se mueve el vecino en la página, nunca el bloque que llevas en el dedo:
+// si se recoloca el elemento que se está tocando, el iPhone corta el arrastre.
+function swapWith(dir) {
     const el = drag.el, box = el.parentElement;
     const kids = [...box.children];
-    const i = kids.indexOf(el), j = kids.indexOf(target);
-    if (i < 0 || j < 0 || i === j) return;
-    const neighbour = kids[i + (j > i ? 1 : -1)];
+    const neighbour = kids[kids.indexOf(el) + dir];
+    if (!neighbour) return;
     const sibs = kids.filter(k => k !== el);
     const first = new Map(sibs.map(s => [s, s.getBoundingClientRect()]));   // dónde se ven ahora
     sibs.forEach(s => { s.style.transition = 'none'; s.style.transform = ''; });
-    if (j > i) box.insertBefore(neighbour, el); else box.insertBefore(el, neighbour);
+    if (dir > 0) box.insertBefore(neighbour, el); else box.insertBefore(neighbour, el.nextSibling);
+    drag.lock = neighbour;
+    drag.lockY = drag.py + window.scrollY;
     sibs.forEach(s => {   // FLIP: cada bloque se desliza desde donde estaba hasta su nuevo sitio
         const a = first.get(s), b = s.getBoundingClientRect();
         const dx = a.left - b.left, dy = a.top - b.top;
@@ -186,6 +189,38 @@ function swapToward(target) {
     });
 }
 
+// ¿Toca intercambiar con el vecino? Se decide con los bordes del bloque arrastrado y el
+// centro del vecino (no con el dedo): así no "baila" cuando los bloques miden distinto.
+function swapDirection() {
+    const el = drag.el, kids = [...el.parentElement.children], i = kids.indexOf(el);
+    const d = el.getBoundingClientRect();            // dónde se ve el bloque arrastrado
+    const own = naturalRect(el);                     // su hueco
+    const cy = (d.top + d.bottom) / 2;
+    const test = (nb, dir) => {
+        if (!nb) return false;
+        const n = naturalRect(nb);
+        const sameRow = n.top < own.bottom - 1 && own.top < n.bottom - 1;   // vecinos lado a lado (ordenador)
+        if (sameRow) {
+            if (cy < n.top) return dir < 0;          // se ha salido de la fila por arriba
+            if (cy > n.bottom) return dir > 0;       // o por abajo
+            const mx = (n.left + n.right) / 2;
+            return dir > 0 ? d.right > mx && d.left > own.left + 8 : d.left < mx && d.right < own.right - 8;
+        }
+        // Basta con solapar un trozo del vecino (no hace falta cruzar medio bloque si es muy alto)
+        const need = Math.min((n.bottom - n.top) / 2, 90);
+        if (!(dir > 0 ? d.bottom > n.top + need : d.top < n.bottom - need)) return false;
+        // Para deshacer el último intercambio, el dedo tiene que haber retrocedido de verdad
+        if (drag.lock === nb) {
+            const back = (drag.py + window.scrollY) - drag.lockY;
+            if (dir > 0 ? back < 24 : back > -24) return false;
+        }
+        return true;
+    };
+    if (test(kids[i + 1], 1)) return 1;
+    if (test(kids[i - 1], -1)) return -1;
+    return 0;
+}
+
 function dragFrame() {
     if (!drag) return;
     const vh = window.innerHeight;
@@ -195,19 +230,14 @@ function dragFrame() {
     else if (drag.py > vh - 130) dy = Math.min(18, Math.ceil((drag.py - (vh - 130)) / 5));
     if (dy) window.scrollBy(0, dy);
 
-    // El bloque sigue al dedo
+    const dir = swapDirection();
+    if (dir) swapWith(dir);
+
+    // El bloque sigue al dedo (después del intercambio, para que no dé un salto)
     const el = drag.el, r = el.getBoundingClientRect();
     drag.tx += (drag.px - drag.gx) - r.left;
     drag.ty += (drag.py - drag.gy) - r.top;
     el.style.transform = 'translate(' + drag.tx + 'px,' + drag.ty + 'px)';
-
-    // ¿Está el dedo sobre otro bloque? Entonces se intercambian
-    const sibs = [...el.parentElement.children].filter(s => s !== el);
-    const hit = sibs.find(s => {
-        const n = naturalRect(s);
-        return drag.px >= n.left && drag.px <= n.right && drag.py >= n.top && drag.py <= n.bottom;
-    });
-    if (hit) swapToward(hit);
 
     drag.raf = requestAnimationFrame(dragFrame);
 }
