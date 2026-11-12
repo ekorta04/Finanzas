@@ -694,3 +694,15 @@ body.priv-on .priv {
     pointer-events: none;
 }
 body.priv-on span.priv, body.priv-on b.priv { display: inline-block; }
+
+/* Cierre de mes */
+.mnav { display: flex; align-items: center; gap: 4px; }
+.mnav button {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--fill); color: var(--blue); font-size: 15px;
+}
+.mnav button:active { opacity: .6; }
+.mnav button:disabled { opacity: .3; }
+#cierre-label { min-width: 104px; text-align: center; }
+.cierre-lead { margin: 0 0 12px; font-size: 15px; line-height: 1.4; color: var(--label); }

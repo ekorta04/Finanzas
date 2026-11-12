@@ -40,7 +40,7 @@ function togglePrivacy() {
    ajustes (AppState.settings.dashOrder), que ya se sincronizan entre iPhone
    y ordenador.
    -------------------------------------------------------------------------- */
-const DASH_IDS = ['saldo', 'kpis', 'forecast', 'mensual', 'categorias', 'shops', 'insights'];
+const DASH_IDS = ['saldo', 'kpis', 'cierre', 'forecast', 'mensual', 'categorias', 'shops', 'insights'];
 const DRAG_HOLD_MS = 380;    // tiempo de pulsación para empezar a arrastrar
 const DRAG_SLOP = 10;        // si el dedo se mueve más, era un desplazamiento (scroll)
 

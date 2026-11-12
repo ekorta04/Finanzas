@@ -293,6 +293,7 @@ function renderDashboard() {
     renderTopShops(rows.filter(r => r.i < 0 && !isInvCat(r.cat)));
     renderInsights(cat, gasto, recovered, cmpTot ? { cat: cmpTot.cat, label: cmp.label } : null);
     if (typeof renderForecast === 'function') renderForecast();
+    if (typeof renderCierre === 'function') renderCierre();
 }
 
 // Estilo común de los gráficos (tipografía y colores del sistema)

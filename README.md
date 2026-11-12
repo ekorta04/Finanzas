@@ -5,6 +5,7 @@ Aplicación web para gestionar y analizar las finanzas personales a partir de ex
 
 ## Funcionalidades
 
+- Cierre de mes en el Resumen: gasto, ingresos y ahorro de un mes frente al anterior, categorías que más suben y bajan y mayores gastos (en el mes en curso compara los mismos días).
 - Dashboard de ingresos, gastos y ahorro, con bloques que se reordenan manteniendo pulsado y arrastrando, como en la pantalla de inicio del iPhone (el orden se sincroniza entre dispositivos).
 - Modo privado (ojito de arriba): oculta las cifras en euros y deja gráficas y porcentajes, para poder enseñar la app sin mostrar tu dinero.
 - Importación de movimientos bancarios desde CSV.

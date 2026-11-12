@@ -215,6 +215,21 @@
 
             </div>
 
+            <!-- Cierre de mes -->
+            <div class="dw dw-12" data-w="cierre">
+            <div id="cierre-card" class="card">
+                <div class="card-head">
+                    <h2 class="card-title">Cierre de mes</h2>
+                    <div class="mnav">
+                        <button id="cierre-prev" type="button" onclick="cierreMove(-1)" aria-label="Mes anterior"><i class="ic ic-chevron-left"></i></button>
+                        <span id="cierre-label" class="small bold"></span>
+                        <button id="cierre-next" type="button" onclick="cierreMove(1)" aria-label="Mes siguiente"><i class="ic ic-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div id="cierre-body"></div>
+            </div>
+            </div>
+
             <!-- Proyección de saldo -->
             <div class="dw dw-12" data-w="forecast">
             <div id="fc-card" class="card">
@@ -724,6 +739,7 @@
 <script src="js/dashboard.js"></script>
 <script src="js/layout.js"></script>
 <script src="js/forecast.js"></script>
+<script src="js/cierre.js"></script>
 <script src="js/movimientos.js"></script>
 <script src="js/inversion.js"></script>
 <script src="js/xray.js"></script>
