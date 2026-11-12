@@ -50,7 +50,8 @@ Aplicación web para gestionar y analizar las finanzas personales a partir de ex
 
 Los movimientos bancarios se guardan en la base de datos de Supabase
 (tablas `accounts`, `transactions` e `imports`), ligados a tu usuario.
-Reglas, etiquetas, presupuestos e inversión se guardan en el navegador.
+Reglas, etiquetas, Bizums vinculados, ajustes e inversión se guardan en la tabla
+`user_settings` y se sincronizan entre dispositivos.
 
 ## Copia de seguridad
 
@@ -65,6 +66,20 @@ En **Datos → Copia de seguridad**:
 La copia automática semanal y la revisión diaria viven en un repositorio
 privado aparte (los datos no deben estar en este, que es público). Sus copias
 tienen el mismo formato y se restauran con el mismo botón.
+
+## Seguridad de la base de datos
+
+Todas las tablas tienen seguridad por filas (RLS): cada usuario solo lee y escribe
+lo suyo, y solo con sesión iniciada. La clave que va en `js/supabase.js` es la
+pública (`sb_publishable_…`); la clave secreta no debe estar nunca en este repo.
+
+- `supabase/endurecer_seguridad.sql` quita al rol anónimo cualquier permiso
+  sobre las tablas (capa extra). Se ejecuta una vez tras los demás `.sql`.
+- `supabase/verificar_seguridad.sql` solo lee y devuelve una fila por tabla; la
+  columna `estado` debe salir OK en todas. Conviene ejecutarlo tras cada cambio
+  de base de datos.
+- En Supabase → Authentication, con tu cuenta ya creada, desactiva
+  "Allow new users to sign up" para que nadie más pueda registrarse.
 
 ## Aviso de errores
 
