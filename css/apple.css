@@ -619,7 +619,6 @@ input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none; }
 .fc-off { opacity: .5; }
 .fc-off .row-title { text-decoration: line-through; }
 
-
 /* ---------- Resumen personalizable y modo privado ---------- */
 
 .dash-widgets { display: flex; flex-direction: column; gap: 20px; }
@@ -632,30 +631,39 @@ input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none; }
     .dw-5 { grid-column: span 5; }
 }
 
+/* Los bloques no deben seleccionarse ni abrir el menú de pulsación larga: esa pulsación es para arrastrar */
+.dash-widgets { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+
 .page-head-actions { display: flex; align-items: center; gap: 8px; }
 #dash-edit-btn { padding: 0; width: 34px; }
 #dash-edit-btn.on { background: var(--blue); color: #fff; }
 
+/* Aviso flotante del modo ordenar (no mueve el contenido) */
 .edit-hint {
-    display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
-    padding: 10px 14px; border-radius: 12px; font-size: 13px; color: var(--label-2);
-    background: color-mix(in srgb, var(--blue) 10%, transparent);
+    position: fixed; left: 50%; transform: translateX(-50%); z-index: 45;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 78px);
+    display: flex; align-items: center; gap: 12px; white-space: nowrap;
+    max-width: calc(100vw - 24px);
+    padding: 8px 8px 8px 16px; border-radius: 999px;
+    font-size: 13px; font-weight: 500; color: var(--label);
+    background: var(--card); box-shadow: 0 8px 28px rgba(0, 0, 0, .22), 0 0 0 .5px var(--sep);
 }
-.edit-hint-btns { display: flex; gap: 8px; }
+.edit-hint-btns { display: flex; gap: 6px; }
+@media (min-width: 900px) { .edit-hint { bottom: 28px; } }
 
-.dw-bar { display: none; }
-body.dash-edit .dw { outline: 1.5px dashed color-mix(in srgb, var(--blue) 45%, transparent); outline-offset: 6px; border-radius: 16px; }
-body.dash-edit .dw-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
-body.dash-edit .dw > :not(.dw-bar) { pointer-events: none; }
-.dw-name { font-size: 13px; font-weight: 600; color: var(--label-2); }
-.dw-btns { display: flex; gap: 8px; }
-.dw-btn {
-    width: 34px; height: 34px; border-radius: 50%;
-    display: inline-flex; align-items: center; justify-content: center;
-    background: var(--fill); color: var(--blue); font-size: 17px;
+/* Modo ordenar: los bloques "tiemblan" como en la pantalla de inicio del iPhone */
+body.dash-edit .dw > * { pointer-events: none; }
+body.dash-edit .dw:not(.dragging) { animation: dw-wiggle .26s ease-in-out infinite alternate; cursor: grab; }
+body.dash-edit .dw:nth-child(2n) { animation-duration: .31s; animation-direction: alternate-reverse; }
+body.dash-edit .dw:nth-child(3n) { animation-duration: .29s; }
+@keyframes dw-wiggle { from { rotate: -.28deg; } to { rotate: .28deg; } }
+@media (prefers-reduced-motion: reduce) { body.dash-edit .dw:not(.dragging) { animation: none; } }
+
+.dw.dragging {
+    z-index: 60; cursor: grabbing; touch-action: none;
+    filter: drop-shadow(0 14px 22px rgba(0, 0, 0, .28));
+    opacity: .96;
 }
-.dw-btn:active { opacity: .6; }
-.dw-btn:disabled { opacity: .3; }
 
 /* Barra superior en el móvil (lleva el ojito) */
 .mobilebar {
@@ -678,10 +686,11 @@ body.dash-edit .dw > :not(.dw-bar) { pointer-events: none; }
 .priv-btn:active { opacity: .6; }
 body.priv-on .priv-btn { background: var(--blue); color: #fff; }
 
-/* Importes ocultos */
+/* Importes ocultos: solo las cifras en euros; gráficas y porcentajes se quedan */
 .priv { transition: filter .2s; }
 body.priv-on .priv {
     filter: blur(12px);
     -webkit-user-select: none; user-select: none;
     pointer-events: none;
 }
+body.priv-on span.priv, body.priv-on b.priv { display: inline-block; }

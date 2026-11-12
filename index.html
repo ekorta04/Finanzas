@@ -136,7 +136,7 @@
                     <h1 class="large-title">Resumen</h1>
                 </div>
                 <div class="page-head-actions">
-                    <button id="dash-edit-btn" type="button" class="btn sm gray" onclick="toggleDashEdit()" aria-pressed="false" title="Ordenar bloques" aria-label="Ordenar bloques"><i class="ic ic-sliders-horizontal"></i></button>
+                    <button id="dash-edit-btn" type="button" class="btn sm gray" onclick="toggleDashEdit()" aria-pressed="false" title="Reordenar bloques (o mantén pulsado uno)" aria-label="Reordenar bloques"><i class="ic ic-sliders-horizontal"></i></button>
                     <select id="dash-month" onchange="renderDashboard()" class="field sm" aria-label="Periodo">
                         <option value="30d">Últimos 30 días</option>
                         <option value="">Todo</option>
@@ -145,7 +145,7 @@
             </div>
 
             <div id="dash-edit-hint" class="edit-hint hidden">
-                <span>Usa las flechas de cada bloque para subirlo o bajarlo.</span>
+                <span>Arrastra los bloques</span>
                 <span class="edit-hint-btns">
                     <button type="button" class="btn xs gray" onclick="resetDashOrder()">Restablecer</button>
                     <button type="button" class="btn xs" onclick="toggleDashEdit(false)">Listo</button>
@@ -184,7 +184,7 @@
                 <div id="kpi-saldo" class="hero-amount num priv">0,00 €</div>
                 <div id="kpi-patrimonio" class="hero-sub num priv hidden"></div>
                 <div id="saldo-range" class="hero-sub num priv"></div>
-                <div class="chart-box hero-chart priv"><canvas id="chart-saldo"></canvas></div>
+                <div class="chart-box hero-chart"><canvas id="chart-saldo"></canvas></div>
             </div>
             </div>
 
@@ -192,24 +192,24 @@
             <div class="grid-2 grid-4">
                 <div class="card stat tap" role="button" tabindex="0" onclick="drillToMovs({type:'expense'})" onkeydown="if(event.key==='Enter')drillToMovs({type:'expense'})" aria-label="Ver gastos en Movimientos">
                     <div class="stat-top"><span class="dot" style="background:var(--red)"><i class="ic ic-arrow-down"></i></span>Gastos</div>
-                    <div id="kpi-gasto" class="stat-value num">0,00 €</div>
+                    <div id="kpi-gasto" class="stat-value num priv">0,00 €</div>
                     <div id="d-gasto" class="delta"></div>
                 </div>
                 <div class="card stat tap" role="button" tabindex="0" onclick="drillToMovs({type:'income'})" onkeydown="if(event.key==='Enter')drillToMovs({type:'income'})" aria-label="Ver ingresos en Movimientos">
                     <div class="stat-top"><span class="dot" style="background:var(--green)"><i class="ic ic-arrow-up"></i></span>Ingresos</div>
-                    <div id="kpi-ingreso" class="stat-value num">0,00 €</div>
+                    <div id="kpi-ingreso" class="stat-value num priv">0,00 €</div>
                     <div id="d-ingreso" class="delta"></div>
                 </div>
                 <div class="card stat">
                     <div class="stat-top"><span class="dot" style="background:var(--blue)"><i class="ic ic-scale"></i></span>Balance</div>
-                    <div id="kpi-balance" class="stat-value num">0,00 €</div>
+                    <div id="kpi-balance" class="stat-value num priv">0,00 €</div>
                     <div id="d-balance" class="delta"></div>
                 </div>
                 <div class="card stat">
                     <div class="stat-top"><span class="dot" style="background:var(--indigo)"><i class="ic ic-percent"></i></span>Ahorro</div>
                     <div id="kpi-ahorro" class="stat-value num">0,0%</div>
                     <div id="d-ahorro" class="delta"></div>
-                    <div class="row-sub num">Gasto medio <span id="kpi-diario">0,00 €</span>/día</div>
+                    <div class="row-sub num">Gasto medio <span id="kpi-diario" class="priv">0,00 €</span>/día</div>
                 </div>
             </div>
 
@@ -225,7 +225,7 @@
                         <button id="fc-m6" type="button" onclick="setForecastMonths(6)">6 meses</button>
                     </div>
                 </div>
-                <div id="fc-body" class="priv">
+                <div id="fc-body">
                     <div id="fc-summary"></div>
                     <div class="chart-box"><canvas id="chart-forecast"></canvas></div>
                     <div id="fc-note" class="fc-note"></div>

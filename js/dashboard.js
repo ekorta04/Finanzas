@@ -105,16 +105,17 @@ function deltaInfo(cur, prev, goodUp, noPct) {
     const sign = up ? '+' : '−';
     const eur = `${sign}${formatEur(Math.abs(diff))}`;
     const cls = up === goodUp ? 'good' : 'bad';
-    if (noPct) return { cls, text: `${up ? '↑' : '↓'} ${eur}` };
+    if (noPct) return { cls, text: `${up ? '↑' : '↓'} ${eur}`, html: `${up ? '↑' : '↓'} <span class="priv">${eur}</span>` };
     const pct = Math.abs(prev) < 0.005 ? null : (Math.abs(diff) / Math.abs(prev)) * 100;
     const pctTxt = pct == null ? 'nuevo' : `${sign}${pct.toFixed(pct < 10 ? 1 : 0).replace('.', ',')} %`;
-    return { cls, text: `${up ? '↑' : '↓'} ${pctTxt} · ${eur}` };
+    return { cls, text: `${up ? '↑' : '↓'} ${pctTxt} · ${eur}`, html: `${up ? '↑' : '↓'} ${pctTxt} · <span class="priv">${eur}</span>` };
 }
 function setDelta(id, info) {
     const el = document.getElementById(id);
     if (!el) return;
     el.className = 'delta' + (info ? ' ' + info.cls : '');
-    el.textContent = info ? info.text : '';
+    if (info && info.html) el.innerHTML = info.html;   // el porcentaje se queda a la vista; los euros, ocultables
+    else el.textContent = info ? info.text : '';
 }
 
 // Guardar la elección de comparación en este dispositivo
@@ -199,7 +200,7 @@ function renderChartSaldo(period, cmp) {
             interaction: { mode: 'index', intersect: false },
             plugins: {
                 legend: { display: false },
-                tooltip: { ...th.tooltip, callbacks: {
+                tooltip: { ...th.tooltip, enabled: !privOn, callbacks: {
                     title: c => formatDateEs(labels[c[0].dataIndex]),
                     label: c => ` ${c.dataset.label === 'Saldo' ? 'Saldo' : 'Periodo anterior'}: ${formatEur(c.raw)}`
                 } }
@@ -218,7 +219,7 @@ function renderChartSaldo(period, cmp) {
                 },
                 y: {
                     grace: '8%', grid: { color: th.grid }, border: { display: false },
-                    ticks: { maxTicksLimit: 4, callback: v => Math.abs(v) >= 1000 ? (v / 1000).toLocaleString('es-ES') + ' k' : v }
+                    ticks: { display: !privOn, maxTicksLimit: 4, callback: v => Math.abs(v) >= 1000 ? (v / 1000).toLocaleString('es-ES') + ' k' : v }
                 }
             }
         }
@@ -248,7 +249,7 @@ function renderDashboard() {
     document.getElementById('kpi-ingreso').textContent = formatEur(ingreso);
     const balEl = document.getElementById('kpi-balance');
     balEl.textContent = formatEur(balance);
-    balEl.className = `stat-value num ${balance >= 0 ? 'pos' : 'red'}`;
+    balEl.className = `stat-value num priv ${balance >= 0 ? 'pos' : 'red'}`;
     balEl.textContent = (balance > 0 ? '+' : '') + formatEur(balance);
     document.getElementById('kpi-ahorro').textContent = tasa.toFixed(1).replace('.', ',') + ' %';
     document.getElementById('kpi-diario').textContent = formatEur(gasto / days);
@@ -337,11 +338,11 @@ function renderChartMensual() {
             interaction: { mode: 'index', intersect: false },
             plugins: {
                 legend: { position: 'top', align: 'end', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 7, boxHeight: 7, padding: 14 } },
-                tooltip: { ...th.tooltip, callbacks: { title: c => monthName(months[c[0].dataIndex]), label: c => ` ${c.dataset.label}: ${formatEur(c.raw)}` } }
+                tooltip: { ...th.tooltip, enabled: !privOn, callbacks: { title: c => monthName(months[c[0].dataIndex]), label: c => ` ${c.dataset.label}: ${formatEur(c.raw)}` } }
             },
             scales: {
                 x: { grid: { display: false }, border: { display: false } },
-                y: { grid: { color: th.grid }, border: { display: false }, ticks: { maxTicksLimit: 5, callback: v => v >= 1000 ? (v / 1000).toLocaleString('es-ES') + ' k' : v } }
+                y: { grid: { color: th.grid }, border: { display: false }, ticks: { display: !privOn, maxTicksLimit: 5, callback: v => v >= 1000 ? (v / 1000).toLocaleString('es-ES') + ' k' : v } }
             }
         }
     });
@@ -364,7 +365,7 @@ function renderChartCategorias(catTotals, prevCat) {
             onHover: (e, els) => { if (e.native && e.native.target) e.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
             plugins: {
                 legend: { display: false },
-                tooltip: { ...th.tooltip, callbacks: { label: c => ` ${c.label}: ${formatEur(c.raw)} (${total > 0 ? ((c.raw / total) * 100).toFixed(0) : 0}%)` } }
+                tooltip: { ...th.tooltip, callbacks: { label: c => { const pc = total > 0 ? ((c.raw / total) * 100).toFixed(0) : 0; return privOn ? ` ${c.label}: ${pc}%` : ` ${c.label}: ${formatEur(c.raw)} (${pc}%)`; } } }
             }
         },
         plugins: [{
@@ -374,6 +375,7 @@ function renderChartCategorias(catTotals, prevCat) {
                 const x = (a.left + a.right) / 2, y = (a.top + a.bottom) / 2;
                 c.save(); c.textAlign = 'center';
                 c.fillStyle = Chart.defaults.color; c.font = `600 12px ${Chart.defaults.font.family}`;
+                if (privOn) { c.fillText('Gasto', x, y + 4); c.restore(); return; }
                 c.fillText('Gasto', x, y - 12);
                 c.fillStyle = cssVar('--label'); c.font = `700 20px ${Chart.defaults.font.family}`;
                 c.fillText(formatEur(total).replace(/,\d\d\s/, ' '), x, y + 12);
@@ -393,7 +395,7 @@ function renderChartCategorias(catTotals, prevCat) {
             <span class="legend-dot" style="background:var(${catStyle(c)[1]})"></span>
             <span class="row-main" style="font-size:14px">${esc(c)}${catDelta(c)}</span>
             <span class="small muted num">${total > 0 ? Math.round(v / total * 100) : 0}%</span>
-            <span class="small bold num" style="min-width:84px;text-align:right">${formatEur(v)}</span>
+            <span class="small bold num priv" style="min-width:84px;text-align:right">${formatEur(v)}</span>
         </button>`).join('')}</div>` : '<p class="small muted center">Sin gastos en este periodo.</p>';
 }
 
@@ -416,7 +418,7 @@ function renderTopShops(expenseRows) {
             <div class="row-main">
                 <div class="flex justify-between gap-2">
                     <span class="row-title truncate" style="font-size:15px" title="${esc(name)}">${esc(name)}</span>
-                    <span class="bold num" style="font-size:15px">${formatEur(amt)}</span>
+                    <span class="bold num priv" style="font-size:15px">${formatEur(amt)}</span>
                 </div>
                 <div class="bar-track"><div class="bar-fill" style="width:${Math.max(3, Math.round(amt / max * 100))}%;background:var(${catStyle(cats[name])[1]})"></div></div>
                 <div class="row-sub">${counts[name]} ${counts[name] === 1 ? 'pago' : 'pagos'}</div>
@@ -434,7 +436,7 @@ function renderInsights(cat, gasto, recovered, cmp) {
             <span class="icon-tile" style="background:var(${color})"><i class="ic ic-${icon}"></i></span>
             <div class="row-main"><div class="row-title bold" style="font-size:15px">${title}</div><div class="row-sub" style="white-space:normal">${text}</div></div>
         </div>`;
-    let html = item(catStyle(top[0])[0], catStyle(top[0])[1], esc(top[0]), `Es tu mayor gasto: <b>${pct}%</b> del total (${formatEur(top[1])}).`);
+    let html = item(catStyle(top[0])[0], catStyle(top[0])[1], esc(top[0]), `Es tu mayor gasto: <b>${pct}%</b> del total (<span class="priv">${formatEur(top[1])}</span>).`);
     if (cmp) {   // categoría con mayor cambio respecto al periodo comparado
         const names = new Set([...Object.keys(cat), ...Object.keys(cmp.cat)]);
         let best = null;
@@ -445,9 +447,9 @@ function renderInsights(cat, gasto, recovered, cmp) {
         if (best) {
             const up = best.diff > 0, pct = best.prev > 0 ? ` (${up ? '+' : '−'}${Math.round(Math.abs(best.diff) / best.prev * 100)} %)` : '';
             html += item(up ? 'trending-up' : 'arrow-down', up ? '--orange' : '--green', esc(best.n),
-                `${up ? 'Ha subido' : 'Ha bajado'} <b>${formatEur(Math.abs(best.diff))}</b>${pct} respecto a ${esc(cmp.label)}.`);
+                `${up ? 'Ha subido' : 'Ha bajado'} <b class="priv">${formatEur(Math.abs(best.diff))}</b>${pct} respecto a ${esc(cmp.label)}.`);
         }
     }
-    if (recovered > 0) html += item('users', '--teal', 'Bizums recuperados', `Te han devuelto <b>${formatEur(recovered)}</b> de gastos compartidos.`);
+    if (recovered > 0) html += item('users', '--teal', 'Bizums recuperados', `Te han devuelto <b class="priv">${formatEur(recovered)}</b> de gastos compartidos.`);
     cont.innerHTML = html;
 }

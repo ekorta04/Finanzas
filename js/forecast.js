@@ -235,8 +235,8 @@ function renderForecast() {
     else if (res.riskDate) alert = `<div class="fc-alert warn">En el escenario desfavorable el saldo podría bajar de 0 € hacia el ${formatDateEs(res.riskDate)}.</div>`;
     document.getElementById('fc-summary').innerHTML = `
         <div class="fc-label">Saldo previsto el ${shortDate(res.labels[res.N - 1])} ${res.labels[res.N - 1].slice(0, 4)}</div>
-        <div class="fc-amount num">${formatEur(res.end.central)}</div>
-        <div class="fc-sub num"><span class="bold ${diff >= 0 ? 'pos' : 'red'}">${fcSigned(diff)}</span> frente al saldo actual · rango ${formatEur(res.end.low)} a ${formatEur(res.end.high)}</div>
+        <div class="fc-amount num priv">${formatEur(res.end.central)}</div>
+        <div class="fc-sub num"><span class="bold priv ${diff >= 0 ? 'pos' : 'red'}">${fcSigned(diff)}</span> frente al saldo actual · rango <span class="priv">${formatEur(res.end.low)} a ${formatEur(res.end.high)}</span></div>
         ${alert}`;
 
     // Gráfica: últimos 45 días reales + proyección con su rango
@@ -262,6 +262,7 @@ function renderForecast() {
                 legend: { display: false },
                 tooltip: {
                     ...th.tooltip,
+                    enabled: !privOn,
                     filter: it => it.dataset.label === 'Saldo' || it.dataset.label === 'Previsión',
                     callbacks: {
                         title: c => formatDateEs(labels[c[0].dataIndex]),
@@ -275,7 +276,7 @@ function renderForecast() {
             },
             scales: {
                 x: { grid: { display: false }, border: { display: false }, ticks: { maxTicksLimit: 5, maxRotation: 0, callback: v => shortDate(labels[v]) } },
-                y: { grace: '8%', grid: { color: th.grid }, border: { display: false }, ticks: { maxTicksLimit: 5, callback: v => Math.abs(v) >= 1000 ? (v / 1000).toLocaleString('es-ES') + ' k' : v } }
+                y: { grace: '8%', grid: { color: th.grid }, border: { display: false }, ticks: { display: !privOn, maxTicksLimit: 5, callback: v => Math.abs(v) >= 1000 ? (v / 1000).toLocaleString('es-ES') + ' k' : v } }
             }
         }
     });
@@ -290,8 +291,8 @@ function renderForecast() {
     // De dónde sale la cifra, por mes
     const f = res.flows;
     const flow = (title, v, sub) => v === 0 ? '' : `
-        <div class="row"><span class="row-main"><span class="row-title" style="display:block;font-size:15px">${title}</span>${sub ? `<span class="row-sub" style="display:block;white-space:normal">${sub}</span>` : ''}</span>
-        <span class="row-value num ${v > 0 ? 'pos' : 'red'}" style="font-size:15px">${fcSigned(v)}</span></div>`;
+        <div class="row"><span class="row-main"><span class="row-title" style="display:block;font-size:15px">${title}</span>${sub ? `<span class="row-sub priv" style="display:block;white-space:normal">${sub}</span>` : ''}</span>
+        <span class="row-value num priv ${v > 0 ? 'pos' : 'red'}" style="font-size:15px">${fcSigned(v)}</span></div>`;
     const top = f.topCats.map(([g, v]) => `${esc(g)} ${formatEur(v).replace(/,\d\d\s/, ' ')}`).join(' · ');
     document.getElementById('fc-flows').innerHTML =
         flow('Ingresos fijos al mes', f.incFix) +
@@ -299,7 +300,7 @@ function renderForecast() {
         flow('Gasto variable al mes', f.spendVar, top ? `Media de ${res.nb} ${res.nb === 1 ? 'mes' : 'meses'}: ${top}` : '') +
         flow('Otros ingresos al mes', f.incVar) +
         flow('Traspasos a inversión al mes', f.invFix + f.invVar) +
-        `<div class="row"><span class="row-main row-title bold" style="font-size:15px">Balance mensual previsto</span><span class="row-value num bold ${f.total >= 0 ? 'pos' : 'red'}" style="font-size:15px">${fcSigned(f.total)}</span></div>`;
+        `<div class="row"><span class="row-main row-title bold" style="font-size:15px">Balance mensual previsto</span><span class="row-value num bold priv ${f.total >= 0 ? 'pos' : 'red'}" style="font-size:15px">${fcSigned(f.total)}</span></div>`;
 
     // Lista de recurrentes (tocar para excluir)
     const list = document.getElementById('fc-list');
@@ -315,7 +316,7 @@ function renderForecast() {
             ${catIcon(s.cat)}
             <span class="row-main"><span class="row-title" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.name)}</span>
             <span class="row-sub" style="display:block">${cadence} · ${next}${tags}</span></span>
-            <span class="row-value num ${s.amount > 0 ? 'pos' : ''}">${fcSigned(s.amount)}</span>
+            <span class="row-value num priv ${s.amount > 0 ? 'pos' : ''}">${fcSigned(s.amount)}</span>
         </button>`;
     }).join('');
 }
