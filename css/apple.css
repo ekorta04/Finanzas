@@ -653,6 +653,22 @@ input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none; }
 
 /* Modo ordenar: los bloques "tiemblan" como en la pantalla de inicio del iPhone */
 body.dash-edit .dw > * { pointer-events: none; }
+.dw-handle { display: none; }
+body.dash-edit .dw > .dw-handle {
+    display: block; pointer-events: auto; touch-action: none; cursor: grab;
+    position: absolute; top: -12px; right: -8px; z-index: 5; width: 44px; height: 44px; border-radius: 50%;
+    background: var(--blue); box-shadow: 0 4px 12px rgba(0, 0, 0, .25);
+    -webkit-tap-highlight-color: transparent;
+}
+body.dash-edit .dw > .dw-handle::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+        radial-gradient(circle, #fff 2px, transparent 2.5px) 0 0 / 8px 8px;
+    -webkit-mask: none;
+    width: 16px; height: 24px; margin: auto;
+    background-image: radial-gradient(circle, #fff 2px, transparent 2.5px);
+    background-size: 8px 8px; background-position: 0 2px;
+}
 body.dash-edit .dw:not(.dragging) { animation: dw-wiggle .26s ease-in-out infinite alternate; cursor: grab; }
 body.dash-edit .dw:nth-child(2n) { animation-duration: .31s; animation-direction: alternate-reverse; }
 body.dash-edit .dw:nth-child(3n) { animation-duration: .29s; }

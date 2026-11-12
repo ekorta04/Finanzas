@@ -103,6 +103,13 @@ function onDashDown(e) {
     const el = e.target.closest && e.target.closest('.dw');
     if (!el || el.parentElement.id !== 'dash-widgets') return;
     const editing = document.body.classList.contains('dash-edit');
+    // El asa de arrastre (solo en modo ordenar) empieza a arrastrar al instante: es fiable en iPhone
+    if (editing && e.target.closest('.dw-handle')) {
+        e.preventDefault();
+        pend = { el, x: e.clientX, y: e.clientY, id: e.pointerId, type: e.pointerType, timer: 0 };
+        startDashDrag();
+        return;
+    }
     // Fuera del modo ordenar, los controles del propio bloque siguen funcionando con normalidad
     if (!editing && e.target.closest('select, input, textarea, a, label, button, .seg, .switch')) return;
     pend = {
@@ -229,6 +236,13 @@ function initDashDrag() {
     const box = document.getElementById('dash-widgets');
     if (!box || box.dataset.drag) return;
     box.dataset.drag = '1';
+    box.querySelectorAll(':scope > .dw').forEach(w => {
+        if (w.querySelector(':scope > .dw-handle')) return;
+        const h = document.createElement('span');
+        h.className = 'dw-handle';
+        h.setAttribute('aria-label', 'Arrastrar para mover');
+        w.appendChild(h);
+    });
     box.addEventListener('pointerdown', onDashDown);
     box.addEventListener('contextmenu', e => { if (pend || drag || document.body.classList.contains('dash-edit')) e.preventDefault(); });
     box.addEventListener('click', e => { if (suppressClick) { e.preventDefault(); e.stopPropagation(); } }, true);
