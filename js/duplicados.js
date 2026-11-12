@@ -120,7 +120,7 @@ function renderDuplicates(total) {
         <label class="row" style="min-height:0;padding:8px 14px;${drop ? 'cursor:pointer' : ''}">
             ${drop ? `<input type="checkbox" class="dup-check" data-id="${t.id}" checked onchange="updateDupCount()">` : '<span style="width:18px;text-align:center;color:var(--green)">✓</span>'}
             <span class="row-main" style="font-size:14px">${drop ? 'Sobra' : 'Se conserva'}
-                <span class="row-sub" style="display:block">${t.balance == null ? 'Sin saldo' : 'Saldo ' + formatEur(Number(t.balance))} · importado el ${esc(String(t.created_at || '').slice(0, 10).split('-').reverse().join('/'))}</span></span>
+                <span class="row-sub" style="display:block">${t.balance == null ? 'Sin saldo' : 'Saldo <span class="priv">' + formatEur(Number(t.balance)) + '</span>'} · importado el ${esc(String(t.created_at || '').slice(0, 10).split('-').reverse().join('/'))}</span></span>
         </label>`;
     out.innerHTML = `
         <p class="small" style="margin:0 4px 10px"><b>${n}</b> ${n === 1 ? 'movimiento sobra' : 'movimientos sobran'} en ${dupGroups.length} ${dupGroups.length === 1 ? 'grupo' : 'grupos'}. Revisa y desmarca los que sean compras repetidas de verdad.</p>

@@ -226,6 +226,7 @@ function renderChartSaldo(period, cmp) {
 }
 
 function renderDashboard() {
+    if (typeof applyDashOrder === 'function') applyDashOrder();   // orden elegido (sincronizado)
     const month = document.getElementById('dash-month').value;
     const period = dashPeriod(month);
     let rows = AppState.rows;

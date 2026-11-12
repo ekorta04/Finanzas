@@ -198,7 +198,7 @@
                         ${chips}
                         <input type="text" list="tag-list" placeholder="+ Añadir etiqueta" onchange="addTagFromInput(this,'${ek}')" class="field sm" style="width:160px">
                     </div>
-                    <div class="xsmall muted num">Fecha ${formatDateEs(r.d)}${r.s != null ? ` · Saldo ${formatEur(r.s)}` : ''}</div>
+                    <div class="xsmall muted num">Fecha ${formatDateEs(r.d)}${r.s != null ? ` · Saldo <span class="priv">${formatEur(r.s)}</span>` : ''}</div>
                 </div>
             </details>`;
         };

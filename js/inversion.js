@@ -49,7 +49,7 @@
             const f = invFlow(r);
             return `<div class="row with-icon">
                 <span class="icon-tile round" style="background:var(${f >= 0 ? '--green' : '--orange'})"><i class="ic ic-${f >= 0 ? 'arrow-down-left' : 'arrow-up-right'}"></i></span>
-                <div class="row-main"><div class="row-title truncate">${esc(r.c)}</div><div class="row-sub num">${formatDateEs(r.d)}${r.s != null ? ' · Saldo ' + formatEur(r.s) : ''}</div></div>
+                <div class="row-main"><div class="row-title truncate">${esc(r.c)}</div><div class="row-sub num">${formatDateEs(r.d)}${r.s != null ? ' · Saldo <span class="priv">' + formatEur(r.s) + '</span>' : ''}</div></div>
                 <span class="bold num ${f >= 0 ? 'pos' : ''}">${f >= 0 ? '+' : ''}${formatEur(r.i)}</span>
             </div>`;
         }).join('') : `<div class="row"><span class="muted small">Importa el CSV de tu cuenta de inversión para empezar.</span></div>`;

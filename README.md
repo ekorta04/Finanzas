@@ -5,7 +5,8 @@ Aplicación web para gestionar y analizar las finanzas personales a partir de ex
 
 ## Funcionalidades
 
-- Dashboard de ingresos, gastos y ahorro.
+- Dashboard de ingresos, gastos y ahorro, con bloques que se pueden subir y bajar (el orden se sincroniza entre dispositivos).
+- Modo privado (ojito de arriba): difumina saldos, patrimonio e inversión para poder enseñar la app sin mostrar tu dinero.
 - Importación de movimientos bancarios desde CSV.
 - Clasificación automática de movimientos.
 - Gestión de categorías y etiquetas.

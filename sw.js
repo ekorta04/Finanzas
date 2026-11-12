@@ -3,7 +3,7 @@
    Caché de los archivos de la aplicación
    ========================================================================== */
 
-   const CACHE = 'finanzas-v24';
+   const CACHE = 'finanzas-v25';
 
    const FILES = [
        './',
@@ -35,6 +35,7 @@
        './js/bizum.js',
        './js/tags.js',
        './js/dashboard.js',
+       './js/layout.js',
        './js/forecast.js',
        './js/movimientos.js',
        './js/inversion.js',

@@ -9,6 +9,7 @@
     populateCategorySelects();
     loadCompareMode();
     setupTabNavigation();
+    initDashLayout();
     setupDropZone();
     setupInvDropZone();
     setupXRayDropZone();
@@ -50,6 +51,7 @@ function switchTab(targetId) {
     if (targetId === 'v-tags') { targetId = 'v-movs'; showMovsView('tags'); }
 
     const prev = document.querySelector('.tab-content:not(.hidden)');
+    if (targetId !== 'v-dashboard') toggleDashEdit(false);
 
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('data-target') === targetId);
