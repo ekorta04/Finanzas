@@ -50,7 +50,27 @@ Aplicación web para gestionar y analizar las finanzas personales a partir de ex
 Los movimientos bancarios se guardan en la base de datos de Supabase
 (tablas `accounts`, `transactions` e `imports`), ligados a tu usuario.
 Reglas, etiquetas, presupuestos e inversión se guardan en el navegador.
-También se pueden exportar copias de seguridad en formato JSON.
+
+## Copia de seguridad
+
+En **Datos → Copia de seguridad**:
+
+- **Descargar copia (.json)** guarda todo lo que hay en la base de datos
+  (cuentas, importaciones, movimientos y ajustes sincronizados).
+- **Restaurar copia** vuelve a escribir ese archivo en Supabase. No borra nada:
+  recupera lo que haya en la copia y conserva lo añadido después. Sirve también
+  en un proyecto de Supabase nuevo (tras ejecutar los `.sql` de `supabase/`).
+
+La copia automática semanal y la revisión diaria viven en un repositorio
+privado aparte (los datos no deben estar en este, que es público). Sus copias
+tienen el mismo formato y se restauran con el mismo botón.
+
+## Aviso de errores
+
+`js/errores.js` apunta en la tabla `app_errors` los fallos de la app (solo el
+mensaje, nunca importes ni movimientos). Para activarlo, ejecuta una vez
+`supabase/app_errors.sql` en el SQL Editor de Supabase. La revisión diaria lee
+esa tabla y avisa por correo.
 
 ## Estado
 
