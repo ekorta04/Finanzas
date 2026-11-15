@@ -15,6 +15,10 @@ Aplicación web para gestionar y analizar las finanzas personales a partir de ex
 - Clasificación automática de movimientos.
 - Gestión de categorías y etiquetas.
 - Vinculación de Bizums a gastos compartidos.
+- Gastos en grupo con ticket (Movimientos → Ticket): la foto se lee en el propio dispositivo
+  (Tesseract, en `vendor/tesseract`), eliges tu parte (tus líneas, a partes iguales o un importe),
+  se enlaza solo con el cargo del banco del mismo total y propone los Bizums de ese día y los
+  3 siguientes que encajan con lo que te deben. Los grupos se sincronizan; la foto queda solo en el dispositivo.
 - Seguimiento de inversiones.
 - Presupuestos mensuales.
 - Gráficos y estadísticas.

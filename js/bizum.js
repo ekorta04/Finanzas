@@ -4,6 +4,7 @@
     function computeBizumSuggestions() {
         const { bizumMin, bizumDays } = AppState.settings;
         const dismissed = new Set(AppState.dismissed);
+        groupExpenseKeys().forEach(k => dismissed.add(k));   // los tickets en grupo tienen su propia propuesta
         const used = new Set(AppState.rows.filter(r => r.lk).map(r => r.k));
         const exps = AppState.rows
             .filter(r => r.i <= -bizumMin && !isInvCat(r.cat) && !isBizum(r) && !(r.bz && r.bz.length) && !dismissed.has(r.k))
@@ -48,13 +49,14 @@
     }
     
     function renderBizumSuggestions() {
+        const groupHtml = renderGroupProposals();
         BizumSugg = computeBizumSuggestions();
         const el = document.getElementById('bizum-alert');
-        if (!BizumSugg.length) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+        if (!BizumSugg.length && !groupHtml) { el.classList.add('hidden'); el.innerHTML = ''; return; }
         el.classList.remove('hidden');
         el.innerHTML = `
             <h3 class="group-header">Gastos compartidos</h3>
-            <div class="group">
+            <div class="group">${groupHtml}
                 ${BizumSugg.map((s, idx) => `
                     <div class="row with-icon" style="align-items:flex-start">
                         <span class="icon-tile round" style="background:var(--teal)"><i class="ic ic-users"></i></span>

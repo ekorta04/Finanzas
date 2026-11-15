@@ -342,6 +342,9 @@
 
             <div class="page-head">
                 <h1 class="large-title">Movimientos</h1>
+                <div class="page-head-actions">
+                    <button type="button" class="btn sm tinted" onclick="openGroups()" title="Gasto en grupo con ticket" aria-label="Gasto en grupo con ticket"><i class="ic ic-receipt"></i> Ticket</button>
+                </div>
             </div>
 
             <div class="seg" role="tablist" aria-label="Vista">
@@ -723,6 +726,14 @@
     </div>
 </div>
 
+<div id="group-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="group-title">
+    <div class="alert grp-sheet">
+        <p id="group-title" style="padding-bottom:6px;font-weight:600;font-size:17px">Gastos en grupo</p>
+        <div id="group-body" class="grp-body"></div>
+        <div id="group-actions" class="alert-actions"></div>
+    </div>
+</div>
+
 <div id="cat-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="cat-modal-title">
     <div class="alert cat-new">
         <p id="cat-modal-title" style="padding-bottom:10px;font-weight:600;font-size:17px">Nueva categoría</p>
@@ -773,6 +784,8 @@
 <script src="js/csv.js"></script>
 <script src="js/import-check.js"></script>
 <script src="js/bizum.js"></script>
+<script src="js/ticket.js"></script>
+<script src="js/grupos.js"></script>
 <script src="js/tags.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/layout.js"></script>
