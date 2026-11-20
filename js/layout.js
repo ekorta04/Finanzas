@@ -51,6 +51,68 @@ function dashOrder() {
     return order.concat(DASH_IDS.filter(id => !order.includes(id)));
 }
 
+// Repertorio de widgets del Resumen (se pueden quitar y volver a añadir)
+const DASH_NAMES = {
+    saldo: ['Saldo actual', 'Saldo de la cuenta y su evolución'],
+    kpis: ['Ingresos, gastos y balance', 'Totales del periodo y comparación'],
+    patrimonio: ['Patrimonio', 'Cuenta + inversión mes a mes'],
+    cierre: ['Cierre de mes', 'Resumen de cómo fue cada mes'],
+    forecast: ['Proyección de saldo', 'Cómo acabarás el mes'],
+    mensual: ['Ingresos y gastos', 'Gráfico por meses'],
+    categorias: ['Por categoría', 'En qué se va el dinero'],
+    shops: ['Dónde más gastas', 'Comercios con más gasto'],
+    insights: ['Observaciones', 'Avisos y datos curiosos']
+};
+
+function dashHidden() {
+    const h = AppState.settings.dashHidden;
+    return new Set(Array.isArray(h) ? h.filter(id => DASH_IDS.includes(id)) : []);
+}
+
+function visibleDw(box) {
+    return [...box.children].filter(el => el.classList.contains('dw') && !el.classList.contains('dw-off'));
+}
+
+function setWidgetShown(id, show) {
+    const h = dashHidden();
+    if (show) h.delete(id); else h.add(id);
+    AppState.settings.dashHidden = [...h];
+    saveState();
+    applyDashOrder();
+    if (show) {
+        renderDashboard();   // los gráficos ocultos se vuelven a dibujar con su tamaño real
+        const el = document.querySelector('#dash-widgets > [data-w="' + id + '"]');
+        if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
+    }
+    if (!document.getElementById('widget-modal').classList.contains('hidden')) paintWidgetPicker();
+}
+
+function removeWidget(id) {
+    setWidgetShown(id, false);
+    showToast('«' + DASH_NAMES[id][0] + '» quitado. Puedes volver a añadirlo con «Añadir»');
+}
+
+function openWidgetPicker() {
+    document.getElementById('widget-modal').classList.remove('hidden');
+    paintWidgetPicker();
+}
+function closeWidgetPicker() { document.getElementById('widget-modal').classList.add('hidden'); }
+
+function paintWidgetPicker() {
+    const h = dashHidden();
+    const row = (id, on) => `
+        <div class="wp-row">
+            <span class="wp-txt"><b>${DASH_NAMES[id][0]}</b><span class="xsmall muted">${DASH_NAMES[id][1]}</span></span>
+            ${on ? `<button type="button" class="wp-btn del" onclick="setWidgetShown('${id}',false)" aria-label="Quitar ${DASH_NAMES[id][0]}">−</button>`
+                 : `<button type="button" class="wp-btn add" onclick="setWidgetShown('${id}',true)" aria-label="Añadir ${DASH_NAMES[id][0]}">+</button>`}
+        </div>`;
+    const shown = dashOrder().filter(id => !h.has(id)), off = DASH_IDS.filter(id => h.has(id));
+    document.getElementById('widget-body').innerHTML =
+        (off.length ? `<div class="wp-head">Para añadir</div>${off.map(id => row(id, false)).join('')}` : '<p class="small muted center" style="margin:4px 0 10px">Ya tienes todos los widgets en pantalla.</p>') +
+        (shown.length ? `<div class="wp-head">En pantalla</div>${shown.map(id => row(id, true)).join('')}` : '') +
+        `<button type="button" class="btn plain small" style="display:block;margin:10px auto 0" onclick="resetDashOrder()">Restablecer widgets y orden</button>`;
+}
+
 function currentDashOrder() {
     const box = document.getElementById('dash-widgets');
     return box ? [...box.children].map(el => el.dataset.w) : [];
@@ -60,7 +122,10 @@ function currentDashOrder() {
 function applyDashOrder() {
     const box = document.getElementById('dash-widgets');
     if (!box || drag) return;   // nunca reordenar mientras se arrastra
-    const order = dashOrder();
+    const order = dashOrder(), hidden = dashHidden();
+    box.querySelectorAll(':scope > .dw').forEach(el => el.classList.toggle('dw-off', hidden.has(el.dataset.w)));
+    const empty = document.getElementById('dash-empty');
+    if (empty) empty.classList.toggle('hidden', hidden.size < DASH_IDS.length);
     if (currentDashOrder().join() === order.join()) return;
     order.forEach(id => {
         const el = box.querySelector(':scope > [data-w="' + id + '"]');
@@ -69,10 +134,14 @@ function applyDashOrder() {
 }
 
 function resetDashOrder() {
+    const hadHidden = dashHidden().size > 0;
     delete AppState.settings.dashOrder;
+    delete AppState.settings.dashHidden;
     saveState();
     applyDashOrder();
-    showToast('Orden restablecido');
+    if (hadHidden) renderDashboard();
+    if (!document.getElementById('widget-modal').classList.contains('hidden')) paintWidgetPicker();
+    showToast('Widgets y orden restablecidos');
 }
 
 // Entrar o salir del modo ordenar
@@ -103,6 +172,7 @@ function onDashDown(e) {
     const el = e.target.closest && e.target.closest('.dw');
     if (!el || el.parentElement.id !== 'dash-widgets') return;
     const editing = document.body.classList.contains('dash-edit');
+    if (editing && e.target.closest('.dw-remove')) return;   // el botón de quitar va por su cuenta
     // El asa de arrastre (solo en modo ordenar) empieza a arrastrar al instante: es fiable en iPhone
     if (editing && e.target.closest('.dw-handle')) {
         e.preventDefault();
@@ -168,7 +238,7 @@ function naturalRect(el) {
 // si se recoloca el elemento que se está tocando, el iPhone corta el arrastre.
 function swapWith(dir) {
     const el = drag.el, box = el.parentElement;
-    const kids = [...box.children];
+    const kids = visibleDw(box);
     const neighbour = kids[kids.indexOf(el) + dir];
     if (!neighbour) return;
     const sibs = kids.filter(k => k !== el);
@@ -192,7 +262,7 @@ function swapWith(dir) {
 // ¿Toca intercambiar con el vecino? Se decide con los bordes del bloque arrastrado y el
 // centro del vecino (no con el dedo): así no "baila" cuando los bloques miden distinto.
 function swapDirection() {
-    const el = drag.el, kids = [...el.parentElement.children], i = kids.indexOf(el);
+    const el = drag.el, kids = visibleDw(el.parentElement), i = kids.indexOf(el);
     const d = el.getBoundingClientRect();            // dónde se ve el bloque arrastrado
     const own = naturalRect(el);                     // su hueco
     const cy = (d.top + d.bottom) / 2;
@@ -268,6 +338,13 @@ function initDashDrag() {
     box.dataset.drag = '1';
     box.querySelectorAll(':scope > .dw').forEach(w => {
         if (w.querySelector(':scope > .dw-handle')) return;
+        const x = document.createElement('button');
+        x.type = 'button';
+        x.className = 'dw-remove';
+        x.textContent = '−';
+        x.setAttribute('aria-label', 'Quitar ' + ((DASH_NAMES[w.dataset.w] || [''])[0]));
+        x.addEventListener('click', ev => { ev.stopPropagation(); removeWidget(w.dataset.w); });
+        w.appendChild(x);
         const h = document.createElement('span');
         h.className = 'dw-handle';
         h.setAttribute('aria-label', 'Arrastrar para mover');

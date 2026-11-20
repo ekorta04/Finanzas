@@ -756,12 +756,12 @@ body.priv-on span.priv, body.priv-on b.priv { display: inline-block; }
 #pat-card .chart-box { height: 200px; }
 
 /* Gastos en grupo con ticket */
-#group-modal {
+#group-modal, #widget-modal {
     position: fixed; inset: 0; z-index: 79;
     display: flex; align-items: center; justify-content: center; padding: 16px;
     background: rgba(0, 0, 0, .32); animation: fade .2s ease;
 }
-#group-modal.hidden { display: none; }
+#group-modal.hidden, #widget-modal.hidden { display: none; }
 .alert.grp-sheet { width: 420px; max-width: 100%; min-width: 0; max-height: calc(100dvh - 32px); display: flex; flex-direction: column; text-align: left; }
 .alert.grp-sheet > p { text-align: center; }
 .grp-body { padding: 0 16px 14px; overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; min-height: 0; }
@@ -798,3 +798,20 @@ body.priv-on span.priv, body.priv-on b.priv { display: inline-block; }
 .grp-body input[type=date] { -webkit-appearance: none; appearance: none; min-width: 0; }
 .grp-seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .grp-seg button { padding: 0 6px; font-size: 12.5px; line-height: 1.15; height: 34px; }
+
+/* Quitar y añadir widgets */
+.dw.dw-off { display: none !important; }
+.dw-remove { display: none; }
+body.dash-edit .dw > .dw-remove {
+    display: flex; align-items: center; justify-content: center; pointer-events: auto;
+    position: absolute; top: -10px; left: -8px; z-index: 6; width: 30px; height: 30px; border-radius: 50%;
+    background: #8e8e93; color: #fff; font-size: 22px; font-weight: 700; line-height: 1;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, .25); -webkit-tap-highlight-color: transparent;
+}
+body.dash-edit .dw > .dw-remove::after { content: ''; position: absolute; inset: -8px; }   /* zona táctil de 46 px */
+.wp-head { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--label-2); margin: 10px 0 4px; }
+.wp-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: .5px solid var(--sep, rgba(60,60,67,.18)); }
+.wp-txt { flex: 1; display: grid; min-width: 0; font-size: 15px; }
+.wp-btn { width: 30px; height: 30px; border-radius: 50%; flex: none; color: #fff; font-size: 21px; font-weight: 700; line-height: 1; display: flex; align-items: center; justify-content: center; }
+.wp-btn.add { background: var(--green); }
+.wp-btn.del { background: var(--red); }

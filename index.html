@@ -150,9 +150,9 @@
             </div>
 
             <div id="dash-edit-hint" class="edit-hint hidden">
-                <span>Arrastra los bloques</span>
+                <span>Arrastra o quita</span>
                 <span class="edit-hint-btns">
-                    <button type="button" class="btn xs gray" onclick="resetDashOrder()">Restablecer</button>
+                    <button type="button" class="btn xs gray" onclick="openWidgetPicker()">+ Añadir</button>
                     <button type="button" class="btn xs" onclick="toggleDashEdit(false)">Listo</button>
                 </span>
             </div>
@@ -194,6 +194,12 @@
 
             <div id="bizum-alert" class="hidden"></div>
 
+            <div id="dash-empty" class="hidden" style="margin-bottom:16px">
+                <div class="card center" style="padding:28px 16px">
+                    <p class="small muted" style="margin-bottom:12px">No tienes ningún widget en el Resumen.</p>
+                    <button type="button" class="btn sm" onclick="openWidgetPicker()">+ Añadir widgets</button>
+                </div>
+            </div>
             <div id="dash-widgets" class="dash-widgets">
 
             <!-- Saldo -->
@@ -723,6 +729,14 @@
             <button type="button" onclick="closeBizumPicker()">Cancelar</button>
             <button type="button" onclick="applyBizumPick()">Guardar grupo</button>
         </div>
+    </div>
+</div>
+
+<div id="widget-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="widget-title">
+    <div class="alert grp-sheet">
+        <p id="widget-title" style="padding-bottom:6px;font-weight:600;font-size:17px">Widgets del Resumen</p>
+        <div id="widget-body" class="grp-body"></div>
+        <div class="alert-actions" style="grid-template-columns:1fr"><button type="button" onclick="closeWidgetPicker()">Listo</button></div>
     </div>
 </div>
 
