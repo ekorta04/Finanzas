@@ -147,6 +147,7 @@ const defaultState = () => ({
     invXray: [],         // informes X-Ray: [{ d, v, assets, countries, sectors, top, funds, rent }]
     dismissed: [],       // gastos cuyas sugerencias Bizum se descartaron
     customCats: [],      // categorías creadas por el usuario: { n, ic, col }
+    subs: [],            // suscripciones: decisiones sobre las detectadas { id, key, st:'ok'|'no'|'end', name, type } y manuales { id, manual, name, amount, cad, next, type, st }
     settings: { bizumMin: 30, bizumDays: 4 }
 });
 

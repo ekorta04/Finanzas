@@ -192,7 +192,7 @@ button { cursor: pointer; background: none; border: 0; padding: 0; }
     left: 0; right: 0; bottom: 0;
     z-index: 40;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 4px) max(8px, env(safe-area-inset-left, 0px));
     background: var(--bar);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
@@ -815,3 +815,12 @@ body.dash-edit .dw > .dw-remove::after { content: ''; position: absolute; inset:
 .wp-btn { width: 30px; height: 30px; border-radius: 50%; flex: none; color: #fff; font-size: 21px; font-weight: 700; line-height: 1; display: flex; align-items: center; justify-content: center; }
 .wp-btn.add { background: var(--green); }
 .wp-btn.del { background: var(--red); }
+
+/* ---------- Suscripciones ---------- */
+
+.sub-detail { padding: 0 16px 12px 60px; }
+.sub-detail::before { content: ""; display: block; border-top: .5px solid var(--sep); margin: 0 -16px 10px -44px; }
+.sub-facts { font-size: 13px; color: var(--label-2); line-height: 1.4; }
+.sub-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.sub-detail + .row::before { content: ""; position: absolute; top: 0; right: 0; left: var(--sep-left, 16px); border-top: .5px solid var(--sep); }
+#subs-root .seg { width: 100%; }

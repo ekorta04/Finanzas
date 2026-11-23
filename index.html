@@ -94,6 +94,7 @@
             <nav class="topnav" aria-label="Secciones">
                 <button class="tab-btn active" data-target="v-dashboard"><i class="ic ic-chart-pie"></i>Resumen</button>
                 <button class="tab-btn" data-target="v-movs"><i class="ic ic-list"></i>Movimientos</button>
+                <button class="tab-btn" data-target="v-subs"><i class="ic ic-repeat"></i>Suscripciones</button>
                 <button class="tab-btn" data-target="v-inversion"><i class="ic ic-trending-up"></i>Inversión</button>
                 <button class="tab-btn" data-target="v-reglas"><i class="ic ic-wand-sparkles"></i>Reglas</button>
                 <button class="tab-btn" data-target="v-datos"><i class="ic ic-cloud"></i>Datos</button>
@@ -439,6 +440,20 @@
              INVERSIÓN
              ========================================== -->
 
+        <section id="v-subs" class="tab-content hidden stack">
+
+            <div class="page-head">
+                <div>
+                    <h1 class="large-title">Suscripciones</h1>
+                    <p class="page-sub">Lo que pagas cada semana, mes o año, y cuánto suma.</p>
+                </div>
+            </div>
+
+            <div id="subs-root" class="stack"></div>
+
+        </section>
+
+
         <section id="v-inversion" class="tab-content hidden stack">
 
             <div class="page-head">
@@ -694,6 +709,7 @@
     <nav class="tabbar" aria-label="Secciones">
         <button class="tab-btn active" data-target="v-dashboard"><i class="ic ic-chart-pie"></i>Resumen</button>
         <button class="tab-btn" data-target="v-movs"><i class="ic ic-list"></i>Movimientos</button>
+        <button class="tab-btn" data-target="v-subs"><i class="ic ic-repeat"></i>Suscrip.</button>
         <button class="tab-btn" data-target="v-inversion"><i class="ic ic-trending-up"></i>Inversión</button>
         <button class="tab-btn" data-target="v-reglas"><i class="ic ic-wand-sparkles"></i>Reglas</button>
         <button class="tab-btn" data-target="v-datos"><i class="ic ic-cloud"></i>Datos<span id="tab-sync-badge" class="badge-dot hidden"></span></button>
@@ -804,6 +820,7 @@
 <script src="js/dashboard.js"></script>
 <script src="js/layout.js"></script>
 <script src="js/forecast.js"></script>
+<script src="js/suscripciones.js"></script>
 <script src="js/cierre.js"></script>
 <script src="js/patrimonio.js"></script>
 <script src="js/movimientos.js"></script>

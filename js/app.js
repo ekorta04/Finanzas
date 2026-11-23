@@ -16,6 +16,7 @@ function renderAllViews() {
     renderMovimientos();
     renderTags();
     renderInversion();
+    renderSubs();
     renderReglas();
     renderImportHistory();
     renderSettings();
@@ -52,6 +53,10 @@ function switchTab(targetId) {
 
     if (targetId === 'v-inversion') {
         renderInversion();
+    }
+
+    if (targetId === 'v-subs') {
+        renderSubs();
     }
 }
 

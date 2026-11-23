@@ -19,6 +19,7 @@ Aplicación web para gestionar y analizar las finanzas personales a partir de ex
   (Tesseract, en `vendor/tesseract`), eliges tu parte (tus líneas, a partes iguales o un importe),
   se enlaza solo con el cargo del banco del mismo total y propone los Bizums de ese día y los
   3 siguientes que encajan con lo que te deben. Los grupos se sincronizan; la foto queda solo en el dispositivo.
+- Suscripciones y recibos: detecta los cargos que se repiten (semanales, mensuales, trimestrales, anuales), calcula lo que cuestan al mes y al año, avisa de subidas de precio y de los próximos cobros de 30 días. Tú confirmas, ignoras o marcas como cancelada cada una, y puedes añadir las que no salen en la cuenta. Las confirmadas alimentan la proyección de flujo de caja.
 - Seguimiento de inversiones.
 - Presupuestos mensuales.
 - Gráficos y estadísticas.

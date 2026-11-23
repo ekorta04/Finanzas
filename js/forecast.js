@@ -127,6 +127,12 @@ function fcBuild(rows, opts) {
 
     const N = Math.round(months * FC_DAYS_MONTH), end = addDays(ref, N);
     const det = fcDetect(rows, ref);
+    if (typeof subsForecastExtras === 'function') {   // suscripciones confirmadas que esta detección no ve (anuales, manuales…)
+        const ex = subsForecastExtras(rows, ref, det);
+        ex.series.forEach(s => det.series.push(s));
+        ex.used.forEach(k => det.used.add(k));
+        det.series.sort((a, b) => (b.amount > 0) - (a.amount > 0) || Math.abs(b.amount) / b.step - Math.abs(a.amount) / a.step);
+    }
     const buckets = fcBaseline(rows, ref, first, det.used);
     const nb = buckets.length;
 
@@ -190,7 +196,9 @@ function fcBuild(rows, opts) {
    -------------------------------------------------------------------------- */
 function fcPrefs() {
     const s = AppState.settings || {};
-    return { months: s.fcMonths === 6 ? 6 : 3, inv: s.fcInv !== false, off: new Set(Array.isArray(s.fcOff) ? s.fcOff : []) };
+    // Las suscripciones marcadas como canceladas dejan de proyectarse
+    const ended = (Array.isArray(AppState.subs) ? AppState.subs : []).filter(r => r && r.st === 'end' && r.key).map(r => r.key);
+    return { months: s.fcMonths === 6 ? 6 : 3, inv: s.fcInv !== false, off: new Set([...(Array.isArray(s.fcOff) ? s.fcOff : []), ...ended]) };
 }
 function setForecastMonths(m) { AppState.settings.fcMonths = m === 6 ? 6 : 3; saveState(); renderForecast(); }
 function setForecastInv(on) { AppState.settings.fcInv = !!on; saveState(); renderForecast(); }
