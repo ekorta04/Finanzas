@@ -7,7 +7,10 @@
 async function signUp(email, password) {
     const { data, error } = await supabaseClient.auth.signUp({
         email,
-        password
+        password,
+        // Al pulsar el enlace del correo se vuelve a esta misma página
+        // (debe estar en Supabase → Authentication → URL Configuration → Redirect URLs)
+        options: { emailRedirectTo: window.location.origin + window.location.pathname }
     });
 
     if (error) throw error;
