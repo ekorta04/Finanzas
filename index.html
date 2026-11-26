@@ -715,6 +715,9 @@
         <button class="tab-btn" data-target="v-datos"><i class="ic ic-cloud"></i>Datos<span id="tab-sync-badge" class="badge-dot hidden"></span></button>
     </nav>
 
+    <!-- Botón flotante: añadir un gasto a mano -->
+    <button type="button" id="fab-add" class="fab" onclick="openManualExpense()" aria-label="Añadir gasto" title="Añadir gasto"><i class="ic ic-plus"></i></button>
+
 </div>
 
 <!-- Mensaje flotante -->
@@ -783,6 +786,31 @@
     </div>
 </div>
 
+<div id="manual-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="manual-modal-title">
+    <div class="alert cat-new">
+        <p id="manual-modal-title" style="padding-bottom:10px;font-weight:600;font-size:17px">Añadir gasto</p>
+        <div class="cat-new-body">
+            <label class="small" style="display:grid;gap:6px">Cantidad (€)
+                <input id="manual-amount" class="field" type="text" inputmode="decimal" placeholder="0,00" autocomplete="off">
+            </label>
+            <label class="small" style="display:grid;gap:6px">¿En qué ha sido?
+                <input id="manual-name" class="field" type="text" maxlength="60" placeholder="Ej. Café en efectivo" autocomplete="off">
+            </label>
+            <label class="small" style="display:grid;gap:6px">Tipo de gasto
+                <select id="manual-cat" class="field"></select>
+            </label>
+            <label class="small" style="display:grid;gap:6px">Fecha
+                <input id="manual-date" class="field" type="date">
+            </label>
+            <div id="manual-error" class="xsmall" style="color:var(--red);min-height:16px"></div>
+        </div>
+        <div class="alert-actions">
+            <button id="manual-cancel" type="button">Cancelar</button>
+            <button id="manual-ok" type="button">Añadir</button>
+        </div>
+    </div>
+</div>
+
 <div id="xray-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="xray-modal-title">
     <div class="alert cat-new">
         <p id="xray-modal-title" style="padding-bottom:10px;font-weight:600;font-size:17px">Informe X-Ray</p>
@@ -824,6 +852,7 @@
 <script src="js/cierre.js"></script>
 <script src="js/patrimonio.js"></script>
 <script src="js/movimientos.js"></script>
+<script src="js/gasto-manual.js"></script>
 <script src="js/inversion.js"></script>
 <script src="js/xray.js"></script>
 <script src="js/reglas.js"></script>

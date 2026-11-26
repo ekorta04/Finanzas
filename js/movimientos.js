@@ -190,6 +190,7 @@
                 </summary>
                 <div class="mov-edit">
                     ${split}
+                    ${isManualRow(r) ? `<button class="link small" style="margin:2px 0 8px;color:var(--red)" onclick="deleteManualExpense('${ek}')">Eliminar este gasto</button>` : ''}
                     ${r.i < 0 && !isBizum(r) && !isInvCat(r.cat) ? `<button class="link small" style="margin:2px 0 8px" onclick="openBizumPicker('${ek}')">${g ? 'Editar Bizums del grupo' : 'Agrupar Bizums a mano…'}</button>` : ''}
                     <label>Categoría
                         <select class="field" onchange="updateRowCategory('${ek}', this.value)">${opts.replace(`value="${esc(r.cat)}"`, m => m + ' selected')}</select>

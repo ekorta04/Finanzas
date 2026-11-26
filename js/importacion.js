@@ -88,7 +88,7 @@
             if (!fresh.length) { await commitImport({ file, account, fresh, exact, similar, badRows }); return; }
 
             const gap = analyzeImportGap(
-                existing.map(t => ({ d: t.operation_date, i: Number(t.amount), s: t.balance == null ? null : Number(t.balance) })),
+                existing.filter(t => !String(t.source_key).startsWith('manual|')).map(t => ({ d: t.operation_date, i: Number(t.amount), s: t.balance == null ? null : Number(t.balance) })),
                 parsedRows);
             pendingImport = { file, account, fresh, exact, similar, badRows, gap, allRows: parsedRows };
             renderImportPreview();

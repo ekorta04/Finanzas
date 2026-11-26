@@ -73,9 +73,13 @@ function comparePeriod(p, mode) {
 
 // Fecha del último movimiento importado
 function lastDataDate() {
-    let max = null;
-    AppState.rows.forEach(r => { if (max === null || r.d > max) max = r.d; });
-    return max;
+    // Los gastos apuntados a mano no cuentan: aquí interesa hasta cuándo llega el CSV del banco
+    let max = null, any = null;
+    AppState.rows.forEach(r => {
+        if (any === null || r.d > any) any = r.d;
+        if (!isManualRow(r) && (max === null || r.d > max)) max = r.d;
+    });
+    return max !== null ? max : any;
 }
 
 // Si los datos llegan menos lejos que el periodo (CSV importado hace días), se recorta la cola del periodo
@@ -244,7 +248,8 @@ function renderDashboard() {
         days = Math.max(1, Math.ceil(Math.abs(Math.max(...ds) - Math.min(...ds)) / 86400000));
     }
 
-    const saldo = AppState.rows.length ? AppState.rows[0].s : 0;
+    const bankRow = AppState.rows.find(r => !isManualRow(r));
+    const saldo = bankRow ? bankRow.s : 0;
     document.getElementById('kpi-gasto').textContent = formatEur(gasto);
     document.getElementById('kpi-ingreso').textContent = formatEur(ingreso);
     const balEl = document.getElementById('kpi-balance');

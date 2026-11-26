@@ -117,6 +117,7 @@ function fcBaseline(rows, ref, first, used) {
 // Proyección completa. opts: { months: 3|6, inv: seguir aportando a inversión, off: Set de claves excluidas }
 function fcBuild(rows, opts) {
     const months = opts.months === 6 ? 6 : 3, invOn = opts.inv !== false, off = opts.off || new Set();
+    rows = rows.filter(r => !isManualRow(r));   // sin saldo: no sirven para proyectar
     if (!rows.length) return { error: 'sin-datos' };
     let ref = rows[0].d, first = rows[0].d;
     rows.forEach(r => { if (r.d > ref) ref = r.d; if (r.d < first) first = r.d; });

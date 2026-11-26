@@ -10,6 +10,8 @@
     const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
     const enc = k => encodeURIComponent(k);
     const isBizum = r => norm(r.c).includes('BIZUM');
+    // Gasto apuntado a mano (efectivo…): no viene del banco y no tiene saldo
+    const isManualRow = r => String((r && r.k) || '').startsWith('manual|');
     const addDays = (iso, n) => { const dt = new Date(iso + 'T12:00:00Z'); dt.setUTCDate(dt.getUTCDate() + n); return dt.toISOString().slice(0, 10); };
     const byKeyMap = () => new Map(AppState.rows.map(r => [r.k, r]));
     const daysBetween = (a, b) => Math.round((new Date(b + 'T12:00:00Z') - new Date(a + 'T12:00:00Z')) / 86400000);
