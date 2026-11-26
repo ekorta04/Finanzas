@@ -790,13 +790,17 @@
     <div class="alert cat-new">
         <p id="manual-modal-title" style="padding-bottom:10px;font-weight:600;font-size:17px">Añadir gasto</p>
         <div class="cat-new-body">
+            <div class="seg" role="group" aria-label="Tipo de movimiento">
+                <button type="button" id="manual-seg-exp" class="on">Gasto</button>
+                <button type="button" id="manual-seg-inc">Ingreso</button>
+            </div>
             <label class="small" style="display:grid;gap:6px">Cantidad (€)
                 <input id="manual-amount" class="field" type="text" inputmode="decimal" placeholder="0,00" autocomplete="off">
             </label>
             <label class="small" style="display:grid;gap:6px">¿En qué ha sido?
                 <input id="manual-name" class="field" type="text" maxlength="60" placeholder="Ej. Café en efectivo" autocomplete="off">
             </label>
-            <label class="small" style="display:grid;gap:6px">Tipo de gasto
+            <label class="small" style="display:grid;gap:6px">Categoría
                 <select id="manual-cat" class="field"></select>
             </label>
             <label class="small" style="display:grid;gap:6px">Fecha

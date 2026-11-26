@@ -6,10 +6,11 @@
    ========================================================================== */
 
 const MANUAL_LAST_CAT_KEY = 'finanzas_manual_last_cat';
+const MANUAL_LAST_INC_KEY = 'finanzas_manual_last_inc_cat';
 
 // ---------- Base de datos ----------
 
-async function insertManualExpense({ amount, name, cat, date }) {
+async function insertManualExpense({ amount, name, cat, date, income }) {
     const user = await getCurrentUser();
     if (!user) throw new Error('Debes iniciar sesión.');
 
@@ -30,7 +31,7 @@ async function insertManualExpense({ amount, name, cat, date }) {
             operation_date: date,
             value_date: date,
             description: name,
-            amount: -Math.abs(amount),
+            amount: income ? Math.abs(amount) : -Math.abs(amount),
             balance: null,
             category: cat,
             manual_category: true
@@ -60,14 +61,14 @@ async function deleteManualExpense(encKey) {
     const row = AppState.rows.find(r => r.k === key);
     if (!row || !isManualRow(row)) return;
 
-    if (!(await askConfirm(`¿Eliminar el gasto «${row.c}» de ${formatEur(-row.i)}?`))) return;
+    if (!(await askConfirm(`¿Eliminar ${row.i > 0 ? 'el ingreso' : 'el gasto'} «${row.c}» de ${formatEur(Math.abs(row.i))}?`))) return;
 
     try {
         await deleteManualExpenseRow(key);
         AppState.rows = AppState.rows.filter(r => r.k !== key);
         saveState();
         renderAllViews();
-        showToast('Gasto eliminado');
+        showToast(row.i > 0 ? 'Ingreso eliminado' : 'Gasto eliminado');
     } catch (error) {
         console.error('Error eliminando gasto manual:', error);
         showToast('No se pudo eliminar el gasto', 'error');
@@ -76,8 +77,10 @@ async function deleteManualExpense(encKey) {
 
 // ---------- Formulario ----------
 
-function manualCategoryOptions(selected) {
-    const exclude = ['Sin clasificar', ...CATEGORIES.filter(c => catGroup(c) === 'Ingreso')];
+function manualCategoryOptions(selected, income) {
+    const exclude = income
+        ? ['Sin clasificar', ...CATEGORIES.filter(c => catGroup(c) !== 'Ingreso')]
+        : ['Sin clasificar', ...CATEGORIES.filter(c => catGroup(c) === 'Ingreso')];
     const html = catOptionsHtml(exclude)
         + `<optgroup label="Más"><option value="${NEW_CAT_VALUE}">＋ Nueva categoría…</option></optgroup>`;
     return html.replace(`value="${esc(selected)}"`, m => m + ' selected');
@@ -93,12 +96,30 @@ function openManualExpense() {
     const okBtn = document.getElementById('manual-ok');
     const cancelBtn = document.getElementById('manual-cancel');
 
-    let last = 'Otros';
-    try { last = localStorage.getItem(MANUAL_LAST_CAT_KEY) || last; } catch (e) { /* sin almacenamiento */ }
-    if (!CATEGORIES.includes(last)) last = 'Otros';
+    const segExp = document.getElementById('manual-seg-exp');
+    const segInc = document.getElementById('manual-seg-inc');
+    const titleEl = document.getElementById('manual-modal-title');
+    let income = false;
+    let current = 'Otros';
 
-    let current = last;
-    catEl.innerHTML = manualCategoryOptions(current);
+    const lastCat = () => {
+        const def = income ? 'Ingreso › Salario, facturas' : 'Otros';
+        let v = def;
+        try { v = localStorage.getItem(income ? MANUAL_LAST_INC_KEY : MANUAL_LAST_CAT_KEY) || def; } catch (e) { /* sin almacenamiento */ }
+        return CATEGORIES.includes(v) && (catGroup(v) === 'Ingreso') === income ? v : def;
+    };
+    const setKind = inc => {
+        income = inc;
+        segExp.classList.toggle('on', !inc);
+        segInc.classList.toggle('on', inc);
+        titleEl.textContent = inc ? 'Añadir ingreso' : 'Añadir gasto';
+        nameEl.placeholder = inc ? 'Ej. Venta, regalo…' : 'Ej. Café en efectivo';
+        current = lastCat();
+        catEl.innerHTML = manualCategoryOptions(current, income);
+    };
+    segExp.onclick = () => setKind(false);
+    segInc.onclick = () => setKind(true);
+    setKind(false);
     amountEl.value = '';
     nameEl.value = '';
     dateEl.value = todayIso();
@@ -108,14 +129,14 @@ function openManualExpense() {
 
     const close = () => {
         modal.classList.add('hidden');
-        okBtn.onclick = cancelBtn.onclick = catEl.onchange = modal.onkeydown = modal.onclick = null;
+        okBtn.onclick = cancelBtn.onclick = catEl.onchange = modal.onkeydown = modal.onclick = segExp.onclick = segInc.onclick = null;
     };
 
     catEl.onchange = async () => {
         if (catEl.value !== NEW_CAT_VALUE) { current = catEl.value; return; }
         const created = await promptNewCategory();
         if (created) current = created;
-        catEl.innerHTML = manualCategoryOptions(current);
+        catEl.innerHTML = manualCategoryOptions(current, income);
         amountEl.focus();
     };
 
@@ -126,9 +147,9 @@ function openManualExpense() {
 
         if (!Number.isFinite(amount) || amount <= 0) { errEl.textContent = 'Escribe una cantidad mayor que 0.'; amountEl.focus(); return; }
         if (amount >= 1e9) { errEl.textContent = 'La cantidad es demasiado grande.'; amountEl.focus(); return; }
-        if (!name) { errEl.textContent = 'Escribe en qué ha sido el gasto.'; nameEl.focus(); return; }
+        if (!name) { errEl.textContent = income ? 'Escribe de qué es el ingreso.' : 'Escribe en qué ha sido el gasto.'; nameEl.focus(); return; }
         if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { errEl.textContent = 'Elige una fecha válida.'; return; }
-        if (!catEl.value || catEl.value === NEW_CAT_VALUE) { errEl.textContent = 'Elige un tipo de gasto.'; return; }
+        if (!catEl.value || catEl.value === NEW_CAT_VALUE) { errEl.textContent = 'Elige una categoría.'; return; }
 
         errEl.textContent = '';
         okBtn.disabled = true;
@@ -138,17 +159,18 @@ function openManualExpense() {
                 amount: Math.round(amount * 100) / 100,
                 name,
                 cat: catEl.value,
-                date
+                date,
+                income
             });
 
             AppState.rows.push(row);
             AppState.rows.sort((a, b) => b.d.localeCompare(a.d) || (b.s ?? 0) - (a.s ?? 0));
             saveState();
-            try { localStorage.setItem(MANUAL_LAST_CAT_KEY, catEl.value); } catch (e) { /* sin almacenamiento */ }
+            try { localStorage.setItem(income ? MANUAL_LAST_INC_KEY : MANUAL_LAST_CAT_KEY, catEl.value); } catch (e) { /* sin almacenamiento */ }
 
             close();
             renderAllViews();
-            showToast('Gasto añadido');
+            showToast(income ? 'Ingreso añadido' : 'Gasto añadido');
         } catch (error) {
             console.error('Error añadiendo gasto manual:', error);
             errEl.textContent = 'No se pudo guardar: ' + describeSupabaseError(error);

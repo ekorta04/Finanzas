@@ -9,7 +9,7 @@ Aplicación web para gestionar y analizar las finanzas personales a partir de ex
 - Se puede soltar el CSV en cualquier pestaña (en el iPhone, elegirlo desde Archivos).
 - Aviso en el Resumen cuando los movimientos llegan hasta hace más de una semana.
 - Cierre de mes en el Resumen: gasto, ingresos y ahorro de un mes frente al anterior, categorías que más suben y bajan y mayores gastos (en el mes en curso compara los mismos días).
-- Botón «+» flotante para apuntar a mano un gasto (efectivo, etc.): cantidad, en qué ha sido, tipo de gasto y fecha. Se guarda en la base de datos como un movimiento más, no afecta al saldo del banco y se puede eliminar desde Movimientos.
+- Botón «+» flotante para apuntar a mano un gasto o un ingreso (efectivo, etc.): cantidad, concepto, categoría y fecha. Se guarda en la base de datos como un movimiento más, no afecta al saldo del banco y se puede eliminar desde Movimientos.
 - Dashboard de ingresos, gastos y ahorro, con bloques que se reordenan manteniendo pulsado y arrastrando, como en la pantalla de inicio del iPhone (el orden se sincroniza entre dispositivos).
 - Modo privado (ojito de arriba): oculta las cifras en euros y deja gráficas y porcentajes, para poder enseñar la app sin mostrar tu dinero.
 - Importación de movimientos bancarios desde CSV.
