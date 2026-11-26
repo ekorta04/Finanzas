@@ -91,17 +91,35 @@
         if (!e || e.i >= 0) return;
         BizumPick = { k, sel: new Set(e.bz || []), all: false };
         document.getElementById('bizum-pick-all').checked = false;
+        document.getElementById('bizum-pick-search').value = '';
         paintBizumPicker();
         document.getElementById('bizum-modal').classList.remove('hidden');
     }
 
+    const BIZUM_PICK_MAX = 200;
+
     function bizumPickCandidates() {
         const e = AppState.rows.find(r => r.k === BizumPick.k);
+        if (BizumPick.all) {
+            // Todos los ingresos de cualquier fecha, los más cercanos al gasto primero
+            const q = norm((document.getElementById('bizum-pick-search') || {}).value || '');
+            const qNum = q.replace(',', '.');
+            const dist = b => Math.abs(daysBetween(e.d, b.d));
+            const list = AppState.rows.filter(b =>
+                b.i > 0 && b.k !== e.k && (
+                    BizumPick.sel.has(b.k) ||
+                    ((!b.lk) && (!q || norm(b.c).includes(q) || b.i.toFixed(2).includes(qNum)))
+                )
+            ).sort((a, b) => (BizumPick.sel.has(b.k) - BizumPick.sel.has(a.k)) || dist(a) - dist(b) || a.k.localeCompare(b.k));
+            const sel = list.filter(b => BizumPick.sel.has(b.k));
+            const rest = list.filter(b => !BizumPick.sel.has(b.k)).slice(0, Math.max(0, BIZUM_PICK_MAX - sel.length));
+            return [...sel, ...rest];
+        }
         const from = addDays(e.d, -3), to = addDays(e.d, 14);
         return AppState.rows.filter(b =>
             b.i > 0 && b.k !== e.k && (
                 BizumPick.sel.has(b.k) ||
-                (!b.lk && b.d >= from && b.d <= to && (BizumPick.all || isBizum(b)))
+                (!b.lk && b.d >= from && b.d <= to && isBizum(b))
             )
         ).sort((a, b) => a.d.localeCompare(b.d) || a.k.localeCompare(b.k));
     }
@@ -115,18 +133,25 @@
 
     function paintBizumPicker() {
         const e = AppState.rows.find(r => r.k === BizumPick.k);
-        const list = bizumPickCandidates();
         document.getElementById('bizum-pick-title').textContent = e.c;
         document.getElementById('bizum-pick-sub').textContent =
             `Pagaste ${formatEur(-e.i)} el ${shortDate(e.d)}. Marca los ingresos que te devolvieron.`;
+        document.getElementById('bizum-pick-searchbox').classList.toggle('hidden', !BizumPick.all);
+        paintBizumPickList();
+    }
+
+    function paintBizumPickList() {
+        if (!BizumPick) return;
+        const list = bizumPickCandidates();
+        const dateOf = b => BizumPick.all ? formatDateEs(b.d) : shortDate(b.d);
         document.getElementById('bizum-pick-list').innerHTML = list.length
             ? list.map(b => `
                 <label class="pick-row">
                     <input type="checkbox" data-k="${enc(b.k)}" ${BizumPick.sel.has(b.k) ? 'checked' : ''}>
-                    <span class="truncate">${shortDate(b.d)} · ${esc(b.c)}</span>
+                    <span class="truncate">${dateOf(b)} · ${esc(b.c)}</span>
                     <span class="num pos">+${formatEur(b.i)}</span>
                 </label>`).join('')
-            : '<div class="muted small" style="padding:14px 0">No hay ingresos cerca de esa fecha.</div>';
+            : `<div class="muted small" style="padding:14px 0">${BizumPick.all ? 'No hay ingresos que coincidan.' : 'No hay Bizums cerca de esa fecha. Activa «Buscar en todos los movimientos».'}</div>`;
         updateBizumPickSummary();
     }
 
