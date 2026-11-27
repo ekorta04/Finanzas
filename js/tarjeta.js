@@ -110,7 +110,8 @@ function renderVisaSection() {
     el.innerHTML = linked.map(r => `
         <div class="row">
             <div class="row-main"><div class="row-title" style="font-size:15px">${esc(formatDateEs(r.d))} · ${esc(formatEur(Math.abs(r.i)))}</div><div class="row-sub">${(v[r.k].cards || []).length} compras de la tarjeta</div></div>
-            <button type="button" class="link small" onclick="unlinkVisa('${encodeURIComponent(r.k)}')">Deshacer</button>
+            <button type="button" class="link small" onclick="openVisaPicker('${encodeURIComponent(r.k)}')">Editar</button>
+            <button type="button" class="link small" style="margin-left:10px" onclick="unlinkVisa('${encodeURIComponent(r.k)}')">Deshacer</button>
         </div>`).join('')
         + pend.map(r => `
         <div class="row">
@@ -128,8 +129,8 @@ function openVisaPicker(encKey) {
     const key = decodeURIComponent(encKey);
     const rc = allRows().find(r => r.k === key);
     if (!rc) return;
-    visaPick = { key, sel: new Set() };
-    document.getElementById('visa-pick-sub').textContent = `Recibo del ${formatDateEs(rc.d)}: ${formatEur(Math.abs(rc.i))}. Marca las compras que lo componen.`;
+    visaPick = { key, sel: new Set((AppState.visa[key] || {}).cards || []) };   // si ya estaba cuadrado, parte de su selección
+    document.getElementById('visa-pick-sub').textContent = `Recibo del ${formatDateEs(rc.d)}: ${formatEur(Math.abs(rc.i))}. Marca las compras que lo componen (cualquier fecha).`;
     paintVisaPick();
     document.getElementById('visa-modal').classList.remove('hidden');
 }
@@ -138,14 +139,17 @@ function closeVisaPicker() { visaPick = null; document.getElementById('visa-moda
 function paintVisaPick() {
     if (!visaPick) return;
     const rc = allRows().find(r => r.k === visaPick.key);
-    const pool = unlinkedCardRows().filter(r => r.d <= rc.d).reverse();
+    const mine = new Set((AppState.visa[visaPick.key] || {}).cards || []);
+    const pool = unlinkedCardRows().concat(allRows().filter(r => mine.has(r.k))).sort((a, b) => b.d.localeCompare(a.d) || a.k.localeCompare(b.k));
     document.getElementById('visa-pick-list').innerHTML = pool.map(r => `
         <label class="pick-row"><input type="checkbox" data-k="${esc(encodeURIComponent(r.k))}" ${visaPick.sel.has(r.k) ? 'checked' : ''}>
         <span>${esc(formatDateEs(r.d))} · ${esc(r.c)}</span><b>${esc(formatEur(r.i))}</b></label>`).join('') || '<p class="muted small" style="padding:8px 0">No hay compras sueltas de la tarjeta.</p>';
     const sum = [...visaPick.sel].reduce((a, k) => a + cents((pool.find(r => r.k === k) || { i: 0 }).i), 0);
     const ok = sum === cents(rc.i);
-    document.getElementById('visa-pick-sum').innerHTML = `Seleccionado: <b>${esc(formatEur(sum / 100))}</b> de ${esc(formatEur(rc.i))} ${ok ? '✓' : ''}`;
-    document.getElementById('visa-pick-ok').disabled = !ok || !visaPick.sel.size;
+    document.getElementById('visa-pick-sum').innerHTML = `Seleccionado: <b>${esc(formatEur(sum / 100))}</b> de ${esc(formatEur(rc.i))} ${ok ? '✓' : (visaPick.sel.size ? `· diferencia ${esc(formatEur((sum - cents(rc.i)) / 100))}` : '')}`;
+    const okBtn = document.getElementById('visa-pick-ok');
+    okBtn.disabled = !visaPick.sel.size;
+    okBtn.textContent = ok ? 'Guardar' : 'Guardar igualmente';
 }
 function onVisaPickToggle(e) {
     const cb = e.target.closest('input[type=checkbox]');
