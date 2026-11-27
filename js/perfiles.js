@@ -18,7 +18,24 @@ const viewKey = userId => `finanzas_view_acc_${userId}`;
 function applyView() {
     const all = allRows();
     AppState.all = all;
-    AppState.rows = viewAcc === 'all' ? all : all.filter(r => r.a === viewAcc);
+    if (viewAcc === 'all') { AppState.rows = all; return; }
+    // Las compras de una tarjeta se ven también en la cuenta que paga su recibo (ahí es donde sale el dinero)
+    const payer = cardPayers(all);
+    AppState.rows = all.filter(r => r.a === viewAcc || payer.get(r.a) === viewAcc);
+}
+
+// perfil de tarjeta -> perfil de la cuenta donde está su recibo (según los recibos ya cuadrados)
+function cardPayers(all) {
+    const out = new Map(), v = AppState.visa || {};
+    const keys = Object.keys(v);
+    if (!keys.length) return out;
+    const byKey = new Map(all.filter(r => isCardRow(r) || v[r.k]).map(r => [r.k, r]));
+    keys.sort((a, b) => ((byKey.get(a) || {}).d || '').localeCompare((byKey.get(b) || {}).d || '')).forEach(k => {
+        const rc = byKey.get(k);
+        if (!rc) return;
+        (v[k].cards || []).forEach(ck => { const c = byKey.get(ck); if (c && c.a !== rc.a) out.set(c.a, rc.a); });
+    });
+    return out;
 }
 
 function profileName(id) {
