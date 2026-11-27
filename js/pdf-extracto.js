@@ -89,7 +89,8 @@
     const isoLoose = s => { const m = String(s).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); return m ? `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}` : ''; };
 
     function isTarjetaPages(pages) {
-        return pages.some(items => items.some(i => /Movimientos de tarjeta/i.test(i.str)) && items.some(i => /^Establecimiento$/i.test(i.str.trim())));
+        // pdf.js según la versión parte las frases en palabras sueltas: se une el texto de la página
+        return pages.some(items => /Movimientos\s+de\s+tarjeta/i.test(items.map(i => i.str).join(' ')) && items.some(i => /^Establecimiento$/i.test(i.str.trim())));
     }
 
     function parseTarjetaPages(pages) {
