@@ -148,6 +148,7 @@ const defaultState = () => ({
     invSign: 1,
     invValues: [],       // [{ d, v }]
     invXray: [],         // informes X-Ray: [{ d, v, assets, countries, sectors, top, funds, rent }]
+    visa: {},            // recibos de la tarjeta ya cuadrados: { claveRecibo: { cards: [claves de compras] } }
     deleted: [],         // claves de movimientos del banco borrados a mano (no vuelven al importar)
     dismissed: [],       // gastos cuyas sugerencias Bizum se descartaron
     customCats: [],      // categorías creadas por el usuario: { n, ic, col }

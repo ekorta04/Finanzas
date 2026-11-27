@@ -48,6 +48,7 @@
         const to = document.getElementById('filter-date-to').value;
         const map = MovsExtra.noInv && type === 'income' ? byKeyMap() : null;
         return AppState.rows.filter(r => {
+            if ((AppState.visa || {})[r.k]) return false;   // recibo de la tarjeta ya cuadrado con sus compras
             if (MovsExtra.noInv && isNeutralCat(r.cat)) return false;
             if (map && r.lk && map.has(r.lk)) return false;   // un Bizum devuelto no es un ingreso: resta del gasto
             if (search && !norm(r.c).includes(search)) return false;

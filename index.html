@@ -614,6 +614,13 @@
                 <h1 class="large-title">Datos</h1>
             </div>
 
+            <div id="visa-section" class="hidden">
+                <h3 class="group-header">Recibos de la tarjeta</h3>
+                <div id="visa-list" class="group"></div>
+                <div class="group mt-2"><button type="button" class="row action" onclick="reconcileVisa()"><i class="ic ic-refresh-cw"></i>Cuadrar recibos ahora</button></div>
+                <p class="group-footer">El «RECIBO VISA» de la cuenta suma las compras de la tarjeta. Al cuadrarlo se oculta y queda como traspaso, para que solo cuenten las compras con su categoría. No se borra: así el saldo sigue cuadrando.</p>
+            </div>
+
             <div>
                 <h3 class="group-header">Perfiles</h3>
                 <div id="profiles-list" class="group"></div>
@@ -766,6 +773,19 @@
     </div>
 </div>
 
+<div id="visa-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="visa-pick-title">
+    <div class="alert cat-new">
+        <p id="visa-pick-title" style="padding-bottom:2px;font-weight:600;font-size:17px">Vincular recibo</p>
+        <div id="visa-pick-sub" class="xsmall muted" style="padding:0 16px 8px"></div>
+        <div id="visa-pick-list" class="pick-list" onchange="onVisaPickToggle(event)"></div>
+        <div id="visa-pick-sum" class="pick-sum"></div>
+        <div class="alert-actions">
+            <button type="button" onclick="closeVisaPicker()">Cancelar</button>
+            <button type="button" id="visa-pick-ok" onclick="applyVisaPick()">Vincular</button>
+        </div>
+    </div>
+</div>
+
 <div id="widget-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="widget-title">
     <div class="alert grp-sheet">
         <p id="widget-title" style="padding-bottom:6px;font-weight:600;font-size:17px">Widgets del Resumen</p>
@@ -873,6 +893,7 @@
 <script src="js/utils.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/perfiles.js"></script>
+<script src="js/tarjeta.js"></script>
 <script src="js/csv.js"></script>
 <script src="js/import-check.js"></script>
 <script src="js/bizum.js"></script>

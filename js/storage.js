@@ -17,6 +17,7 @@
         st.settings = Object.assign({ bizumMin: 30, bizumDays: 4 }, (p && p.settings) || {});
         if (!Array.isArray(st.rules)) st.rules = DEFAULT_RULES.slice();
         ['rows', 'imports', 'inv', 'invValues', 'dismissed', 'deleted', 'groups', 'subs'].forEach(k => { if (!Array.isArray(st[k])) st[k] = []; });
+        if (!st.visa || typeof st.visa !== 'object' || Array.isArray(st.visa)) st.visa = {};
         st.invXray = (Array.isArray(st.invXray) ? st.invXray : [])
             .filter(x => x && /^\d{4}-\d{2}-\d{2}$/.test(x.d) && typeof x.v === 'number' && Array.isArray(x.assets))
             .map(x => Object.assign({ countries: [], sectors: [], top: [], funds: [], rent: {} }, x))

@@ -8,6 +8,7 @@
 function renderAllViews() {
     renderViewSelector();
     renderProfiles();
+    renderVisaSection();
     populateCategorySelects();
     updateUnclassifiedAlert();
     updateStaleAlert();

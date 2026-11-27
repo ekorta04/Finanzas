@@ -19,6 +19,7 @@ function purgeRowsByKeys(keys) {
     });
     if (Array.isArray(AppState.groups)) AppState.groups = AppState.groups.filter(g => !gone.has(g.exp));
     gone.forEach(k => OpenMovs.delete(k));
+    cleanVisaLinks(gone);
 }
 
 /* ---------- Un movimiento ---------- */

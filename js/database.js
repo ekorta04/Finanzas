@@ -162,6 +162,9 @@ function describeSupabaseError(error) {
                 : null
         );
 
+        const ruleCat = classifyConcept(r.c, AppState.rules);
+        const hint = r.catHint && CATEGORIES.includes(r.catHint) ? r.catHint : null;
+
         if (!key) {
             throw new Error(
                 'El movimiento no tiene un identificador válido.'
@@ -186,8 +189,9 @@ function describeSupabaseError(error) {
             c: r.c,
             i: r.i,
             s: r.s ?? null,
-            cat: classifyConcept(r.c, AppState.rules),
-            man: false
+            // Las reglas mandan; si no hay regla, vale la categoría que trae el PDF de la tarjeta
+            cat: ruleCat !== 'Sin clasificar' || !hint ? ruleCat : hint,
+            man: ruleCat === 'Sin clasificar' && !!hint
         };
     });
 

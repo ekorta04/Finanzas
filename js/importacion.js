@@ -68,7 +68,7 @@
 
         try {
             const isPdf = /\.pdf$/i.test(file.name) || file.type === 'application/pdf';
-            const { parsedRows, badRows } = isPdf ? await readExtractoPdf(file) : parseLaboralKutxaCSV(await file.text());
+            const { parsedRows, badRows, kind } = isPdf ? await readExtractoPdf(file) : parseLaboralKutxaCSV(await file.text());
             if (!parsedRows.length) {
                 showImportResult(isPdf
                     ? 'Este PDF no parece un extracto de movimientos de Laboral Kutxa. (Los informes X-Ray se suben en la pestaña Inversión.)'
@@ -79,10 +79,20 @@
             const session = await getStoredSession();
             if (!session) { showLoginScreen(); return; }
 
-            const { account } = await resolveActiveAccount(session.user.id, true);
-            window.activeSupabaseAccountId = account.id;
+            const isCard = kind === 'tarjeta';
+            let account;
+            if (isCard) {
+                account = await ensureCardProfile();   // la tarjeta va a su propio perfil, sin tocar el perfil activo
+            } else {
+                ({ account } = await resolveActiveAccount(session.user.id, true));
+                window.activeSupabaseAccountId = account.id;
+                if (allRows().some(r => r.a === account.id && isCardRow(r))) {
+                    showImportResult(`«${esc(account.name)}» es un perfil de tarjeta. Elige otro perfil para importar movimientos de cuenta.`, 'error');
+                    return;
+                }
+            }
 
-            const rowsWithKeys = parsedRows.map(r => ({ ...r, k: generateRowKey(r) }));
+            const rowsWithKeys = parsedRows.map(r => ({ ...r, k: r.k || generateRowKey(r) }));
 
             // Se compara con lo guardado por fecha + importe + concepto, no solo por la clave:
             // así un movimiento que llega con otro saldo o texto no se guarda dos veces.
@@ -93,8 +103,8 @@
             // Sin nada nuevo no hay que decidir: se registra y se cuenta
             if (!fresh.length) { await commitImport({ file, account, fresh, exact, similar, badRows }); return; }
 
-            const gap = analyzeImportGap(
-                existing.filter(t => !String(t.source_key).startsWith('manual|')).map(t => ({ d: t.operation_date, i: Number(t.amount), s: t.balance == null ? null : Number(t.balance) })),
+            const gap = isCard ? { status: 'none' } : analyzeImportGap(
+                existing.filter(t => !/^(manual|tj)\|/.test(String(t.source_key))).map(t => ({ d: t.operation_date, i: Number(t.amount), s: t.balance == null ? null : Number(t.balance) })),
                 parsedRows);
             pendingImport = { file, account, fresh, exact, similar, badRows, gap, allRows: parsedRows };
             renderImportPreview();
@@ -123,7 +133,7 @@
         const pi = pendingImport;
         if (!el || !pi) return;
         const dates = pi.allRows.map(r => r.d).sort();
-        const unclassified = pi.fresh.filter(r => classifyConcept(r.c, AppState.rules) === 'Sin clasificar').length;
+        const unclassified = pi.fresh.filter(r => !r.catHint && classifyConcept(r.c, AppState.rules) === 'Sin clasificar').length;
         const dup = pi.exact.length + pi.similar.length;
         const sample = [...pi.fresh].sort((a, b) => b.d.localeCompare(a.d)).slice(0, 5);
         const stat = (n, label) => `<div class="import-stat"><div class="import-stat-n">${n}</div><div class="import-stat-l">${label}</div></div>`;
@@ -184,6 +194,7 @@
             const errs = ((result && result.error_rows) || 0);
 
             await loadUserDashboard({ keepTab: true });
+            const cuadrados = await reconcileVisa({ silent: true });
 
             AppState.imports.push({ at: new Date().toLocaleString('es-ES'), added, dup });
             saveState();
@@ -193,7 +204,8 @@
             const newKeys = new Set(fresh.map(r => r.k));
             const unc = added ? AppState.rows.filter(r => newKeys.has(r.k) && r.cat === 'Sin clasificar').length : 0;
             const sug = BizumSugg.length;
-            showImportResult(`<b>${added} ${added === 1 ? 'movimiento nuevo' : 'movimientos nuevos'}</b> en ${esc(account.name)}` + (dup ? ` · ${dup} repetidos omitidos` + (similar.length ? ` (${similar.length} con otro saldo o texto)` : '') : '') + (errs ? ` · ${errs} filas ilegibles` : '') + (sug ? `<br>Hay ${sug} ${sug === 1 ? 'gasto compartido' : 'gastos compartidos'} para agrupar en Resumen.` : '')
+            const cuadre = cuadrados ? `<br>${cuadrados} ${cuadrados === 1 ? 'recibo de la tarjeta cuadrado' : 'recibos de la tarjeta cuadrados'} con sus compras.` : '';
+            showImportResult(`<b>${added} ${added === 1 ? 'movimiento nuevo' : 'movimientos nuevos'}</b> en ${esc(account.name)}` + (dup ? ` · ${dup} repetidos omitidos` + (similar.length ? ` (${similar.length} con otro saldo o texto)` : '') : '') + (errs ? ` · ${errs} filas ilegibles` : '') + cuadre + (sug ? `<br>Hay ${sug} ${sug === 1 ? 'gasto compartido' : 'gastos compartidos'} para agrupar en Resumen.` : '')
                 + (unc ? `<div class="import-actions"><button type="button" class="btn sm" onclick="goClassifyNew()">Clasificar ${unc} ${unc === 1 ? 'nuevo' : 'nuevos'}</button></div>` : ''), 'success');
             showToast(added ? `${added} movimientos importados` : 'No había movimientos nuevos');
         } catch (err) {
