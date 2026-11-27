@@ -48,6 +48,6 @@
         } catch (e) { console.error(e); AppState = defaultState(); }
     }
     function saveState() {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState)); } catch (e) { /* sin almacenamiento local: sigue la nube */ }
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState, (k, v) => (k === 'all' ? undefined : v))); } catch (e) { /* sin almacenamiento local: sigue la nube */ }
         cloudSchedule();
     }

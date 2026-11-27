@@ -23,7 +23,7 @@
         const c = document.getElementById('rule-category').value;
         if (!p) { showToast('Escribe un texto o palabra clave', 'error'); return; }
         AppState.rules.unshift({ p, c });
-        AppState.rows.forEach(r => { if (!r.man) r.cat = classifyConcept(r.c, AppState.rules); });
+        allRows().forEach(r => { if (!r.man) r.cat = classifyConcept(r.c, AppState.rules); });
         saveState(); renderAllViews();
         document.getElementById('rule-pattern').value = '';
         showToast('Nueva regla añadida y aplicada');

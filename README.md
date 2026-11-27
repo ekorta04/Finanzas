@@ -13,6 +13,7 @@ Aplicación web para gestionar y analizar las finanzas personales a partir de ex
 - Botón «+» flotante para apuntar a mano un gasto o un ingreso (efectivo, etc.): cantidad, concepto, categoría y fecha. Se guarda en la base de datos como un movimiento más, no afecta al saldo del banco y se puede eliminar desde Movimientos.
 - Borrar un movimiento (Movimientos → abrirlo → «Eliminar») o una importación entera (Datos → Últimas importaciones → «Borrar»). Un movimiento del banco borrado a mano no vuelve al importar el mismo archivo.
 - El aviso «Movimientos sin categoría» se puede cerrar con la X hasta cerrar y volver a abrir la app.
+- Perfiles (Datos → Perfiles): cada cuenta o tarjeta (débito, crédito, otro banco) es un perfil que creas, renombras y borras. Al importar eliges el perfil. Arriba eliges ver todos juntos o uno; el saldo suma el último saldo de cada perfil y el patrimonio cuenta siempre todos. La proyección de flujo de caja se calcula por perfil. La categoría «Traspaso entre cuentas» marca pagos de tarjeta y movimientos entre perfiles para que no cuenten como gasto ni ingreso.
 - Dashboard de ingresos, gastos y ahorro, con bloques que se reordenan manteniendo pulsado y arrastrando, como en la pantalla de inicio del iPhone (el orden se sincroniza entre dispositivos).
 - Modo privado (ojito de arriba): oculta las cifras en euros y deja gráficas y porcentajes, para poder enseñar la app sin mostrar tu dinero.
 - Importación de movimientos bancarios desde CSV.

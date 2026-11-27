@@ -11,8 +11,9 @@ const DELETED_MAX = 3000;
 // Quitar movimientos de la memoria y limpiar lo que los apuntaba (Bizums agrupados, gastos en grupo)
 function purgeRowsByKeys(keys) {
     const gone = new Set(keys);
-    AppState.rows = AppState.rows.filter(r => !gone.has(r.k));
-    AppState.rows.forEach(r => {
+    AppState.all = allRows().filter(r => !gone.has(r.k));
+    applyView();
+    AppState.all.forEach(r => {
         if (r.bz) { r.bz = r.bz.filter(k => !gone.has(k)); if (!r.bz.length) delete r.bz; }
         if (r.lk && gone.has(r.lk)) delete r.lk;
     });
@@ -27,7 +28,7 @@ async function deleteMovement(encKey) {
     const row = AppState.rows.find(r => r.k === key);
     if (!row) return;
 
-    const accountId = window.activeSupabaseAccountId;
+    const accountId = row.a || window.activeSupabaseAccountId;
     if (!accountId) { showToast('No hay una cuenta seleccionada', 'error'); return; }
 
     const manual = isManualRow(row);

@@ -7,7 +7,7 @@
         groupExpenseKeys().forEach(k => dismissed.add(k));   // los tickets en grupo tienen su propia propuesta
         const used = new Set(AppState.rows.filter(r => r.lk).map(r => r.k));
         const exps = AppState.rows
-            .filter(r => r.i <= -bizumMin && !isInvCat(r.cat) && !isBizum(r) && !(r.bz && r.bz.length) && !dismissed.has(r.k))
+            .filter(r => r.i <= -bizumMin && !isNeutralCat(r.cat) && !isBizum(r) && !(r.bz && r.bz.length) && !dismissed.has(r.k))
             .sort((a, b) => a.d.localeCompare(b.d));
         const incomes = AppState.rows.filter(r => r.i > 0 && isBizum(r) && !r.lk);
         // 1) Posibles repartos para cada gasto (entre 2 y 6 personas)

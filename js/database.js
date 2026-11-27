@@ -394,7 +394,7 @@ function renderImportAccountSelector(accounts, activeId) {
     )));
 
     selector.value = activeId || accounts[0].id;
-    selector.disabled = accounts.length < 2;
+    selector.disabled = false;
 }
 
 // Inicializar la interfaz principal una única vez
@@ -420,13 +420,10 @@ function initMainUIOnce() {
     if (selector) {
         selector.addEventListener('change', async () => {
             if (!selector.value) return;
+            // Solo elige a qué perfil va lo que importes (lo que se ve lo decide el selector de arriba)
             window.activeSupabaseAccountId = selector.value;
-
-            try {
-                await loadUserDashboard({ keepTab: true });
-            } catch (error) {
-                showToast('No se pudo cambiar de cuenta: ' + describeSupabaseError(error), 'error');
-            }
+            dbImports = null;
+            renderImportHistory();
         });
     }
 }
@@ -443,9 +440,12 @@ function showCachedDashboard() {
 
         if (!userId || localStorage.getItem(CACHE_OWNER_KEY) !== userId) return false;
 
+        restoreViewAcc(userId);
+
         initMainUIOnce();
         loadState();
         if (!AppState.rows.length) return false;
+        applyView();
 
         renderAllViews();
         switchTab('v-dashboard');
@@ -480,36 +480,46 @@ async function loadUserDashboard(options = {}) {
 
     // Datos locales (reglas, etiquetas, presupuestos, inversión…)
     loadState();
-    const localByKey = new Map(AppState.rows.map(r => [r.k, r]));
+    const localByKey = new Map(allRows().map(r => [r.k, r]));
 
     const [{ accounts, account }, cloudData] = await Promise.all([
         resolveActiveAccount(user.id),
         fetchCloudSettings(user.id)
     ]);
-    renderImportAccountSelector(accounts, account && account.id);
+    setProfiles(accounts, user.id);
 
     let rows = [];
 
     if (account) {
-        window.activeSupabaseAccountId = account.id;
+        // Perfil por defecto para importar y apuntar gastos: el que se está viendo, o el último usado
+        window.activeSupabaseAccountId = viewAcc !== 'all' ? viewAcc : account.id;
 
-        try { localStorage.setItem(dashboardAccountKey(user.id), account.id); } catch (e) {}
+        try { localStorage.setItem(dashboardAccountKey(user.id), window.activeSupabaseAccountId); } catch (e) {}
 
-        rows = (await prepareAccountDashboard(account.id)).map(row => {
-            const local = localByKey.get(row.k);
+        // Los movimientos de todos los perfiles, cada uno marcado con el suyo
+        const perAccount = await Promise.all(accounts.map(async acc =>
+            (await prepareAccountDashboard(acc.id)).map(row => {
+                const local = localByKey.get(row.k);
 
-            if (local) {
-                if (local.t) row.t = local.t;
-                if (local.bz) row.bz = local.bz;
-                if (local.lk) row.lk = local.lk;
-            }
+                if (local) {
+                    if (local.t) row.t = local.t;
+                    if (local.bz) row.bz = local.bz;
+                    if (local.lk) row.lk = local.lk;
+                }
 
-            return row;
-        });
+                row.a = acc.id;
+                return row;
+            })
+        ));
+        rows = perAccount.flat();
     }
 
+    renderImportAccountSelector(accounts, window.activeSupabaseAccountId);
+
     rows.sort((a, b) => b.d.localeCompare(a.d) || (b.s ?? 0) - (a.s ?? 0));
+    AppState.all = rows;
     AppState.rows = rows;
+    applyView();
 
     if (cloudData) {
         // Lo guardado en la nube manda (lo último hecho en cualquier dispositivo)
@@ -520,11 +530,12 @@ async function loadUserDashboard(options = {}) {
         await cloudFlush();
     }
 
-    migrateRowCats(AppState.rows);
+    migrateRowCats(allRows());
+    applyView();
 
     // Guardar en el dispositivo sin volver a subir nada
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState, (k, v) => (k === 'all' ? undefined : v)));
         localStorage.setItem(CACHE_OWNER_KEY, user.id);
     } catch (e) {}
 

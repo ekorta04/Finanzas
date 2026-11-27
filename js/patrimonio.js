@@ -9,11 +9,29 @@ let chartPatrimonioInstance = null;
 let patrimonioAll = false;   // false = últimos 12 meses; solo en memoria
 
 function patrimonioSeries() {
-    if (!AppState.rows.length) return [];
-    const byMonth = {};   // rows va de más nuevo a más antiguo: el primero de cada mes es el de fin de mes
-    AppState.rows.forEach(r => { if (r.s != null && byMonth[r.d.slice(0, 7)] === undefined) byMonth[r.d.slice(0, 7)] = r.s; });
-    const keys = Object.keys(byMonth).sort();
+    const rows = allRows();   // el patrimonio cuenta todos los perfiles, se vea el que se vea
+    if (!rows.length) return [];
+    // Por perfil: saldo de fin de cada mes (rows va de más nuevo a más antiguo: el primero de cada mes es el de fin de mes)
+    const perAcc = new Map();
+    rows.forEach(r => {
+        if (r.s == null) return;
+        const a = r.a || '';
+        if (!perAcc.has(a)) perAcc.set(a, {});
+        const o = perAcc.get(a), m = r.d.slice(0, 7);
+        if (o[m] === undefined) o[m] = r.s;
+    });
+    const keys = [...new Set([...perAcc.values()].flatMap(o => Object.keys(o)))].sort();
     if (!keys.length) return [];
+    const lastOf = new Map();
+    const byMonth = {};   // suma de los últimos saldos conocidos de cada perfil
+    let [yy, mm] = keys[0].split('-').map(Number);
+    for (;;) {
+        const k = `${yy}-${String(mm).padStart(2, '0')}`;
+        perAcc.forEach((o, a) => { if (o[k] !== undefined) lastOf.set(a, o[k]); });
+        byMonth[k] = [...lastOf.values()].reduce((x, y) => x + y, 0);
+        if (k >= keys[keys.length - 1]) break;
+        if (++mm > 12) { mm = 1; yy++; }
+    }
     const vals = [...AppState.invValues].sort((a, b) => a.d.localeCompare(b.d));
     const out = [];
     let liq = byMonth[keys[0]];

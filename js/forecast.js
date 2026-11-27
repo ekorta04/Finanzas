@@ -104,7 +104,7 @@ function fcBaseline(rows, ref, first, used) {
     const b = Array.from({ length: nb }, () => ({ spend: 0, inc: 0, inv: 0, cats: {} }));
     rows.forEach(r => {
         const age = daysBetween(r.d, ref);
-        if (age < 0 || age >= nb * 30 || used.has(r.k)) return;
+        if (age < 0 || age >= nb * 30 || used.has(r.k) || r.cat === TRANSFER_CAT) return;
         const o = b[Math.floor(age / 30)];
         if (r.i < 0) {
             if (isInvCat(r.cat)) o.inv += -r.i;
@@ -222,14 +222,18 @@ function renderForecast() {
     document.getElementById('fc-m6').classList.toggle('on', pr.months === 6);
     document.getElementById('fc-inv').checked = pr.inv;
 
-    const res = fcBuild(AppState.rows, pr);
+    // La proyección se calcula por perfil: con varios a la vez no hay un saldo único del que partir
+    const multi = new Set(AppState.rows.map(r => r.a || '')).size > 1;
+    const res = multi ? { error: 'varios' } : fcBuild(AppState.rows, pr);
     FC.last = res;
     const body = document.getElementById('fc-body'), empty = document.getElementById('fc-empty');
     if (chartForecastInstance) { chartForecastInstance.destroy(); chartForecastInstance = null; }
     if (res.error) {
         body.classList.add('hidden');
         empty.classList.remove('hidden');
-        empty.textContent = res.error === 'poco-historial'
+        empty.textContent = res.error === 'varios'
+            ? 'La proyección se calcula por perfil: elige uno arriba (junto al ojito) para verla.'
+            : res.error === 'poco-historial'
             ? `Hacen falta al menos ${FC_MIN_HISTORY} días de movimientos para proyectar (ahora hay ${res.hist}).`
             : 'Importa tus movimientos para ver la proyección.';
         return;

@@ -48,7 +48,7 @@
         const to = document.getElementById('filter-date-to').value;
         const map = MovsExtra.noInv && type === 'income' ? byKeyMap() : null;
         return AppState.rows.filter(r => {
-            if (MovsExtra.noInv && isInvCat(r.cat)) return false;
+            if (MovsExtra.noInv && isNeutralCat(r.cat)) return false;
             if (map && r.lk && map.has(r.lk)) return false;   // un Bizum devuelto no es un ingreso: resta del gasto
             if (search && !norm(r.c).includes(search)) return false;
             if (cat && r.cat !== cat && !(CAT_TREE.some(m => m.n === cat) && catGroup(r.cat) === cat)) return false;
@@ -164,6 +164,7 @@
             const cls = amount > 0 ? 'pos' : 'neg';
             const chips = (r.t || []).map(t => `<span class="tag-chip">#${esc(t)}<button onclick="removeTag('${ek}','${enc(t)}')" aria-label="Quitar etiqueta">✕</button></span>`).join('');
             const sub = [r.cat, shortDate(r.d)];
+            if (viewAcc === 'all' && ProfileList.length > 1 && profileName(r.a)) sub.push(profileName(r.a));
             if (g) sub.push(`entre ${g.people}`);
             if (r.t && r.t.length) sub.push(r.t.map(t => '#' + t).join(' '));
 
@@ -191,7 +192,7 @@
                 <div class="mov-edit">
                     ${split}
                     <button class="link small" style="margin:2px 0 8px;color:var(--red)" onclick="deleteMovement('${ek}')">Eliminar ${isManualRow(r) ? (r.i > 0 ? 'este ingreso' : 'este gasto') : 'este movimiento'}</button>
-                    ${r.i < 0 && !isBizum(r) && !isInvCat(r.cat) ? `<button class="link small" style="margin:2px 0 8px" onclick="openBizumPicker('${ek}')">${g ? 'Editar Bizums del grupo' : 'Agrupar Bizums a mano…'}</button>` : ''}
+                    ${r.i < 0 && !isBizum(r) && !isNeutralCat(r.cat) ? `<button class="link small" style="margin:2px 0 8px" onclick="openBizumPicker('${ek}')">${g ? 'Editar Bizums del grupo' : 'Agrupar Bizums a mano…'}</button>` : ''}
                     <label>Categoría
                         <select class="field" onchange="updateRowCategory('${ek}', this.value)">${opts.replace(`value="${esc(r.cat)}"`, m => m + ' selected')}</select>
                     </label>
@@ -204,7 +205,7 @@
             </details>`;
         };
 
-        const monthTotal = rows => rows.reduce((a, r) => { const g = bizumGroup(r, map); const v = g ? g.net : r.i; return v < 0 && !isInvCat(r.cat) ? a - v : a; }, 0);
+        const monthTotal = rows => rows.reduce((a, r) => { const g = bizumGroup(r, map); const v = g ? g.net : r.i; return v < 0 && !isNeutralCat(r.cat) ? a - v : a; }, 0);
 
         cont.innerHTML = months.map(({ m, rows }) => `
             <div class="mt-3">
@@ -249,7 +250,7 @@ async function updateRowCategory(encKey, newCategory) {
         return;
     }
 
-    const accountId = window.activeSupabaseAccountId;
+    const accountId = row.a || window.activeSupabaseAccountId;
 
     if (!accountId) {
         showToast('No hay una cuenta seleccionada', 'error');
@@ -380,7 +381,7 @@ async function suggestRuleFor(row, newCategory, accountId) {
         return;
     }
 
-    const same = AppState.rows.filter(x =>
+    const same = allRows().filter(x =>
         norm(x.c) === cn && x.k !== row.k && !x.man
     );
 
@@ -397,12 +398,15 @@ async function suggestRuleFor(row, newCategory, accountId) {
     renderAllViews();
 
     try {
-        if (same.length) {
-            await updateTransactionsAutoCategory(
-                accountId,
-                same.map(x => x.k),
-                newCategory
-            );
+        // Cada perfil es una cuenta distinta de la base de datos
+        const byAccount = new Map();
+        same.forEach(x => {
+            const a = x.a || accountId;
+            if (!byAccount.has(a)) byAccount.set(a, []);
+            byAccount.get(a).push(x.k);
+        });
+        for (const [a, keys] of byAccount) {
+            await updateTransactionsAutoCategory(a, keys, newCategory);
         }
         showToast('Regla guardada y movimientos actualizados');
     } catch (error) {

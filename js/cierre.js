@@ -135,7 +135,7 @@ function renderCierre() {
     }
 
     // Mayores gastos sueltos del mes
-    const big = rows.filter(r => r.i < 0 && !isInvCat(r.cat)).sort((a, b) => a.i - b.i).slice(0, 3);
+    const big = rows.filter(r => r.i < 0 && !isNeutralCat(r.cat)).sort((a, b) => a.i - b.i).slice(0, 3);
     if (big.length) {
         html += '<h3 class="group-header">Mayores gastos</h3><div class="group">' + big.map(r => `
             <div class="row with-icon">${catIcon(r.cat)}

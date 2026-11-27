@@ -6,7 +6,7 @@ function netTotals(rows) {
     const map = byKeyMap();
     let gasto = 0, ingreso = 0, recovered = 0; const cat = {};
     rows.forEach(r => {
-        if (isInvCat(r.cat)) return;
+        if (isNeutralCat(r.cat)) return;
         if (r.i < 0) { gasto += -r.i; cat[catGroup(r.cat)] = (cat[catGroup(r.cat)] || 0) - r.i; }
         else if (r.lk && map.has(r.lk)) { const e = map.get(r.lk); gasto -= r.i; recovered += r.i; cat[catGroup(e.cat)] = (cat[catGroup(e.cat)] || 0) - r.i; }
         else ingreso += r.i;
@@ -140,7 +140,24 @@ function onCompareChange() {
 // más antiguas, así que la primera de cada día es la última del día.
 function balanceSeries(period) {
     const close = new Map();
-    AppState.rows.forEach(r => { if (r.s != null && !close.has(r.d)) close.set(r.d, r.s); });
+    // Varios perfiles: el saldo de cada día es la suma del último saldo conocido de cada perfil
+    const perAcc = new Map();
+    AppState.rows.forEach(r => {
+        if (r.s == null) return;
+        const a = r.a || '';
+        if (!perAcc.has(a)) perAcc.set(a, new Map());
+        if (!perAcc.get(a).has(r.d)) perAcc.get(a).set(r.d, r.s);
+    });
+    if (perAcc.size <= 1) {
+        AppState.rows.forEach(r => { if (r.s != null && !close.has(r.d)) close.set(r.d, r.s); });
+    } else {
+        const dates = [...new Set([...perAcc.values()].flatMap(m => [...m.keys()]))].sort();
+        const lastOf = new Map();
+        dates.forEach(d => {
+            perAcc.forEach((m, a) => { if (m.has(d)) lastOf.set(a, m.get(d)); });
+            close.set(d, [...lastOf.values()].reduce((x, y) => x + y, 0));
+        });
+    }
     const days = [...close.keys()].sort();
     if (!days.length) return { labels: [], data: [] };
 
@@ -248,8 +265,7 @@ function renderDashboard() {
         days = Math.max(1, Math.ceil(Math.abs(Math.max(...ds) - Math.min(...ds)) / 86400000));
     }
 
-    const bankRow = AppState.rows.find(r => !isManualRow(r));
-    const saldo = bankRow ? bankRow.s : 0;
+    const saldo = totalBalance(AppState.rows);   // suma del último saldo de cada perfil que se ve
     document.getElementById('kpi-gasto').textContent = formatEur(gasto);
     document.getElementById('kpi-ingreso').textContent = formatEur(ingreso);
     const balEl = document.getElementById('kpi-balance');
@@ -262,8 +278,12 @@ function renderDashboard() {
 
     const inv = invSummary();
     const pat = document.getElementById('kpi-patrimonio');
-    if (inv.valor != null) { pat.classList.remove('hidden'); pat.textContent = `Con inversión: ${formatEur(saldo + inv.valor)}`; }
-    else pat.classList.add('hidden');
+    // El patrimonio suma todos los perfiles, se vea el que se vea
+    const patSaldo = totalBalance(allRows()), partial = ProfileList.length > 1 && viewAcc !== 'all';
+    if (inv.valor != null || partial) {
+        pat.classList.remove('hidden');
+        pat.textContent = `${partial ? 'Patrimonio total' + (inv.valor != null ? ' con inversión' : '') : 'Con inversión'}: ${formatEur(patSaldo + (inv.valor || 0))}`;
+    } else pat.classList.add('hidden');
 
     // Comparación con otro periodo
     const lastData = lastDataDate();
@@ -295,7 +315,7 @@ function renderDashboard() {
     renderChartSaldo(period, cmpTot ? cmp : null);
     renderChartMensual();
     renderChartCategorias(cat, cmpTot ? cmpTot.cat : null);
-    renderTopShops(rows.filter(r => r.i < 0 && !isInvCat(r.cat)));
+    renderTopShops(rows.filter(r => r.i < 0 && !isNeutralCat(r.cat)));
     renderInsights(cat, gasto, recovered, cmpTot ? { cat: cmpTot.cat, label: cmp.label } : null);
     if (typeof renderForecast === 'function') renderForecast();
     if (typeof renderCierre === 'function') renderCierre();

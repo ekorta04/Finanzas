@@ -18,13 +18,16 @@ const CAT_TREE = [
     { n: 'Inversiones', ic: 'trending-up', col: '--yellow', subs: [['Propiedades', 'building-2'], ['Vehículos, bienes muebles', 'car'], ['Inversiones financieras', 'trending-up'], ['Ahorros', 'piggy-bank'], ['Colecciones', 'trophy']] },
     { n: 'Ingreso', ic: 'wallet', col: '--mint', subs: [['Salario, facturas', 'banknote'], ['Intereses, dividendos', 'percent'], ['Venta', 'tag'], ['Ingresos por alquiler', 'house'], ['Cuotas y subvenciones', 'landmark'], ['Ingresos por préstamo', 'hand-coins'], ['Cheques, cupones, vales', 'ticket-percent'], ['Lotería, juegos de azar', 'dices'], ['Reembolsos (impuestos, compra)', 'refresh-cw'], ['Pensión alimenticia', 'users'], ['Regalos', 'gift']] }
 ];
-const SPECIAL_CATS = ['Bizum y transferencias', 'Inversión'];   // 'Inversión' = traspasos a la cuenta de inversión (no cuentan como gasto)
+const TRANSFER_CAT = 'Traspaso entre cuentas';   // pagos de tarjeta y movimientos entre tus perfiles: no son gasto ni ingreso
+const SPECIAL_CATS = ['Bizum y transferencias', 'Inversión', TRANSFER_CAT];   // 'Inversión' = traspasos a la cuenta de inversión (no cuentan como gasto)
 const BASE_CATEGORIES = [].concat(
     ...CAT_TREE.map(m => [m.n, ...m.subs.map(s => m.n + CAT_SEP + s[0])]),
     SPECIAL_CATS, ['Otros', 'Sin clasificar']
 );
 const catGroup = c => { c = String(c == null ? '' : c); const i = c.indexOf(CAT_SEP); return i < 0 ? c : c.slice(0, i); };
 const isInvCat = c => c === 'Inversión' || catGroup(c) === 'Inversiones';
+// No cuenta como gasto ni ingreso: inversión y traspasos entre perfiles
+const isNeutralCat = c => isInvCat(c) || c === TRANSFER_CAT;
 
 // Categorías de versiones anteriores → nuevas
 const LEGACY_CATS = {

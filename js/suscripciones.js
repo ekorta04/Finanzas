@@ -48,7 +48,7 @@ function subsDetect(rows, ref) {
     const since = addMonthsIso(ref, -26);
     const groups = new Map();
     rows.forEach(r => {
-        if (r.i >= 0 || r.d > ref || r.d < since || r.lk || (r.bz && r.bz.length) || isInvCat(r.cat) || isBizum(r)) return;
+        if (r.i >= 0 || r.d > ref || r.d < since || r.lk || (r.bz && r.bz.length) || isNeutralCat(r.cat) || isBizum(r)) return;
         const key = fcKey(r);
         if (!key) return;
         if (!groups.has(key)) groups.set(key, []);
@@ -162,7 +162,7 @@ function subsBuild() {
     if (rows.length) {
         const from = addDays(ref, -89), first = rows.reduce((m, r) => r.d < m ? r.d : m, ref);
         const span = Math.min(90, daysBetween(first, ref) + 1);
-        const inc = rows.filter(r => r.i > 0 && r.d >= from && r.d <= ref && !r.lk && !isBizum(r) && !isInvCat(r.cat)).reduce((a, r) => a + r.i, 0);
+        const inc = rows.filter(r => r.i > 0 && r.d >= from && r.d <= ref && !r.lk && !isBizum(r) && !isNeutralCat(r.cat)).reduce((a, r) => a + r.i, 0);
         income = span >= 28 ? inc / (span / FC_DAYS_MONTH) : 0;
     }
     totals.pct = income > 0 ? totals.month / income * 100 : null;

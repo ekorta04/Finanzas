@@ -53,6 +53,7 @@
     const CATEGORY_STYLE = {
         'Bizum y transferencias': ['arrow-left-right', '--teal'],
         'Inversión': ['trending-up', '--indigo'],
+        'Traspaso entre cuentas': ['repeat', '--teal'],
         'Otros': ['circle-ellipsis', '--gray'],
         'Sin clasificar': ['circle-help', '--gray']
     };

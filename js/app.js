@@ -6,6 +6,8 @@
 // El arranque real está en initMainUIOnce (database.js), que se ejecuta al entrar con la sesión.
 
 function renderAllViews() {
+    renderViewSelector();
+    renderProfiles();
     populateCategorySelects();
     updateUnclassifiedAlert();
     updateStaleAlert();

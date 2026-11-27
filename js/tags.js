@@ -53,7 +53,7 @@
     async function deleteTagEverywhere(encTag) {
         const tag = decodeURIComponent(encTag);
         if (!(await askConfirm(`¿Quitar la etiqueta #${tag} de todos los movimientos? (No se borra ningún movimiento)`))) return;
-        AppState.rows.forEach(r => { if (r.t) { r.t = r.t.filter(x => x.toLowerCase() !== tag.toLowerCase()); if (!r.t.length) delete r.t; } });
+        allRows().forEach(r => { if (r.t) { r.t = r.t.filter(x => x.toLowerCase() !== tag.toLowerCase()); if (!r.t.length) delete r.t; } });
         saveState(); renderAllViews(); showToast('Etiqueta eliminada');
     }
     function viewTag(encTag) {

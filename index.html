@@ -101,6 +101,7 @@
             </nav>
 
             <div class="topbar-actions">
+                <select id="view-acc-top" class="field sm view-acc hidden" onchange="onViewChange(this.value)" aria-label="Perfil que se ve"></select>
                 <button type="button" class="priv-btn" onclick="togglePrivacy()" aria-pressed="false" title="Ocultar importes" aria-label="Ocultar importes"><i class="ic ic-eye"></i></button>
                 <button id="cloud-dot" onclick="cloudDotClick()" title="Estado de la sincronización" class="pill">
                     <span id="cloud-dot-i" class="legend-dot" style="background:var(--gray)"></span>
@@ -120,6 +121,7 @@
                 <span class="app-icon"><i class="ic ic-wallet"></i></span>
                 Finanzas
             </div>
+            <select id="view-acc-mob" class="field sm view-acc hidden" onchange="onViewChange(this.value)" aria-label="Perfil que se ve"></select>
             <button type="button" class="priv-btn" onclick="togglePrivacy()" aria-pressed="false" title="Ocultar importes" aria-label="Ocultar importes"><i class="ic ic-eye"></i></button>
         </div>
     </div>
@@ -613,10 +615,21 @@
             </div>
 
             <div>
+                <h3 class="group-header">Perfiles</h3>
+                <div id="profiles-list" class="group"></div>
+                <div class="group mt-2">
+                    <div class="row"><input id="profile-new-name" class="field sm" type="text" maxlength="40" placeholder="Nombre (p. ej. Tarjeta de crédito)" autocomplete="off" style="width:100%"></div>
+                    <div class="row"><input id="profile-new-bank" class="field sm" type="text" maxlength="40" placeholder="Banco (p. ej. Laboral Kutxa)" autocomplete="off" style="width:100%"></div>
+                    <button type="button" class="row action" onclick="createProfile()"><i class="ic ic-plus"></i>Crear perfil</button>
+                </div>
+                <p class="group-footer">Cada perfil es una cuenta o tarjeta. Arriba eliges si ver todos juntos o uno solo. El patrimonio suma siempre todos. Los pagos de la tarjeta y los traspasos entre perfiles se marcan con la categoría «Traspaso entre cuentas» para que no cuenten dos veces.</p>
+            </div>
+
+            <div>
                 <h3 class="group-header">Importar extracto</h3>
                 <div class="group">
                     <div class="row">
-                        <span class="row-main row-title">Cuenta</span>
+                        <span class="row-main row-title">Importar en el perfil</span>
                         <select id="import-account" class="field sm" style="max-width:60%"><option value="">Cargando…</option></select>
                     </div>
                 </div>
@@ -802,6 +815,9 @@
             <label class="small" style="display:grid;gap:6px">¿En qué ha sido?
                 <input id="manual-name" class="field" type="text" maxlength="60" placeholder="Ej. Café en efectivo" autocomplete="off">
             </label>
+            <label id="manual-acc-wrap" class="small hidden" style="display:grid;gap:6px">Perfil
+                <select id="manual-acc" class="field"></select>
+            </label>
             <label class="small" style="display:grid;gap:6px">Categoría
                 <select id="manual-cat" class="field"></select>
             </label>
@@ -813,6 +829,17 @@
         <div class="alert-actions">
             <button id="manual-cancel" type="button">Cancelar</button>
             <button id="manual-ok" type="button">Añadir</button>
+        </div>
+    </div>
+</div>
+
+<div id="text-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="text-title">
+    <div class="alert cat-new">
+        <p id="text-title" style="padding-bottom:10px;font-weight:600;font-size:17px"></p>
+        <div class="cat-new-body"><input id="text-input" class="field" type="text" maxlength="40" autocomplete="off"></div>
+        <div class="alert-actions">
+            <button id="text-cancel" type="button">Cancelar</button>
+            <button id="text-ok" type="button">Guardar</button>
         </div>
     </div>
 </div>
@@ -845,6 +872,7 @@
 <script src="js/state.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/storage.js"></script>
+<script src="js/perfiles.js"></script>
 <script src="js/csv.js"></script>
 <script src="js/import-check.js"></script>
 <script src="js/bizum.js"></script>

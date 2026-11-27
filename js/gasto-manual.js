@@ -10,11 +10,11 @@ const MANUAL_LAST_INC_KEY = 'finanzas_manual_last_inc_cat';
 
 // ---------- Base de datos ----------
 
-async function insertManualExpense({ amount, name, cat, date, income }) {
+async function insertManualExpense({ amount, name, cat, date, income, accountId }) {
     const user = await getCurrentUser();
     if (!user) throw new Error('Debes iniciar sesión.');
 
-    let accountId = window.activeSupabaseAccountId;
+    accountId = accountId || window.activeSupabaseAccountId;
     if (!accountId) {
         const { account } = await resolveActiveAccount(user.id, true);
         accountId = window.activeSupabaseAccountId = account.id;
@@ -40,7 +40,7 @@ async function insertManualExpense({ amount, name, cat, date, income }) {
         .single();
 
     if (error) throw error;
-    return transactionToAppRow(data);
+    return { ...transactionToAppRow(data), a: accountId };
 }
 
 // ---------- Formulario ----------
@@ -61,6 +61,8 @@ function openManualExpense() {
     const catEl = document.getElementById('manual-cat');
     const dateEl = document.getElementById('manual-date');
     const errEl = document.getElementById('manual-error');
+    const accEl = document.getElementById('manual-acc');
+    const accWrap = document.getElementById('manual-acc-wrap');
     const okBtn = document.getElementById('manual-ok');
     const cancelBtn = document.getElementById('manual-cancel');
 
@@ -94,6 +96,9 @@ function openManualExpense() {
     dateEl.max = todayIso();
     errEl.textContent = '';
     okBtn.disabled = false;
+    accWrap.classList.toggle('hidden', ProfileList.length < 2);
+    accEl.innerHTML = ProfileList.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
+    if (ProfileList.some(p => p.id === window.activeSupabaseAccountId)) accEl.value = window.activeSupabaseAccountId;
 
     const close = () => {
         modal.classList.add('hidden');
@@ -128,11 +133,14 @@ function openManualExpense() {
                 name,
                 cat: catEl.value,
                 date,
-                income
+                income,
+                accountId: accEl.value || undefined
             });
 
-            AppState.rows.push(row);
-            AppState.rows.sort((a, b) => b.d.localeCompare(a.d) || (b.s ?? 0) - (a.s ?? 0));
+            AppState.all = allRows();
+            AppState.all.push(row);
+            AppState.all.sort((a, b) => b.d.localeCompare(a.d) || (b.s ?? 0) - (a.s ?? 0));
+            applyView();
             saveState();
             try { localStorage.setItem(income ? MANUAL_LAST_INC_KEY : MANUAL_LAST_CAT_KEY, catEl.value); } catch (e) { /* sin almacenamiento */ }
 

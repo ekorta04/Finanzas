@@ -48,7 +48,7 @@ Cloud.dirty = false;
 
 function buildCloudData() {
     const tags = {}, links = {};
-    AppState.rows.forEach(r => {
+    allRows().forEach(r => {
         if (r.t && r.t.length) tags[r.k] = r.t;
         if (r.lk) links[r.k] = r.lk;
     });
@@ -59,10 +59,11 @@ function buildCloudData() {
 
 // Aplicar los ajustes de la nube sobre los movimientos ya cargados
 function applyCloudData(data) {
-    const rows = AppState.rows;
+    const rows = allRows();
     const next = {};
     SETTINGS_FIELDS.forEach(f => { if (data[f] !== undefined) next[f] = data[f]; });
     AppState = normalizeState(Object.assign({}, AppState, next));
+    AppState.all = rows;
     AppState.rows = rows;
 
     const tags = data.tags || {}, links = data.links || {};
@@ -78,6 +79,7 @@ function applyCloudData(data) {
         c.lk = parent;
         (p.bz = p.bz || []).push(child);
     });
+    applyView();
 }
 
 async function fetchCloudSettings(userId) {
