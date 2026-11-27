@@ -87,7 +87,8 @@
             // Se compara con lo guardado por fecha + importe + concepto, no solo por la clave:
             // así un movimiento que llega con otro saldo o texto no se guarda dos veces.
             const existing = await getAllAccountTransactions(account.id);
-            const { exact, similar, fresh } = splitRepeatedRows(existing, rowsWithKeys);
+            const deletedSet = new Set(AppState.deleted || []);   // borrados a mano: no vuelven a entrar
+            const { exact, similar, fresh } = splitRepeatedRows(existing, rowsWithKeys.filter(r => !deletedSet.has(r.k)));
 
             // Sin nada nuevo no hay que decidir: se registra y se cuenta
             if (!fresh.length) { await commitImport({ file, account, fresh, exact, similar, badRows }); return; }
@@ -186,6 +187,7 @@
 
             AppState.imports.push({ at: new Date().toLocaleString('es-ES'), added, dup });
             saveState();
+            dbImports = null;
             renderImportHistory();
 
             const newKeys = new Set(fresh.map(r => r.k));
@@ -203,13 +205,4 @@
         const el = document.getElementById('import-result');
         el.className = 'result mt-2 ' + (type === 'success' ? 'ok' : 'err');
         el.innerHTML = msg;
-    }
-    function renderImportHistory() {
-        const tb = document.getElementById('import-history-body');
-        if (!AppState.imports.length) { tb.innerHTML = `<div class="row"><span class="muted small">Todavía no has importado nada.</span></div>`; return; }
-        tb.innerHTML = AppState.imports.slice(-5).reverse().map(i => `
-            <div class="row">
-                <div class="row-main"><div class="row-title" style="font-size:15px">${esc(i.at)}</div><div class="row-sub">${i.dup} repetidos omitidos</div></div>
-                <span class="bold pos num">+${i.added}</span>
-            </div>`).join('');
     }

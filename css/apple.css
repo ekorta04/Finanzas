@@ -842,3 +842,14 @@ body.dash-edit .dw > .dw-remove::after { content: ''; position: absolute; inset:
 .fab:active { transform: scale(.92); }
 @media (min-width: 900px) { .fab { right: 28px; bottom: 28px; } }
 body.dash-edit .fab { display: none; }
+
+/* Aviso con X para cerrarlo */
+.banner { position: relative; }
+#unclassified-alert .row { padding-right: 46px; }
+.banner-x {
+    position: absolute; top: 50%; right: 10px; transform: translateY(-50%);
+    width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--fill); color: var(--label-2); border: 0; cursor: pointer;
+}
+.banner-x .ic { width: 14px; height: 14px; }
+.banner-x:active { background: var(--fill-2); }

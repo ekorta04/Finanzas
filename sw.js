@@ -3,7 +3,7 @@
    Caché de los archivos de la aplicación
    ========================================================================== */
 
-   const CACHE = 'finanzas-v37';
+   const CACHE = 'finanzas-v38';
 
    const FILES = [
        './',
@@ -49,6 +49,7 @@
        './js/reglas.js',
        './js/pdf-extracto.js',
        './js/importacion.js',
+       './js/borrar.js',
        './js/backup.js',
        './js/ui.js',
        './js/cloud.js',

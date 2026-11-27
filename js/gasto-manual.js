@@ -43,38 +43,6 @@ async function insertManualExpense({ amount, name, cat, date, income }) {
     return transactionToAppRow(data);
 }
 
-async function deleteManualExpenseRow(key) {
-    const accountId = window.activeSupabaseAccountId;
-    if (!accountId || !isManualRow({ k: key })) throw new Error('No se puede borrar este movimiento.');
-
-    const { error } = await supabaseClient
-        .from('transactions')
-        .delete()
-        .eq('account_id', accountId)
-        .eq('source_key', key);
-
-    if (error) throw error;
-}
-
-async function deleteManualExpense(encKey) {
-    const key = decodeURIComponent(encKey);
-    const row = AppState.rows.find(r => r.k === key);
-    if (!row || !isManualRow(row)) return;
-
-    if (!(await askConfirm(`¿Eliminar ${row.i > 0 ? 'el ingreso' : 'el gasto'} «${row.c}» de ${formatEur(Math.abs(row.i))}?`))) return;
-
-    try {
-        await deleteManualExpenseRow(key);
-        AppState.rows = AppState.rows.filter(r => r.k !== key);
-        saveState();
-        renderAllViews();
-        showToast(row.i > 0 ? 'Ingreso eliminado' : 'Gasto eliminado');
-    } catch (error) {
-        console.error('Error eliminando gasto manual:', error);
-        showToast('No se pudo eliminar el gasto', 'error');
-    }
-}
-
 // ---------- Formulario ----------
 
 function manualCategoryOptions(selected, income) {

@@ -11,6 +11,8 @@ Aplicación web para gestionar y analizar las finanzas personales a partir de ex
 - Aviso en el Resumen cuando los movimientos llegan hasta hace más de una semana.
 - Cierre de mes en el Resumen: gasto, ingresos y ahorro de un mes frente al anterior, categorías que más suben y bajan y mayores gastos (en el mes en curso compara los mismos días).
 - Botón «+» flotante para apuntar a mano un gasto o un ingreso (efectivo, etc.): cantidad, concepto, categoría y fecha. Se guarda en la base de datos como un movimiento más, no afecta al saldo del banco y se puede eliminar desde Movimientos.
+- Borrar un movimiento (Movimientos → abrirlo → «Eliminar») o una importación entera (Datos → Últimas importaciones → «Borrar»). Un movimiento del banco borrado a mano no vuelve al importar el mismo archivo.
+- El aviso «Movimientos sin categoría» se puede cerrar con la X hasta cerrar y volver a abrir la app.
 - Dashboard de ingresos, gastos y ahorro, con bloques que se reordenan manteniendo pulsado y arrastrando, como en la pantalla de inicio del iPhone (el orden se sincroniza entre dispositivos).
 - Modo privado (ojito de arriba): oculta las cifras en euros y deja gráficas y porcentajes, para poder enseñar la app sin mostrar tu dinero.
 - Importación de movimientos bancarios desde CSV.

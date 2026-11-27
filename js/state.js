@@ -145,6 +145,7 @@ const defaultState = () => ({
     invSign: 1,
     invValues: [],       // [{ d, v }]
     invXray: [],         // informes X-Ray: [{ d, v, assets, countries, sectors, top, funds, rent }]
+    deleted: [],         // claves de movimientos del banco borrados a mano (no vuelven al importar)
     dismissed: [],       // gastos cuyas sugerencias Bizum se descartaron
     customCats: [],      // categorías creadas por el usuario: { n, ic, col }
     subs: [],            // suscripciones: decisiones sobre las detectadas { id, key, st:'ok'|'no'|'end', name, type } y manuales { id, manual, name, amount, cad, next, type, st }

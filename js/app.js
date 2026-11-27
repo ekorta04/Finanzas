@@ -146,6 +146,13 @@ function snoozeStaleAlert() {
     updateStaleAlert();
 }
 
+// Cerrada con la X: no vuelve a salir hasta cerrar y abrir la app
+let unclassifiedDismissed = false;
+function dismissUnclassifiedAlert() {
+    unclassifiedDismissed = true;
+    updateUnclassifiedAlert();
+}
+
 function updateUnclassifiedAlert() {
     const count = AppState.rows.filter(
         r => r.cat === 'Sin clasificar'
@@ -153,7 +160,7 @@ function updateUnclassifiedAlert() {
 
     const el = document.getElementById('unclassified-alert');
 
-    if (count > 0) {
+    if (count > 0 && !unclassifiedDismissed) {
         el.classList.remove('hidden');
 
         document.getElementById('unclassified-count').textContent =
