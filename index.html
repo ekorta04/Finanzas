@@ -620,9 +620,9 @@
                     </div>
                 </div>
                 <div id="drop-zone" class="drop mt-2" role="button" tabindex="0">
-                    <input type="file" id="csv-file-input" accept=".csv,text/csv" class="hidden" onchange="handleFileSelect(event)">
+                    <input type="file" id="csv-file-input" accept=".csv,text/csv,.pdf,application/pdf" class="hidden" onchange="handleFileSelect(event)">
                     <span class="icon-tile"><i class="ic ic-file-up"></i></span>
-                    <span class="bold">Elegir CSV de Laboral Kutxa</span>
+                    <span class="bold">Elegir CSV o PDF de Laboral Kutxa</span>
                     <span class="small muted">Los movimientos repetidos se omiten solos</span>
                 </div>
                 <div id="import-result" class="hidden result mt-2"></div>
@@ -861,6 +861,7 @@
 <script src="js/inversion.js"></script>
 <script src="js/xray.js"></script>
 <script src="js/reglas.js"></script>
+<script src="js/pdf-extracto.js"></script>
 <script src="js/importacion.js"></script>
 <script src="js/backup.js"></script>
 <script src="js/ui.js"></script>

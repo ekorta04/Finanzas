@@ -6,7 +6,8 @@ Aplicación web para gestionar y analizar las finanzas personales a partir de ex
 ## Funcionalidades
 
 - Importación del CSV con vista previa: antes de guardar enseña cuántos movimientos son nuevos, repetidos y sin clasificar, y avisa si faltan movimientos comparando el saldo del archivo con el último guardado. Al terminar, un botón lleva a clasificar lo nuevo.
-- Se puede soltar el CSV en cualquier pestaña (en el iPhone, elegirlo desde Archivos).
+- También se puede importar el PDF «Movimientos de cuenta» de la banca online: se lee en el propio dispositivo y da los mismos movimientos que el CSV (se omiten los repetidos igual).
+- Se puede soltar el CSV (o el PDF) en cualquier pestaña (en el iPhone, elegirlo desde Archivos).
 - Aviso en el Resumen cuando los movimientos llegan hasta hace más de una semana.
 - Cierre de mes en el Resumen: gasto, ingresos y ahorro de un mes frente al anterior, categorías que más suben y bajan y mayores gastos (en el mes en curso compara los mismos días).
 - Botón «+» flotante para apuntar a mano un gasto o un ingreso (efectivo, etc.): cantidad, concepto, categoría y fecha. Se guarda en la base de datos como un movimiento más, no afecta al saldo del banco y se puede eliminar desde Movimientos.

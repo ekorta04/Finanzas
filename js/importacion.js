@@ -43,9 +43,8 @@
             if (!loggedIn() || inOwnZone(e)) return;
             const file = e.dataTransfer.files[0];
             if (!file) return;
-            if (/\.csv$|\.txt$/i.test(file.name) || /csv/.test(file.type)) { switchTab('v-datos'); processCSVFile(file); }
-            else if (/\.pdf$/i.test(file.name)) showToast('Los informes X-Ray se suben en la pestaña Inversión', 'error');
-            else showToast('Suelta el CSV de Laboral Kutxa', 'error');
+            if (/\.csv$|\.txt$|\.pdf$/i.test(file.name) || /csv|pdf/.test(file.type)) { switchTab('v-datos'); processCSVFile(file); }
+            else showToast('Suelta el CSV o el PDF de Laboral Kutxa', 'error');
         });
     }
 
@@ -68,8 +67,14 @@
         showImportResult('Leyendo el archivo…', 'success');
 
         try {
-            const { parsedRows, badRows } = parseLaboralKutxaCSV(await file.text());
-            if (!parsedRows.length) { showImportResult('No se encontraron movimientos válidos en el archivo.', 'error'); return; }
+            const isPdf = /\.pdf$/i.test(file.name) || file.type === 'application/pdf';
+            const { parsedRows, badRows } = isPdf ? await readExtractoPdf(file) : parseLaboralKutxaCSV(await file.text());
+            if (!parsedRows.length) {
+                showImportResult(isPdf
+                    ? 'Este PDF no parece un extracto de movimientos de Laboral Kutxa. (Los informes X-Ray se suben en la pestaña Inversión.)'
+                    : 'No se encontraron movimientos válidos en el archivo.', 'error');
+                return;
+            }
 
             const session = await getStoredSession();
             if (!session) { showLoginScreen(); return; }
